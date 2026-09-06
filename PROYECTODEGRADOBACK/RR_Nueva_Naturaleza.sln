@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RR_Nueva_Naturaleza", "RR_Nueva_Naturaleza.csproj", "{C5012823-301E-43C9-B587-C2052670113C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C5012823-301E-43C9-B587-C2052670113C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5012823-301E-43C9-B587-C2052670113C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5012823-301E-43C9-B587-C2052670113C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5012823-301E-43C9-B587-C2052670113C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {50827417-CD5E-4489-BB28-60EBE3A8A62D}
+	EndGlobalSection
+EndGlobal

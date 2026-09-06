@@ -24,3 +24,5 @@ secrets.json
 # Sistema
 Thumbs.db
 .DS_Store
+*.bak
+desktop.ini
