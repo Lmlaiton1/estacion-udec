@@ -1,0 +1,160 @@
+<mat-toolbar class="mattoolbar1">
+    <button mat-icon-button class="color-button" (click)="drawer.toggle()">
+        <mat-icon>menu</mat-icon>
+    </button>
+
+    <div>
+        <img src="images/LogoWhite.jpg" alt="Logo" class="login-logo">
+    </div>
+
+
+    <h1 class="toolbar-title">BIENVENIDOS NUEVA NATURALEZA</h1>
+
+    <div class="user-info">
+
+        <button mat-icon-button [matMenuTriggerFor]="notifMenu" aria-label="Notificaciones" [matBadge]="unseenCount"
+            matBadgeOverlap="false" matBadgeColor="warn" class="notif-button">
+            <mat-icon>notifications</mat-icon>
+        </button>
+
+        <mat-menu #notifMenu="matMenu" class="notif-menu">
+            <div class="notif-header">
+                <button mat-menu-item (click)="markAllSeen()">
+                    <mat-icon>done_all</mat-icon>
+                    <span>Marcar todo como leído</span>
+                </button>
+            </div>
+            <mat-divider></mat-divider>
+
+            <!-- Lista de notificaciones -->
+            @if (notify.length > 0) {
+            @for (notif of notify; track notif.id) {
+            <button mat-menu-item class="notif-item">
+                <div class="notif-content">
+                    <div class="notif-text">{{ notif.notification }}</div>
+                    <div class="notif-meta"> {{ notif.date }}</div>
+                </div>
+                <button mat-icon-button (click)="markOneSeen(notif.id)">
+                    <mat-icon>check</mat-icon>
+                </button>
+            </button>
+            }
+            } @else {
+            <button mat-menu-item disabled>
+                <span>No hay notificaciones</span>
+            </button>
+            }
+        </mat-menu>
+
+        <span class="color-button">
+            Hola,
+            {{ this.user?.name?.toUpperCase()}}
+        </span>
+        <button mat-icon-button class="color-button" [matMenuTriggerFor]="userMenu">
+            <mat-icon>account_circle</mat-icon>
+        </button>
+    </div>
+
+    <mat-menu #userMenu="matMenu">
+        <button mat-menu-item (click)="logOut()">
+            <mat-icon>logout</mat-icon>
+            <span>cerrar</span>
+        </button>
+    </mat-menu>
+</mat-toolbar>
+<mat-drawer-container class="example-container">
+    <mat-drawer #drawer mode="side" opened class="custom-drawer">
+        <mat-list role="list">
+            <mat-list-item role="listitem" routerLink="Sensors" routerLinkActive="active" class="menu-item">
+                <div class="icon-container">
+                    <mat-icon class="icon-blue" aria-hidden="false" aria-label="Example home icon"
+                        fontIcon="view_comfy"></mat-icon>
+                    Parametros
+                </div>
+            </mat-list-item>
+            <mat-list-item role="listitem" routerLink="Actuator" routerLinkActive="active" class="menu-item">
+                <div class="icon-container">
+                    <mat-icon class="icon-blue" aria-hidden="false" aria-label="Example home icon"
+                        fontIcon="touch_app"></mat-icon>
+                    Actuadores
+                </div>
+            </mat-list-item>
+            @if (esAdministrador()) {
+            <mat-list-item role="listitem" routerLink="Control" routerLinkActive="active" class="menu-item">
+                <div class="icon-container">
+                    <mat-icon class="icon-blue" aria-hidden="false" aria-label="Example home icon"
+                        fontIcon="videogame_asset"></mat-icon>
+                    Control
+                </div>
+            </mat-list-item>
+            }
+
+            <mat-list-item role="listitem" routerLink="ChecklistForm" routerLinkActive="active" class="menu-item">
+                <div class="icon-container">
+                    <mat-icon class="icon-blue" aria-hidden="false" aria-label="Example home icon"
+                        fontIcon="assignment_turned_in"></mat-icon>
+                    Checklist
+                </div>
+            </mat-list-item>
+
+            @if (esAdministrador()) {
+            <mat-list-item role="listitem" routerLink="report" routerLinkActive="active" class="menu-item">
+                <div class="icon-container">
+                    <mat-icon class="icon-blue" aria-hidden="false" aria-label="Example home icon"
+                        fontIcon="assignment"></mat-icon>
+                    Reportes de mediciones
+                </div>
+            </mat-list-item>
+            }
+            @if (esAdministrador()) {
+            <mat-list-item role="listitem" routerLink="audit-user" routerLinkActive="active" class="menu-item">
+                <div class="icon-container">
+                    <mat-icon class="icon-blue" aria-hidden="false" aria-label="Example home icon"
+                        fontIcon="supervisor_account"></mat-icon>
+                    Auditoria usuarios
+                </div>
+            </mat-list-item>
+            }
+            @if (esAdministrador()) {
+            <a mat-list-item routerLink="registerUser" routerLinkActive="active" class="menu-item">
+                <div class="icon-container">
+                    <mat-icon class="icon-blue" fontIcon="person_add"></mat-icon>
+                    Registrar usuarios
+                </div>
+            </a>
+            }
+
+             <mat-list-item role="listitem" routerLink="Ia" routerLinkActive="active" class="menu-item">
+                <div class="icon-container">
+                    <mat-icon class="icon-blue" aria-hidden="false" aria-label="Example home icon"
+                        fontIcon="remove_red_eye"></mat-icon>
+                    IA
+                </div>
+            </mat-list-item>
+
+           
+            <div class="mensaje-creditos">
+                <div class="logo-fondo">
+                    <img src="images/UdeC.jpg" alt="Logo" class="login-logo3">
+                    <img src="images/GISTFA.png" alt="Logo" class="login-logo2">
+                </div>
+
+                <div class="mensaje-contenido">
+                    <div class="mensaje-linea-titulo">Grupo de investigación GISTFA</div>
+                    <div class="mensaje-linea-titulo">Semillero de investigacion SERFAC</div>
+
+                    <div class="mensaje-linea-titulo">Director:</div>
+                    <div class="mensaje-linea">Jaime Eduardo Andrade Ramírez</div>
+
+                    <div class="mensaje-linea-titulo">Equipo de desarrolladores:</div>
+                    <div class="mensaje-linea">Jorge Andrés Rodríguez Castaño</div>
+                    <div class="mensaje-linea">Carlos Andrés Ramos García</div>
+                </div>
+            </div>
+
+        </mat-list>
+    </mat-drawer>
+    <mat-drawer-content>
+        <router-outlet></router-outlet>
+    </mat-drawer-content>
+</mat-drawer-container>

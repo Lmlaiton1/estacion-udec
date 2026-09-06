@@ -1,0 +1,14 @@
+<h2 class="titleM" mat-dialog-title>{{ formatNameSensor(data.deviceName) }}</h2>
+<mat-dialog-content>
+  <apx-chart 
+    [series]="chartOptions.series" 
+    [chart]="chartOptions.chart" 
+    [xaxis]="chartOptions.xaxis" 
+    [yaxis]="chartOptions.yaxis"
+    [title]="chartOptions.title">
+  </apx-chart>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close()">Cerrar</button>
+</mat-dialog-actions>
+

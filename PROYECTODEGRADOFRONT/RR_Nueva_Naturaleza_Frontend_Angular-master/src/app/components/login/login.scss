@@ -1,0 +1,100 @@
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5;
+  position: relative;
+}
+
+/* Bloque de configuración serial */
+.serial-config {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #ffffff;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 220px;
+
+  h3 {
+    font-size: 1rem;
+    color: #1d4d35;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .config-field {
+    width: 100%;
+    margin-bottom: 1rem;
+
+    mat-label {
+      font-weight: 500;
+      color: #1d4d35;
+    }
+  }
+
+  .save-config-btn {
+    width: 100%;
+    font-weight: bold;
+    border: 1px solid #1d4d35;
+    color: #1d4d35;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #1d4d35;
+      color: white;
+    }
+  }
+}
+
+.login-card {
+  width: 400px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 24px;
+  color: #1d4d35;
+}
+
+.login-input {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.login-button {
+  width: 100%;
+  font-weight: bold;
+}
+
+.custom-button {
+  border: 1px solid #1d4d35;
+  width: 100%;
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+
+.login-logo {
+  width: 150px;
+  display: block;
+  margin: 0 auto 20px auto;
+  border-radius: 8px;
+}
+
+.forgot-password-link {
+  display: block;
+  text-align: right;
+  color: #1d4d35;
+  text-decoration: none;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}

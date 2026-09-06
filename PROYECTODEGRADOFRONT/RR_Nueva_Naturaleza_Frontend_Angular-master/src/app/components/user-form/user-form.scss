@@ -1,0 +1,17 @@
+.user-card {
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 15px;
+  border-radius: 16px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 16px;
+}
+
+mat-card-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}

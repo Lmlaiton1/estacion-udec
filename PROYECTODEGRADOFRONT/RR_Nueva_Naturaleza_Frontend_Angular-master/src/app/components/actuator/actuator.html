@@ -1,0 +1,103 @@
+<div class="actuator-section">
+
+  <mat-form-field appearance="outline" class="filter-bar">
+    <mat-label>Buscar actuador</mat-label>
+    <input
+      matInput
+      (keyup)="applyFilter($event)"
+      placeholder="Nombre"
+    />
+  </mat-form-field>
+
+  <div class="actuator-container">
+    @for (
+      actuator of dataSource.filteredData
+        | slice:(paginator.pageIndex * paginator.pageSize):((paginator.pageIndex + 1) * paginator.pageSize);
+      track actuatorTrack($index, actuator)
+    ) {
+      <mat-card class="actuator-card">
+        @if (actuator.mode?.supportsAuto) {
+          <div class="auto-mode-toggle" *ngIf="actuator.mode?.supportsAuto">
+            <mat-checkbox
+              [checked]="actuator.mode?.isAutoMode"
+              (change)="toggleAutoMode(actuator, $event)"
+              [disabled]="!esAdministrador()"
+            >
+              Auto
+            </mat-checkbox>
+          </div>
+        }
+
+        <div class="actuator-info">
+          <div class="actuator-text">
+            <span
+              class="actuator-name"
+              [ngClass]="{
+                'off': actuator.device_StatusName !== 'Activo',
+                'on': actuator.device_StatusName === 'Activo'
+              }"
+            >
+              {{ format(actuator.device_Name) }}
+            </span>
+
+            <span
+              class="actuator-status"
+              [ngClass]="{
+                'off': actuator.device_StatusName !== 'Activo',
+                'on': actuator.device_StatusName === 'Activo'
+              }"
+            >
+              {{ actuator.device_StatusName === 'Activo' ? 'ON' : 'OFF' }}
+            </span>
+          </div>
+
+          <!-- Toggle -->
+          <mat-slide-toggle
+            [checked]="actuator.device_StatusName === 'Activo'"
+            (change)="toggleActuator(actuator, $event)"
+            [disabled]="!esAdministrador() || actuator.mode?.isAutoMode || dosificando || sd"
+          >
+          </mat-slide-toggle>
+        </div>
+      </mat-card>
+    }
+
+    <button class="actuatorC" mat-raised-button color="primary" (click)="reset()">
+      RESET
+    </button>
+  </div>
+
+  <mat-paginator
+    #paginator
+    [length]="dataSource.filteredData.length"
+    [pageSize]="9"
+    [pageSizeOptions]="[3, 6, 9, 12]"
+    showFirstLastButtons
+  >
+  </mat-paginator>
+
+  @if (dosificando) {
+    <div class="dosificacion-alert">
+      ⚠️ Dosificación en curso... Los actuadores estarán deshabilitados temporalmente.
+    </div>
+  }
+
+  @if (sd) {
+    <div class="dosificacion-alert">
+      ⚠️ Enviando datos SD... Los actuadores estarán deshabilitados temporalmente.
+    </div>
+  }
+
+  @if (esAdministrador()) {
+    <div class="button-container">
+      <button
+        class="actuatorB"
+        mat-raised-button
+        color="primary"
+        (click)="goToActuatorForm()"
+      >
+        ➕ Agregar / Editar Actuadores
+      </button>
+    </div>
+  }
+</div>

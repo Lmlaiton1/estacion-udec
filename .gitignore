@@ -1,0 +1,26 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Angular / Node
+node_modules/
+.angular/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Secretos y config local
+appsettings.Development.json
+*.env
+secrets.json
+
+# Sistema
+Thumbs.db
+.DS_Store

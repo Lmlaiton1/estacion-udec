@@ -1,0 +1,83 @@
+<form class="report-form">
+    <div class="form-section">
+        <mat-form-field appearance="outline" class="sensor-select">
+        <mat-label>Auditado</mat-label>
+        <input
+            type="text"
+            placeholder="Buscar auditado.."
+            aria-label="Buscar auditado"
+            matInput
+            [formControl]="userControl"
+            name="userType"   
+            [(ngModel)]="userId"
+            [matAutocomplete]="auto"
+            (focus)="showAllUser()"
+            (click)="showAllUser()"
+        />
+        <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayUserName.bind(this)">
+            @for (type of filteredUser; track type.id) {
+            <mat-option [value]="type.id">
+                {{ `${type.name} ${type.last_Name}` }}
+            </mat-option>
+            }
+        </mat-autocomplete>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Fecha Inicio (MM/DD/YYYY)</mat-label>
+            <input matInput [(ngModel)]="startDate" [matDatepicker]="picker" name="Input1">
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Fecha Fin (MM/DD/YYYY)</mat-label>
+            <input matInput [(ngModel)]="endDate" [matDatepicker]="picker2" name="Input2">
+            <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+            <mat-datepicker #picker2></mat-datepicker>
+        </mat-form-field>
+    </div>
+
+    <div class="button-section">
+        <button mat-raised-button class="custom-button" type="button" (click)="onSubmit()">
+            📋Generar Reporte
+        </button>
+    </div>
+
+    <div *ngIf="showReport" class="table-section">
+        <table mat-table [dataSource]="dataSource" class="mat-elevation-z8 custom-table">
+
+            <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Fecha</th>
+                <td mat-cell *matCellDef="let element">{{ element.date | date:'short' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="device">
+                <th mat-header-cell *matHeaderCellDef>Dispositivo</th>
+                <td mat-cell *matCellDef="let element">{{ element.device}}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="action">
+                <th mat-header-cell *matHeaderCellDef>acción</th>
+                <td mat-cell *matCellDef="let element">{{ element.action }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="observation">
+                <th mat-header-cell *matHeaderCellDef>Observación</th>
+                <td mat-cell *matCellDef="let element">{{ element.observation }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <mat-paginator [pageSize]="15" [pageSizeOptions]="[5, 10, 15, 20]" showFirstLastButtons>
+        </mat-paginator>
+    </div>
+
+    <div class="button-section-pdf" *ngIf="showReport">
+        <button mat-raised-button class="custom-button" (click)="onPDF()">
+            📄 Generar PDF
+        </button>
+    </div>
+</form>

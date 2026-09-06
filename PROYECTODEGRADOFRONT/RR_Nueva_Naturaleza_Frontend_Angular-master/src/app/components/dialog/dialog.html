@@ -1,0 +1,44 @@
+<h2 mat-dialog-title>Acción sobre {{ data.device_Name }}</h2>
+
+<mat-dialog-content class="content">
+  <p class="hint">Selecciona el motivo de la acción:</p>
+
+  <mat-radio-group [(ngModel)]="reason" class="radio-group">
+    <mat-radio-button class="radio" value="Mantenimiento">Mantenimiento</mat-radio-button>
+    <mat-radio-button class="radio" value="Pruebas">Pruebas</mat-radio-button>
+    <mat-radio-button class="radio" value="Rutina">Rutina</mat-radio-button>
+    <mat-radio-button class="radio" value="Otra">Otra</mat-radio-button>
+  </mat-radio-group>
+
+  @if (reason === 'Otra') {
+    <div class="mt">
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-label>Escribe la observación</mat-label>
+        <textarea 
+          matInput 
+          rows="4" 
+          [(ngModel)]="customReason" 
+          maxlength="300">
+        </textarea>
+        <mat-hint align="end">{{ customReason.length }}/300</mat-hint>
+      </mat-form-field>
+
+      @if (customReason.trim().length < 3) {
+        <div class="error">
+          La observación debe tener al menos 3 caracteres.
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button 
+    mat-flat-button 
+    color="primary" 
+    [disabled]="!isValid()"
+    (click)="confirm()">
+    Aceptar
+  </button>
+</mat-dialog-actions>

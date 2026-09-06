@@ -1,0 +1,159 @@
+.example-container {
+  flex-grow: 2;
+  z-index: 1;
+  min-height: 90vh;
+  flex-direction: column;
+}
+
+.container {
+  align-items: center;
+}
+
+.custom-drawer {
+  background-color: #f1f1f1;
+  width: 245px;
+  position: fixed;
+  margin-top: 64px;
+  height: calc(100vh - 45px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mattoolbar1 {
+  display: flex;
+  background-color: #1d4d35;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.color-button {
+  color: #ffffff;
+}
+
+
+mat-toolbar {
+  display: flex;
+  justify-content: space-between;
+
+  .user-info {
+    display: flex;
+    align-items: center;
+
+    span {
+      margin-right: 0.5rem;
+    }
+
+    mat-icon {
+      transform: scale(1.4);
+    }
+  }
+}
+
+.menu-item {
+  transition: background-color 0.3s;
+  flex-shrink: 0;
+}
+
+.menu-item:hover {
+  background-color: #ddd;
+  cursor: pointer;
+}
+
+mat-drawer-container.example-container {
+  margin-top: 64px;
+}
+
+.icon-blue {
+  color: #1d4d35;
+  margin-right: 5px;
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-title {
+  font-size: 2.0rem;
+  font-weight: bold;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  margin: 0 auto;
+}
+
+.login-logo {
+  width: 60px;
+  position: absolute;
+  top: 3px;
+  left: 70px;
+}
+
+.login-logo-lestoma {
+  width: 50px;
+  position: absolute;
+  top: 12px;
+  left: 70px;
+}
+
+.mensaje-creditos {
+  position: absolute;
+  bottom: 0.3cm;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 10px 0;
+  overflow: hidden; // evita que el logo se salga
+
+  .logo-fondo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.22;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: -30px;
+  }
+
+  .login-logo2 {
+    max-width: 100px;
+    height: auto;
+  }
+
+   .login-logo3 {
+    max-width: 110px;
+    height: auto;
+  }
+
+  .mensaje-contenido {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+.mensaje-linea {
+  display: block;
+  font-size: 12px;
+  color: #555;
+  margin: 2px 0;
+}
+
+.mensaje-linea-titulo {
+  display: block;
+  font-size: 13px;
+  color: #1d4d35;
+  margin: 2px 0;
+  font-weight: bold;
+}
+
+.notif-button {
+  margin-right: 30px;
+  color: #ffffff;
+}

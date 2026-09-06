@@ -1,0 +1,126 @@
+
+.actuator-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+
+.actuator-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  padding: 30px;
+  width: 100%;
+  max-width: 1200px; 
+  box-sizing: border-box;
+}
+
+.actuator-card {
+  position: relative;
+  padding: 20px;
+  font-size: 1.2rem;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.actuator-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.auto-mode-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  transform: scale(0.85);
+  opacity: 0.85;
+}
+
+.actuator-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.actuator-name {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.actuator-name.off {
+  color: #f44336;
+  font-weight: 600;
+}
+
+.actuator-name.on {
+  color: #1e9c0d;
+  font-weight: 600;
+}
+
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 10px 0 20px 0;
+}
+
+.actuatorB {
+  padding: 12px 30px;
+  font-size: 1rem;
+}
+
+.actuatorC {
+  padding: 12px 30px;
+  font-size: 1rem;
+  margin-top: 40px;
+  color: #ff0000d3;
+  font-weight: 800;
+}
+
+.dosificacion-alert {
+  background: #fff3cd;
+  color: #856404;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin: 15px 0;
+}
+.actuator-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.actuator-status {
+  font-size: 1rem; /* más pequeño que el nombre */
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.actuator-status.on {
+  color: #1e9c0d; /* mismo verde que el nombre */
+}
+
+.actuator-status.off {
+  color: #f44336; /* mismo rojo que el nombre */
+}
+
+.filter-bar {
+  width: 60%;
+  margin: 10px auto;
+  display: block;
+}
+
+mat-paginator {
+  margin-top: 20px;
+  align-self: center;
+}

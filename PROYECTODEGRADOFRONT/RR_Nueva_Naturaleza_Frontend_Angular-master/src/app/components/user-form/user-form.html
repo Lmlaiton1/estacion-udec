@@ -1,0 +1,93 @@
+<mat-card class="user-card">
+  <mat-card-title>Registrar Usuario</mat-card-title>
+  <mat-card-content>
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="form-grid">
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="nombre" placeholder="Ej: Jaime" />
+
+        @if (userForm.get('nombre')?.hasError('required')) {
+          <mat-error>El nombre es obligatorio</mat-error>
+        }
+        @if (userForm.get('nombre')?.hasError('minlength')) {
+          <mat-error>Mínimo 2 caracteres</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Apellido</mat-label>
+        <input matInput formControlName="apellido" placeholder="Ej: Andrade" />
+
+        @if (userForm.get('apellido')?.hasError('required')) {
+          <mat-error>El apellido es obligatorio</mat-error>
+        }
+        @if (userForm.get('apellido')?.hasError('minlength')) {
+          <mat-error>Mínimo 2 caracteres</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Cédula</mat-label>
+        <input matInput formControlName="cedula" placeholder="Ej: 1023456789" />
+
+        @if (userForm.get('cedula')?.hasError('required')) {
+          <mat-error>La cédula es obligatoria</mat-error>
+        }
+        @if (userForm.get('cedula')?.hasError('pattern')) {
+          <mat-error>Solo números (6 a 10 dígitos)</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Pregunta</mat-label>
+        <mat-select formControlName="pregunta">         
+            <mat-option [value]="1">
+              ¿Cuál es el nombre de tu primera mascota?
+            </mat-option>         
+            <mat-option [value]="2">
+              ¿Cuál es el nombre de tu ciudad natal?
+            </mat-option>  
+            <mat-option [value]="3">
+              ¿Cuál es tu comida favorita?
+            </mat-option> 
+        </mat-select>
+
+        @if (userForm.get('pregunta')?.hasError('required')) {
+          <mat-error>Selecciona una pregunta</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Respuesta</mat-label>
+        <input matInput formControlName="respuesta" placeholder="Ej: Pilin, Girardot, Empanada" />
+
+        @if (userForm.get('respuesta')?.hasError('required')) {
+          <mat-error>La respuesta es obligatoria</mat-error>
+        }        
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="rol">
+          @for (rol of roles; track rol.id) {
+            <mat-option [value]="rol.id">
+              {{ rol.name }}
+            </mat-option>
+          }
+        </mat-select>
+
+        @if (userForm.get('rol')?.hasError('required')) {
+          <mat-error>Selecciona un rol</mat-error>
+        }
+      </mat-form-field>
+
+    </form>
+  </mat-card-content>
+
+  <mat-card-actions align="end">
+    <button mat-flat-button color="primary" [disabled]="userForm.invalid" (click)="onSubmit()">
+      👤 Registrar
+    </button>
+  </mat-card-actions>
+</mat-card>

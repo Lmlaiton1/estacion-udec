@@ -1,0 +1,187 @@
+
+<div class="control-container" style="padding: 20px; max-width: 600px; margin: auto;">
+    <h2 class="section-title"> ✏️ Editar rangos de sensores</h2>
+  <!-- Combo de sensores -->
+  <mat-form-field appearance="outline" class="sensor-select">
+    <mat-label>Selecciona un sensor</mat-label>
+    <input
+      type="text"
+      placeholder="Buscar sensor..."
+      aria-label="Buscar sensor"
+      matInput
+      [formControl]="sensorControl"
+      [matAutocomplete]="auto"
+      (focus)="showAllSensors()"
+      (click)="showAllSensors()"
+    />
+    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelectSensor($event.option.value)" [displayWith]="displaySensorName.bind(this)">
+      @for (sensor of filteredSensors; track sensor.id) {
+        <mat-option [value]="sensor">
+          {{ formatNameSensor(sensor.device_Name) }}
+        </mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+
+  <!-- Formulario de configuración -->
+  @if (rulesForm.length > 0) {
+    <form [formGroup]="form">
+      <div formArrayName="rules">
+
+        @for (rule of rulesForm.controls; let i = $index; track trackByRuleId(i, rule)) {
+          <mat-card class="rule-card" [formGroupName]="i">
+
+            <mat-card-title class="sensor-title">
+              Configuración de rango
+              <span *ngIf="selectedSensor" style="font-size: 14px; font-weight: normal; margin-left: 8px; color: gray;">
+                    (Unidad: {{ format(selectedSensor.unit) }})
+              </span>
+            </mat-card-title>
+
+            <mat-card-content>
+              <!-- Campo MIN -->
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Valor mínimo permitido</mat-label>
+                <input matInput type="number" formControlName="min">
+              </mat-form-field>
+
+              <!-- Campo MAX -->
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Valor máximo permitido</mat-label>
+                <input matInput type="number" formControlName="max">
+              </mat-form-field>
+
+              <!-- Checklist actuadores -->
+             <div class="actuators-checklist">
+              <h4>Actuadores asociados al incumplimiento del rango</h4>
+
+              <mat-form-field appearance="outline" class="filter-field">
+                <mat-label>Buscar actuador</mat-label>
+                <input matInput (keyup)="filterActuators($event)" placeholder="Ej. Bomba, Válvula, Luz" />
+              </mat-form-field>
+
+              <mat-selection-list [multiple]="true" formControlName="actuatorIds">
+                @for (actuator of filteredActuators; track actuator.id) {
+                  <div class="actuator-row">
+                    <mat-list-option [value]="actuator.id">
+                      {{ actuator.device_Name }}
+                    </mat-list-option>
+
+                    <div class="trigger-selects" formGroupName="triggerTypes">
+                      <ng-container *ngIf="rulesForm.at(i).get('actuatorIds')?.value?.includes(actuator.id)">
+                        <mat-form-field appearance="outline" class="trigger-select">
+                          <mat-label>Tipo de activación</mat-label>
+                          <mat-select [formControlName]="actuator.id" (click)="$event.stopPropagation()">
+                            <mat-option value="Exceso">Exceso</mat-option>
+                            <mat-option value="Deficit">Déficit</mat-option>
+                            <mat-option value="Ambos">Ambos</mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </ng-container>
+                    </div>
+                  </div>
+                }
+              </mat-selection-list>
+            </div>
+
+            </mat-card-content>
+
+            <mat-card-actions align="end">
+              <button mat-raised-button color="primary" (click)="updateRule(i)">
+                Guardar cambios
+              </button>
+            </mat-card-actions>
+
+          </mat-card>
+        }
+
+      </div>
+    </form>
+  }
+</div>
+
+<div class="dosificador-section" style="margin-top: 40px;">
+  <h2 class="section-title">⏱️ Programación de dosificadores</h2>
+
+  <mat-card class="dosificador-card">
+    <mat-card-title class="sensor-title">
+      {{ editingScheduleId ? 'Editar horario (Formato 24 horas)' : 'Agregar nuevo horario (Formato 24 horas)' }}
+    </mat-card-title>
+    <mat-card-content>
+      <form [formGroup]="scheduleForm" class="dosificador-form">
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Seleccionar dosificador</mat-label>
+          <mat-select formControlName="deviceId">
+            @for (d of dosificadores; track d.id) {
+              <mat-option [value]="d.id">
+                {{ d.device_Name }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="time-fields">
+          <mat-form-field appearance="outline">
+            <mat-label>Hora</mat-label>
+            <input matInput type="number" formControlName="hour" min="0" max="23">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Minuto</mat-label>
+            <input matInput type="number" formControlName="minute" min="0" max="59">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tiempo(Segundos)</mat-label>
+            <input matInput type="number" formControlName="durationSeconds" min="0">
+          </mat-form-field>
+        </div>
+
+        <button mat-raised-button color="primary" type="button" (click)="saveSchedule()" [disabled]="scheduleForm.invalid">
+          <mat-icon>{{ editingScheduleId ? 'save' : 'add_alarm' }}</mat-icon>
+          {{ editingScheduleId ? 'Actualizar horario' : 'Guardar horario' }}
+        </button>
+
+        @if (editingScheduleId) {
+          <button mat-button type="button" color="warn" (click)="editingScheduleId = null; scheduleForm.reset()">
+            Cancelar edición
+          </button>
+        }
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  @if (schedules.length > 0) {
+    <div class="horarios-list">
+      <h3 class="list-title">Horarios configurados</h3>
+
+      <mat-accordion>
+        @for (sch of schedules; track sch.id) {
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                🕐 {{ sch.hour | number: '2.0' }}:{{ sch.minute | number: '2.0' }} - {{ sch.deviceName }} - {{sch.durationSeconds}} segundos
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <div class="schedule-actions">
+              <button mat-stroked-button color="accent" (click)="editSchedule(sch)">
+                <mat-icon>edit</mat-icon> Editar
+              </button>
+
+              <button mat-stroked-button color="warn" (click)="deleteSchedule(sch.id)">
+                <mat-icon>delete</mat-icon> Eliminar
+              </button>
+            </div>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+    </div>
+  } @else {
+    <p style="text-align: center; margin-top: 20px; color: gray;">
+      No hay horarios configurados aún.
+    </p>
+  }
+</div>
+<br><br>

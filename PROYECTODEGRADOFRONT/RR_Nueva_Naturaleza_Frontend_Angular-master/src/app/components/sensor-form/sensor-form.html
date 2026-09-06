@@ -1,0 +1,182 @@
+<button class="actuatorB" mat-raised-button color="primary" (click)="goToSensors()">
+  🔙 Volver
+</button>
+
+<div class="manage-container">
+  <h2>Administrar Sensores</h2>
+
+  <mat-form-field appearance="outline" class="filter-field">
+    <mat-label>Buscar sensor</mat-label>
+    <input
+      matInput
+      (keyup)="applyFilter($event)"
+      placeholder="Ej. Oxígeno, pH, Temperatura"
+    />
+  </mat-form-field>
+
+  <table class="actuator-table">
+    <thead>
+      <tr>
+        <th (click)="sortData('device_Name')">
+          Nombre <mat-icon class="sort-icon">swap_vert</mat-icon>
+        </th>
+        <th (click)="sortData('mark')">
+          Marca <mat-icon class="sort-icon">swap_vert</mat-icon>
+        </th>
+        <th (click)="sortData('sn')">
+          SN <mat-icon class="sort-icon">swap_vert</mat-icon>
+        </th>
+        <th (click)="sortData('device_StatusName')">
+          Estado <mat-icon class="sort-icon">swap_vert</mat-icon>
+        </th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @if (paginator) {
+        @for (
+          act of dataSource.filteredData
+            | slice:(paginator.pageIndex * paginator.pageSize):((paginator.pageIndex + 1) * paginator.pageSize);
+          track act.id
+        ) {
+          <tr>
+            <td>{{ act.device_Name }}</td>
+            <td>{{ act.mark }}</td>
+            <td>{{ act.sn }}</td>
+            <td>
+              {{ act.device_StatusName === 'Deshabilitado' ? 'Deshabilitado' : 'Habilitado' }}
+            </td>
+            <td>
+              <button mat-button color="primary" (click)="editActuator(act)">✏️ Editar</button>
+              <button mat-button color="warn" (click)="toggleEnable(act)">
+                {{ act.device_StatusName === 'Deshabilitado' ? 'Habilitar' : 'Deshabilitar' }}
+              </button>
+            </td>
+          </tr>
+        }
+      } @else {
+        @for (act of dataSource.filteredData | slice:0:5; track act.id) {
+          <tr>
+            <td>{{ act.device_Name }}</td>
+            <td>{{ act.mark }}</td>
+            <td>{{ act.sn }}</td>
+            <td>
+              {{ act.device_StatusName === 'Deshabilitado' ? 'Deshabilitado' : 'Habilitado' }}
+            </td>
+            <td>
+              <button mat-button color="primary" (click)="editActuator(act)">✏️ Editar</button>
+              <button mat-button color="warn" (click)="toggleEnable(act)">
+                {{ act.device_StatusName === 'Deshabilitado' ? 'Habilitar' : 'Deshabilitar' }}
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+
+  <mat-paginator
+    [pageSizeOptions]="[8, 10, 20]"
+    showFirstLastButtons
+    aria-label="Paginador de sensores"
+  ></mat-paginator>
+
+  <hr />
+
+  <h3>{{ isEditMode ? 'Editar sensor' : 'Agregar nuevo sensor' }}</h3>
+
+  <form [formGroup]="sensorForm" (ngSubmit)="isEditMode ? updateActuator() : createActuator()">
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="device_Name" />
+    </mat-form-field>
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Marca</mat-label>
+      <input matInput formControlName="mark" />
+    </mat-form-field>
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>SN</mat-label>
+      <input matInput formControlName="sn" />
+    </mat-form-field>
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Descripción</mat-label>
+      <textarea matInput formControlName="description"></textarea>
+    </mat-form-field>
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Sistema</mat-label>
+      <mat-select formControlName="system_TypeId">
+        @for (sys of systemTypes; track sys.id) {
+          <mat-option [value]="sys.id">{{ sys.system_Type_Name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Valor Mínimo de Medición</mat-label>
+      <textarea matInput formControlName="min"></textarea>
+    </mat-form-field>
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Valor Máximo de Medición</mat-label>
+      <textarea matInput formControlName="max"></textarea>
+    </mat-form-field>
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Unidad</mat-label>
+      <mat-select formControlName="unitId">
+        @for (unit of unitList; track unit.id) {
+          <mat-option [value]="unit.id">{{ unit.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="buttons-container">
+      <div class="left-buttons">
+        <button
+          mat-stroked-button
+          color="accent"
+          type="button"
+          (click)="showAddUnitForm = !showAddUnitForm"
+        >
+          ➕ Agregar unidad
+        </button>
+      </div>
+
+      <div class="right-buttons">
+        <button mat-raised-button color="primary" type="submit">
+          {{ isEditMode ? 'Guardar cambios' : 'Agregar sensor' }}
+        </button>
+        <button mat-button type="button" (click)="cancelEdit()">Cancelar</button>
+      </div>
+    </div>
+  </form>
+
+  @if (showAddUnitForm) {
+    <div class="add-unit-form">
+      <h4>Agregar nueva unidad</h4>
+      <form [formGroup]="unitForm" (ngSubmit)="createUnit()">
+        <mat-form-field class="full-width" appearance="outline">
+          <mat-label>Nombre de la unidad</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+
+        <div class="buttons">
+          <button mat-raised-button color="primary" type="submit">Guardar unidad</button>
+          <button
+            mat-button
+            type="button"
+            (click)="showAddUnitForm = false; resetFormUnit()"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

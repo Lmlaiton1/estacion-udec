@@ -1,0 +1,126 @@
+
+<aside class="sidebar">
+
+  <div class="button-section-Check">
+    <button mat-raised-button class="custom-button" type="button" (click)="onGenerateChecklistClick()">
+      📂 Generar .csv con todas las mediciones
+    </button>
+  </div>
+
+  <div class="download-panel" *ngIf="showDownloadOptions">
+    <h4>Selecciona fecha inicio y Fecha fin</h4>
+
+    <form [formGroup]="filterForm" class="filter-form">
+      <div class="date-container">
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha Inicio (MM/DD/YYYY)</mat-label>
+          <input matInput [matDatepicker]="picker1" formControlName="fechaInicio">
+          <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+          <mat-datepicker #picker1></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha Fin (MM/DD/YYYY)</mat-label>
+          <input matInput [matDatepicker]="picker2" formControlName="fechaFin">
+          <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+          <mat-datepicker #picker2></mat-datepicker>
+        </mat-form-field>
+
+      </div>
+
+      <!-- Botón CSV -->
+      <div class="filter-buttons">
+        <button mat-raised-button class="custom-button" type="button" (click)="descargarCSV()"
+          [disabled]="filterForm.invalid">
+          ⬇️ Descargar .CSV
+        </button>
+      </div>
+    </form>
+  </div>
+</aside>
+
+
+<form class="report-form">
+  <div class="form-section">
+    <mat-form-field appearance="outline" class="sensor-select">
+      <mat-label>Tipo de medición</mat-label>
+      <input
+        type="text"
+        placeholder="Buscar medición.."
+        aria-label="Buscar medición"
+        matInput
+        [formControl]="sensorControl"
+        name="measurementType"   
+        [(ngModel)]="measurementTypeId"
+        [matAutocomplete]="auto"
+        (focus)="showAllSensors()"
+        (click)="showAllSensors()"
+      />
+      <mat-autocomplete #auto="matAutocomplete" [displayWith]="displaySensorName.bind(this)">
+        @for (type of filteredSensors; track type.id) {
+          <mat-option [value]="type.id">
+            {{ formatNameSensor(type.name) }}
+          </mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha Inicio (MM/DD/YYYY)</mat-label>
+      <input matInput [(ngModel)]="startDate" [matDatepicker]="picker" name="Input1">
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha Fin (MM/DD/YYYY)</mat-label>
+      <input matInput [(ngModel)]="endDate" [matDatepicker]="picker2" name="Input2">
+      <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+      <mat-datepicker #picker2></mat-datepicker>
+    </mat-form-field>
+  </div>
+
+  <div class="button-section">
+    <button mat-raised-button class="custom-button" type="button" (click)="onSubmit()">
+      📋 Generar Reporte
+    </button>
+  </div>
+
+  <div *ngIf="showReport" class="table-section">
+    <!-- IMPORTANTE: aquí debe ir dataSource (MatTableDataSource), NO result -->
+    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8 custom-table">
+
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let element">{{ element.date | date:'short' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="value">
+        <th mat-header-cell *matHeaderCellDef>Valor</th>
+        <td mat-cell *matCellDef="let element">{{ element.value }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="unit">
+        <th mat-header-cell *matHeaderCellDef>Unidad</th>
+        <td mat-cell *matCellDef="let element">{{ element.unit }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <!-- PAGINADOR: lo dejamos aquí dentro del *ngIf -->
+    <mat-paginator [pageSize]="15" [pageSizeOptions]="[5, 10, 15, 20]" showFirstLastButtons>
+    </mat-paginator>
+  </div>
+
+  <div class="chart-section" *ngIf="showReport">
+    <apx-chart #chartRef [series]="series" [chart]="chart" [title]="title" [xaxis]="XAxis" [yaxis]="Yaxis"></apx-chart>
+  </div>
+
+  <div class="button-section-pdf" *ngIf="showReport">
+    <button mat-raised-button class="custom-button" (click)="onPDF()">
+      📄 Generar PDF
+    </button>
+  </div>
+</form>

@@ -1,0 +1,33 @@
+.content {
+  min-width: 320px;
+  max-width: 520px;
+}
+
+.hint {
+  margin: 0 0 8px;
+  opacity: 0.8;
+}
+
+.radio-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+
+.radio {
+  padding: 4px 0;
+}
+
+.mt {
+  margin-top: 12px;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
+}

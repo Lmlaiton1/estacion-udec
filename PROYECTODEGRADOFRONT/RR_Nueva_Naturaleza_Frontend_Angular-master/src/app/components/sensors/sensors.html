@@ -1,0 +1,68 @@
+<div class="container">
+  <h2 class="title">Sensórica del Sistema</h2>
+
+  <mat-form-field appearance="outline" class="filter-bar">
+    <mat-label>Buscar sensor</mat-label>
+    <input
+      matInput
+      (keyup)="applyFilter($event)"
+      placeholder="Nombre"
+    />
+  </mat-form-field>
+
+  <div class="grid">
+    @for (
+      sensor of dataSource.filteredData
+        | slice:(paginator.pageIndex * paginator.pageSize):((paginator.pageIndex + 1) * paginator.pageSize);
+      track sensorTrack($index, sensor)
+    ){
+      <mat-card class="sensor-card" [ngClass]="getMeasurementStatus(sensor)" appearance="outlined">
+        <mat-card-header>
+          <mat-icon mat-card-avatar color="primary">sensors</mat-icon>
+          <mat-card-title class="sensor-title">{{ formatNameSensor(sensor.deviceName) }}</mat-card-title>
+        </mat-card-header>
+
+        <mat-divider></mat-divider>
+
+        <mat-card-content>
+          @if (sensor.lastMeasurement) {
+            <p class="measurement-value">
+              @if(sensor.deviceName.includes("Nivel")){
+                <span class="value">{{ formatValue(sensor.lastMeasurement.value) }}</span>
+              }@else{
+                <span class="value">{{ sensor.lastMeasurement.value }}</span>
+              }              
+              <span class="unit">{{ format(sensor.lastMeasurement.unit) }}</span>
+            </p>
+            <p class="measurement-label">
+              <strong>Fecha:</strong> {{ sensor.lastMeasurement.date }}
+            </p>
+          } @else {
+            <p class="no-data">Sin mediciones registradas</p>
+          }
+        </mat-card-content>
+
+        <mat-card-actions align="end">
+          <button mat-stroked-button color="primary" (click)="openChart(sensor)">
+            📈 Ver gráfica
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+  <mat-paginator
+    #paginator
+    [length]="dataSource.filteredData.length"
+    [pageSize]="9"
+    [pageSizeOptions]="[3, 6, 9, 12]"
+    showFirstLastButtons
+  >
+  </mat-paginator>
+  @if (esAdministrador()){
+    <div class="button-container">
+      <button class="actuatorB" mat-raised-button color="primary" (click)="goToActuatorForm()">
+        ➕ Agregar / Editar Sensores
+      </button>
+    </div>
+  }
+</div>

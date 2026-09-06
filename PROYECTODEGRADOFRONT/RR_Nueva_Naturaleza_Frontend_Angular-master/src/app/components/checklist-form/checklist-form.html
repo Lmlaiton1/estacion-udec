@@ -1,0 +1,214 @@
+@if (esAdministrador()) {
+<div class="sidebar-container">
+    <aside class="sidebar">
+
+        <div class="button-section-Check">
+            <button mat-raised-button class="custom-button" type="button" (click)="onGenerateChecklistClick()">
+                📂 Generar reporte checklist
+            </button>
+        </div>
+
+        <!-- Contenido desplegable -->
+        <div *ngIf="showReporte" class="content-section">
+            <!-- Aquí va tu reporte -->
+        </div>
+
+        <div class="download-panel" *ngIf="showDownloadOptions">
+            <h4>Selecciona fecha inicio y Fecha fin</h4>
+
+            <form [formGroup]="filterForm" class="filter-form">
+                <div class="date-container">
+                    <mat-form-field appearance="outline" class="small-label">
+                        <mat-label>Fecha Inicio (MM/DD/YYYY)</mat-label>
+                        <input matInput [matDatepicker]="picker1" formControlName="fechaInicio">
+                        <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+                        <mat-datepicker #picker1></mat-datepicker>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="small-label">
+                        <mat-label>Fecha Fin (MM/DD/YYYY)</mat-label>
+                        <input matInput [matDatepicker]="picker2" formControlName="fechaFin">
+                        <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+                        <mat-datepicker #picker2></mat-datepicker>
+                    </mat-form-field>
+
+                </div>
+
+                <!-- Botón CSV -->
+                <div class="button-section-Check">
+                    <button mat-raised-button class="custom-button" type="button" (click)="descargarCSV()"
+                        [disabled]="filterForm.invalid">
+                        ⬇️ Descargar .CSV
+                    </button>
+                </div>
+            </form>
+        </div>
+    </aside>
+
+    <aside class="sidebar2">
+
+        <div class="button-section-Check">
+            <button mat-raised-button class="custom-button" type="button" (click)="onGenerateChecklistClick2()">
+                📂 Gráfica comparativa mediciones checklist
+            </button>
+        </div>
+
+        <!-- Contenido desplegable -->
+        <div *ngIf="showComparativa" class="content-section">
+            <!-- Aquí va tu gráfica comparativa -->
+        </div>
+
+        <div class="download-panel" *ngIf="showDownloadOptions2">
+            <h4>Selecciona fecha inicio y Fecha fin</h4>
+
+            <form [formGroup]="filterForm2" class="filter-form">
+
+                <div class="form-group">
+                
+                    <mat-form-field appearance="outline" class="sensor-select w-100">
+                        <mat-label>Selecciona un sensor</mat-label>
+                        <input type="text" placeholder="Buscar sensor..." aria-label="Buscar sensor" matInput formControlName="sensorId"
+                            [formControl]="sensorControl" [matAutocomplete]="auto" (focus)="showAllSensors()"
+                            (click)="showAllSensors()" />
+                        <mat-autocomplete #auto="matAutocomplete"
+                            [displayWith]="displaySensorName.bind(this)">
+                            @for (sensor of filteredSensors; track sensor.id) {
+                            <mat-option [value]="sensor.id">
+                                {{ formatNameSensor(sensor.device_Name) }}
+                            </mat-option>
+                            }
+                        </mat-autocomplete>
+                    </mat-form-field>
+
+                </div>
+
+
+                <div class="date-container">
+                    <mat-form-field appearance="outline" class="small-label">
+                        <mat-label>Fecha Inicio (MM/DD/YYYY)</mat-label>
+                        <input matInput [matDatepicker]="picker3" formControlName="fechaInicio">
+                        <mat-datepicker-toggle matIconSuffix [for]="picker3"></mat-datepicker-toggle>
+                        <mat-datepicker #picker3></mat-datepicker>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="small-label">
+                        <mat-label>Fecha Fin (MM/DD/YYYY)</mat-label>
+                        <input matInput [matDatepicker]="picker4" formControlName="fechaFin">
+                        <mat-datepicker-toggle matIconSuffix [for]="picker4"></mat-datepicker-toggle>
+                        <mat-datepicker #picker4></mat-datepicker>
+                    </mat-form-field>
+
+                </div>
+
+                <!-- Botón CSV -->
+                <div class="button-section-Check">
+                    <button mat-raised-button class="custom-button" type="button" (click)="generateGraph()"
+                        [disabled]="filterForm2.invalid">
+                        ⬇️ Generar Gráfica
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </aside>
+
+    <div *ngIf="showReport" class="chart-container">
+        <apx-chart [series]="series" [chart]="{ type: 'line', height: 350 }" [xaxis]="XAxis" [yaxis]="Yaxis"
+            [stroke]="{ width: 3 }">
+        </apx-chart>
+    </div>
+</div>
+}
+
+<div class="page-layout">
+
+    <section class="content">
+        <form class="checklist-form" [formGroup]="checklistForm" (ngSubmit)="onSubmit()">
+
+            <div class="user-date-row">
+                <div>
+                    <label>Usuario:</label>
+                    <span>{{ checklistForm.value.usuarioDisplay }}</span>
+                </div>
+                <div>
+                    <label>Fecha:</label>
+                    <span>{{ checklistForm.value.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+            </div>
+
+            <!-- Sensores -->
+            <div class="sensores-section">
+                <h3>Sensores</h3>
+                <div formArrayName="detallesSensores" class="grid-sensores">
+                    <div *ngFor="
+        let detalle of getPagedSensores();
+        let i = index
+      " [formGroupName]="i + pageIndexSensors * pageSize" class="detalle-item">
+                        <p><strong>{{ formatNameSensor(sensors[i + pageIndexSensors * pageSize].device_Name) }}
+                            </strong></p>
+
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Medición Sensor</mat-label>
+                            <input matInput formControlName="medicionSensor" required>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>Medición Manual</mat-label>
+                            <input matInput formControlName="medicionManual" required>
+                        </mat-form-field>
+
+                        <label>Marque la casilla si está activo:</label>
+                        <input formControlName="estado" type="checkbox" />
+                    </div>
+                </div>
+
+                <mat-paginator [length]="detallesSensores.length" [pageSize]="pageSize" [pageSizeOptions]="[9]"
+                    (page)="onPageChangeSensors($event)" aria-label="Selector de página para sensores">
+                </mat-paginator>
+            </div>
+
+
+            <!-- Actuadores -->
+            <div class="sensores-section">
+                <h3>Actuadores</h3>
+                <div formArrayName="detallesActuadores" class="grid-actuadores">
+                    <div *ngFor="
+        let detalle of getPagedActuadores();
+        let i = index
+      " [formGroupName]="i + pageIndexActuators * pageSize" class="detalle-item">
+                        <p><strong>{{ actuators[i + pageIndexActuators * pageSize].device_Name }}</strong></p>
+                        <label>Marque la casilla si está activo:</label>
+                        <input formControlName="estado" type="checkbox" />
+                    </div>
+                </div>
+
+                <mat-paginator [length]="detallesActuadores.length" [pageSize]="pageSize" [pageSizeOptions]="[9]"
+                    (page)="onPageChangeActuators($event)" aria-label="Selector de página para actuadores">
+                </mat-paginator>
+            </div>
+
+
+            <!-- Observaciones -->
+            <div>
+                <h3>Observaciones:</h3>
+                <mat-form-field appearance="outline">
+                    <textarea matInput formControlName="observacion" (input)="filtrarCaracteres($event)"></textarea>
+                    <mat-error *ngIf="checklistForm.get('observacion')?.hasError('required')">
+                        ❌ Las observaciones son obligatorias
+                    </mat-error>
+                    <mat-error *ngIf="checklistForm.get('observacion')?.hasError('pattern')">
+                        ❌ No se permiten los caracteres ;, " ni saltos de línea
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Botón Guardar -->
+            <div class="button-section-Check">
+                <button mat-raised-button class="custom-button" type="submit"
+                    [disabled]="checklistForm.invalid || isSubmitting">
+                    💾 Guardar
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
