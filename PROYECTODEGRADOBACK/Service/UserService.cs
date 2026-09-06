@@ -32,7 +32,7 @@ namespace RR_Nueva_Naturaleza.Service
         {
             try
             {
-                string spassword = Encrypt.GetSHA256(idCard);
+                string spassword = Encrypt.HashBCrypt(idCard);
 
                 await _context.Users.AddAsync(new User()
                 {
@@ -98,7 +98,10 @@ namespace RR_Nueva_Naturaleza.Service
                 user.Name = name;
                 user.Last_Name = lastName;
                 user.Id_Card = idCard;
-                user.Password = password;
+                if (!string.IsNullOrEmpty(password))
+                {
+                    user.Password = Encrypt.HashBCrypt(password);
+                }
                 user.RolId = rolId.Id;
 
                 _context.Users.Update(user);
@@ -160,11 +163,37 @@ namespace RR_Nueva_Naturaleza.Service
 
             UserResponse userresponse = new UserResponse();
 
-            string spassword = Encrypt.GetSHA256(model.Password);
-
-            var user = await _context.Users.Where(c => c.Password == spassword && c.Id_Card == model.user).Include(x => x.Rol).FirstOrDefaultAsync();
+            var user = await _context.Users.Where(c => c.Id_Card == model.user).Include(x => x.Rol).FirstOrDefaultAsync();
 
             if (user == null)
+            {
+                // Ejecuta una verificación BCrypt contra un hash dummy para que esta rama
+                // tarde lo mismo que la de credenciales inválidas de más abajo, y no se
+                // puedan enumerar cédulas válidas midiendo el tiempo de respuesta.
+                Encrypt.VerifyDummyBCrypt(model.Password);
+                return null;
+            }
+
+            bool passwordOk;
+
+            if (Encrypt.IsLegacySha256Hash(user.Password))
+            {
+                passwordOk = user.Password == Encrypt.GetSHA256(model.Password);
+                if (passwordOk)
+                {
+                    // Migración transparente: solo se re-hashea si la contraseña legada
+                    // en SHA-256 coincidió; si falló, no se toca la base de datos.
+                    user.Password = Encrypt.HashBCrypt(model.Password);
+                    _context.Users.Update(user);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                passwordOk = Encrypt.VerifyBCrypt(model.Password, user.Password);
+            }
+
+            if (!passwordOk)
             {
                 return null;
             }
@@ -193,7 +222,7 @@ namespace RR_Nueva_Naturaleza.Service
                         Result = ServiceResponseType.Failed,
                     };
                 }
-                user.Password = Encrypt.GetSHA256(forget.newPassword);
+                user.Password = Encrypt.HashBCrypt(forget.newPassword);
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
                 return new ServiceResponse()
@@ -233,7 +262,7 @@ namespace RR_Nueva_Naturaleza.Service
 
                     ),
 
-                Expires = DateTime.UtcNow.AddDays(60),
+                Expires = DateTime.UtcNow.AddHours(8),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 

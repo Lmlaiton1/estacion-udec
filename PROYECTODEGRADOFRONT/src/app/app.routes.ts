@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './security/auth.guard';
 import { RoleGuard } from './security/role.guard';
 import { Login } from './components/login/login';
+import { Inicio } from './components/inicio/inicio';
+import { EstacionPlaceholder } from './components/estacion-placeholder/estacion-placeholder';
 import { Unauthorized } from './components/unauthorized/unauthorized';
 import { Actuator } from './components/actuator/actuator';
 import { Menu } from './components/menu/menu';
@@ -21,6 +23,8 @@ export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'forget-password', component: ForgetPassword },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: 'inicio', component: Inicio, canActivate: [AuthGuard] },
+  { path: 'estacion', component: EstacionPlaceholder, canActivate: [AuthGuard] },
   { path: 'Unauthorized', component: Unauthorized },
   { path: 'menu', redirectTo: 'menu/Actuator' },
   { path: 'audit-user', redirectTo: 'menu/audit-user' },

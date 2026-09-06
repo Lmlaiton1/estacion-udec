@@ -1,0 +1,29 @@
+<div class="inicio-container">
+  <h1>¿Qué quieres gestionar?</h1>
+
+  <div class="tarjetas">
+    <mat-card class="tarjeta" (click)="irANuevaNaturaleza()">
+      <mat-card-header>
+        <mat-card-title>Nueva Naturaleza</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Acuaponía: dispositivos, sensores, actuadores y control.</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="irANuevaNaturaleza()">Entrar</button>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="tarjeta" (click)="irAEstacion()">
+      <mat-card-header>
+        <mat-card-title>Estación Meteorológica</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Red de estaciones ESP32: monitoreo y predicción de microclima.</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="irAEstacion()">Entrar</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

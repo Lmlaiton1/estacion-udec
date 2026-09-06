@@ -116,8 +116,8 @@ export class Login implements OnInit, OnDestroy {
       next: (response) => {
         if (response.result == 0) {
 
-          // Redirigir al componente actuator
-          this.router.navigate(['/menu']);
+          // Redirigir a la pantalla de selección de dominio
+          this.router.navigate(['/inicio']);
 
         }
         if (response.result == 1) {
