@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Logo Estación Meteorológica">
+  <defs>
+    <linearGradient id="badgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#12879e"/>
+      <stop offset="100%" stop-color="#0a4c63"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="60" cy="60" r="58" fill="url(#badgeGradient)"/>
+
+  <!-- Sol asomando -->
+  <g opacity="0.95">
+    <circle cx="30" cy="34" r="9" fill="#f2a341"/>
+    <g stroke="#f2a341" stroke-width="2.4" stroke-linecap="round">
+      <line x1="30" y1="18" x2="30" y2="12"/>
+      <line x1="14" y1="34" x2="8" y2="34"/>
+      <line x1="18.7" y1="22.7" x2="14.3" y2="18.3"/>
+    </g>
+  </g>
+
+  <!-- Ondas de señal -->
+  <g fill="none" stroke="#e8f7fb" stroke-width="2.6" stroke-linecap="round" opacity="0.9">
+    <path d="M80 40 A 20 20 0 0 1 96 56"/>
+    <path d="M80 48 A 12 12 0 0 1 90 58"/>
+  </g>
+
+  <!-- Mástil -->
+  <rect x="58.5" y="52" width="3" height="42" rx="1.5" fill="#eaf6fb"/>
+
+  <!-- Anemómetro -->
+  <g stroke="#eaf6fb" stroke-width="2.4" stroke-linecap="round">
+    <line x1="60" y1="50" x2="46" y2="40"/>
+    <line x1="60" y1="50" x2="74" y2="42"/>
+    <line x1="60" y1="50" x2="60" y2="34"/>
+  </g>
+  <circle cx="46" cy="40" r="3.2" fill="#eaf6fb"/>
+  <circle cx="74" cy="42" r="3.2" fill="#eaf6fb"/>
+  <circle cx="60" cy="34" r="3.2" fill="#eaf6fb"/>
+  <circle cx="60" cy="50" r="2.4" fill="#0a4c63"/>
+
+  <!-- Panel solar -->
+  <g transform="translate(60,66) rotate(-18)">
+    <rect x="0" y="-2" width="16" height="10" rx="1.2" fill="#0a4c63" stroke="#eaf6fb" stroke-width="1.2"/>
+    <line x1="4" y1="-2" x2="4" y2="8" stroke="#eaf6fb" stroke-width="0.8"/>
+    <line x1="8" y1="-2" x2="8" y2="8" stroke="#eaf6fb" stroke-width="0.8"/>
+    <line x1="12" y1="-2" x2="12" y2="8" stroke="#eaf6fb" stroke-width="0.8"/>
+  </g>
+
+  <!-- Base -->
+  <path d="M48 94 L72 94 L67 100 L53 100 Z" fill="#eaf6fb"/>
+</svg>

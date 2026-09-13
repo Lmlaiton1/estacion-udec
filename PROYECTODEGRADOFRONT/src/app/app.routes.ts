@@ -24,7 +24,6 @@ export const routes: Routes = [
   { path: 'forget-password', component: ForgetPassword },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'inicio', component: Inicio, canActivate: [AuthGuard] },
-  { path: 'estacion', component: EstacionPlaceholder, canActivate: [AuthGuard] },
   { path: 'Unauthorized', component: Unauthorized },
   { path: 'menu', redirectTo: 'menu/Actuator' },
   { path: 'audit-user', redirectTo: 'menu/audit-user' },
@@ -87,6 +86,43 @@ export const routes: Routes = [
       {
         path: 'SensorForm',
         component: SensorForm,
+        canActivate: [AuthGuard, RoleGuard],
+        data: { requiredRole: 'Administrador' }
+      },
+    ]
+  },
+
+  {
+    path: 'estacion',
+    component: EstacionPlaceholder,
+    canActivate: [AuthGuard],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'Sensors' },
+      {
+        path: 'Sensors',
+        component: Sensors,
+        canActivate: [AuthGuard]
+      },
+      {
+        path: 'SensorForm',
+        component: SensorForm,
+        canActivate: [AuthGuard, RoleGuard],
+        data: { requiredRole: 'Administrador' }
+      },
+      {
+        path: 'registerUser',
+        component: UserForm,
+        canActivate: [AuthGuard, RoleGuard],
+        data: { requiredRole: 'Administrador' }
+      },
+      {
+        path: 'Ia',
+        component: Ia,
+        canActivate: [AuthGuard]
+      },
+      {
+        path: 'report',
+        component: ReportComponent,
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },

@@ -1,37 +1,11 @@
 <div class="login-container">
 
-  <!-- Configuración de Puerto y Baudios (afuera del mat-card) -->
-  <div class="serial-config">
-    <h3>⚙️ Configuración Serial</h3>
-
-    <mat-form-field appearance="outline" class="config-field">
-      <mat-label>Puerto COM</mat-label>
-      <mat-select [(ngModel)]="selectedPort">
-        <mat-option *ngFor="let port of ports" [value]="port">
-          {{ port }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="config-field">
-      <mat-label>Baudios</mat-label>
-      <mat-select [(ngModel)]="selectedBaudRate">
-        <mat-option *ngFor="let baud of baudRates" [value]="baud">
-          {{ baud }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <button mat-stroked-button color="primary" (click)="guardarConfigSerial()" class="save-config-btn">
-      Guardar Configuración
-    </button>
-  </div>
-
   <!-- Login principal -->
   <mat-card class="login-card">
-    <img src="images/LogoWhite.jpg" alt="Logo" class="login-logo" />
+    <img src="images/station-logo.svg" alt="Logo Estación Meteorológica" class="login-logo" />
 
     <h1 class="login-title">Iniciar Sesión</h1>
+    <p class="login-subtitle">APLICACIÓN LOCAL LESTOMA</p>
 
     <mat-form-field appearance="outline" class="login-input">
       <mat-label>Usuario</mat-label>

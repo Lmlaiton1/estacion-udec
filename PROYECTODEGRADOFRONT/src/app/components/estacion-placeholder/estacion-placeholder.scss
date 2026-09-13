@@ -1,4 +1,107 @@
-.container {
+.station-toolbar {
+  display: flex;
+  background-color: #0a4c63;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+}
+
+.toolbar-button {
+  color: #ffffff;
+}
+
+.toolbar-logo {
+  width: 40px;
+  height: 40px;
+}
+
+.toolbar-title {
+  flex: 1;
+  font-size: 1.4rem;
+  font-weight: 700;
   text-align: center;
-  padding: 40px 20px;
+  color: #ffffff;
+  margin: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+
+  .greeting {
+    margin-right: 0.5rem;
+    white-space: nowrap;
+  }
+}
+
+.notif-menu {
+  .notif-header {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .notif-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: auto;
+    white-space: normal;
+  }
+
+  .notif-content {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .notif-text {
+    font-size: 0.9rem;
+    color: #123a48;
+  }
+
+  .notif-meta {
+    font-size: 0.75rem;
+    color: #6b8894;
+  }
+}
+
+.station-container {
+  margin-top: 64px;
+  min-height: calc(100vh - 64px);
+}
+
+.station-drawer {
+  width: 250px;
+  background-color: #eaf6fb;
+  padding-top: 12px;
+}
+
+.menu-item {
+  transition: background-color 0.2s ease;
+}
+
+.menu-item:hover {
+  background-color: #d7edf5;
+  cursor: pointer;
+}
+
+.menu-item.active {
+  background-color: #c3e2ee;
+  font-weight: 600;
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-station {
+  color: #0d6b8a;
+  margin-right: 5px;
 }

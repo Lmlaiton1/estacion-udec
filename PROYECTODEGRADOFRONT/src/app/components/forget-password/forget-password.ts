@@ -48,7 +48,7 @@ export class ForgetPassword {
             duration: 3000,
           });
 
-          setTimeout(() => this.router.navigate(['/menu']), 1200);
+          setTimeout(() => this.router.navigate(['/login']), 1200);
         }
 
         else if (response.result == 1) {

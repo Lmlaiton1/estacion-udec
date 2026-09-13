@@ -1,31 +1,41 @@
 .login-container {
-  height: 100vh;
+  --station-primary: #0d6b8a;
+  --station-primary-dark: #0a4c63;
+  --station-primary-light: #12879e;
+  --station-accent: #f2a341;
+  --station-text: #123a48;
+  --station-surface: #ffffff;
+
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f5f5f5;
+  padding: 2rem 1rem;
+  background: radial-gradient(circle at 15% 20%, #eaf6fb 0%, #d7edf5 45%, #c3e2ee 100%);
   position: relative;
+  box-sizing: border-box;
 }
 
 /* Bloque de configuración serial */
 .serial-config {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  background: #ffffff;
-  padding: 1rem 1.2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 220px;
+  top: 24px;
+  left: 24px;
+  background: var(--station-surface);
+  padding: 1.2rem 1.4rem;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(10, 76, 99, 0.12);
+  border: 1px solid rgba(13, 107, 138, 0.08);
+  width: 230px;
 
   h3 {
     font-size: 1rem;
-    color: #1d4d35;
+    color: var(--station-primary-dark);
     font-weight: 600;
-    margin-bottom: 0.8rem;
+    margin: 0 0 1rem;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
   }
 
   .config-field {
@@ -34,19 +44,20 @@
 
     mat-label {
       font-weight: 500;
-      color: #1d4d35;
+      color: var(--station-primary-dark);
     }
   }
 
   .save-config-btn {
     width: 100%;
     font-weight: bold;
-    border: 1px solid #1d4d35;
-    color: #1d4d35;
-    transition: all 0.3s ease;
+    border: 1px solid var(--station-primary);
+    color: var(--station-primary);
+    border-radius: 10px;
+    transition: all 0.25s ease;
 
     &:hover {
-      background: #1d4d35;
+      background: var(--station-primary);
       color: white;
     }
   }
@@ -54,16 +65,37 @@
 
 .login-card {
   width: 400px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  background: #ffffff;
+  max-width: 100%;
+  padding: 2.5rem 2rem;
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(10, 76, 99, 0.18);
+  background: var(--station-surface);
+  border-top: 5px solid var(--station-primary);
+}
+
+.login-logo {
+  width: 96px;
+  height: 96px;
+  display: block;
+  margin: 0 auto 1rem auto;
 }
 
 .login-title {
   text-align: center;
-  margin-bottom: 2rem;
+  margin: 0 0 0.25rem;
   font-size: 24px;
-  color: #1d4d35;
+  font-weight: 700;
+  color: var(--station-primary-dark);
+}
+
+.login-subtitle {
+  text-align: center;
+  margin: 0 0 2rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--station-primary);
+  opacity: 0.75;
 }
 
 .login-input {
@@ -71,30 +103,33 @@
   margin-bottom: 1rem;
 }
 
-.login-button {
-  width: 100%;
-  font-weight: bold;
-}
-
 .custom-button {
-  border: 1px solid #1d4d35;
+  border: none;
   width: 100%;
   font-weight: bold;
-  margin-bottom: 2rem;
-}
+  margin-bottom: 1.5rem;
+  border-radius: 10px;
+  padding: 0.4rem 0;
+  background: linear-gradient(135deg, var(--station-primary-light), var(--station-primary-dark));
+  color: white;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 
-.login-logo {
-  width: 150px;
-  display: block;
-  margin: 0 auto 20px auto;
-  border-radius: 8px;
+  &:hover {
+    box-shadow: 0 8px 18px rgba(10, 76, 99, 0.3);
+    transform: translateY(-1px);
+  }
 }
 
 .forgot-password-link {
   display: block;
   text-align: right;
-  color: #1d4d35;
+  color: var(--station-primary);
   text-decoration: none;
   margin-bottom: 1rem;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+
+  &:hover {
+    color: var(--station-accent);
+    text-decoration: underline;
+  }
 }

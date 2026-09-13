@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { DeviceService } from '../../service/device/device-service';
 import { MatDialog } from '@angular/material/dialog';
 import { SensorChartDialog } from '../sensor-chart-dialog/sensor-chart-dialog';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UserPost } from '../../models/UserPost';
 import { Rolservice } from '../../service/rol/rolservice';
 import { Authservice } from '../../service/auth/authservice';
@@ -27,7 +27,7 @@ export class Sensors implements OnDestroy, AfterViewInit {
   user!: UserPost | null;
   rolUsuario: string | null = null;
 
-  constructor(private _deviceService: DeviceService, private dialog: MatDialog, private router: Router, public _authService: Authservice, public _RolService: Rolservice) {
+  constructor(private _deviceService: DeviceService, private dialog: MatDialog, private router: Router, private route: ActivatedRoute, public _authService: Authservice, public _RolService: Rolservice) {
     this.user = this._authService.getTokenUserInfo();
     if (this.user?.rolId) {
       this._RolService.getRol(this.user.rolId).subscribe(data => {
@@ -122,8 +122,8 @@ export class Sensors implements OnDestroy, AfterViewInit {
     return unit;
   }
 
-  goToActuatorForm() {
-    this.router.navigate(['/menu/SensorForm']);
+  goToSensorForm() {
+    this.router.navigate(['../SensorForm'], { relativeTo: this.route });
   }
 
 
