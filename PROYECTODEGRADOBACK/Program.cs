@@ -1,4 +1,4 @@
-锘縰sing Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -25,18 +25,18 @@ namespace RR_Nueva_Naturaleza
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // Configuraci贸n de base de datos
+            // Configuraci髇 de base de datos
             builder.Services.AddDbContext<RR_Nueva_NaturalezaContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Configuraci贸n de AppSettings
+            // Configuraci髇 de AppSettings
             var appSettingsSection = builder.Configuration.GetSection("AppSettings");
             builder.Services.Configure<AppSettings>(appSettingsSection);
 
             var appSettings = appSettingsSection.Get<AppSettings>();
-            var key = Encoding.ASCII.GetBytes(appSettings.secret); // Nota: nombre en may煤scula para seguir convenci贸n
+            var key = Encoding.ASCII.GetBytes(appSettings.secret); // Nota: nombre en may鷖cula para seguir convenci髇
 
-            // Configuraci贸n de JWT Authentication
+            // Configuraci髇 de JWT Authentication
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -56,7 +56,7 @@ namespace RR_Nueva_Naturaleza
                 };
             });
 
-            // Inyecci贸n de dependencias
+            // Inyecci髇 de dependencias
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IRolService, RolService>();
             builder.Services.AddScoped<IDeviceService, DeviceService>();
@@ -72,7 +72,7 @@ namespace RR_Nueva_Naturaleza
             builder.Services.AddScoped<IScheduleService, ScheduleService>();
             builder.Services.AddScoped<IChecklistService, ChecklistService>();
 
-            // Dominio Estaci贸n Meteorol贸gica
+            // Dominio Estaci髇 Meteorol骻ica
             builder.Services.AddScoped<IEstacionMeteoService, EstacionMeteoService>();
             builder.Services.AddScoped<ISensorMeteoService, SensorMeteoService>();
             builder.Services.AddScoped<ILecturaMeteoService, LecturaMeteoService>();
@@ -88,7 +88,7 @@ namespace RR_Nueva_Naturaleza
             {
                 options.AddPolicy(name: rrnn, builder =>
                 {
-                    builder.WithOrigins("http://localhost:4200")
+                    builder.WithOrigins("http://localhost:4200", "http://10.40.20.10:4200")
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials();

@@ -85,6 +85,17 @@ const unsigned long intervaloSerial    =  1000UL;
 const unsigned long intervaloReconnect =  5000UL;
 const float         mm_por_pulso       = 8.0;
 
+// ── Anemómetro Hall — constantes físicas (Estaciones 1 y 2) ────
+// Diámetro y K equivalentes a la fórmula fija que se usaba antes
+// (pv * 0.56548 * 3.1, asumiendo un intervalo fijo de 2.5 s).
+// Se separan aquí para poder calcular con el dt REAL transcurrido.
+const float DIAMETRO_M_ANEMOMETRO        = 0.45;  // diámetro círculo de las copas (m)
+const float PULSOS_POR_VUELTA_ANEMOMETRO = 1.0;   // 1 pulso Hall por vuelta
+const float FACTOR_ANEMOMETRO            = 3.1;   // K = v_viento / v_copas
+const float CIRCUNFERENCIA_M_ANEMOMETRO  = PI * DIAMETRO_M_ANEMOMETRO;
+
+unsigned long tUltimaVentana = 0; // último cálculo de velocidad de viento (dt real)
+
 // ── TSL2561 — saturacion y horario diurno ──────────────────────
 const uint16_t TSL_MAX_COUNT_13MS = 5047;
 const float    LUX_MAXIMA_SENSOR  = 40000.0;
@@ -115,6 +126,19 @@ bool esDeDia() {
 // =================================================================
 //  SENSORES
 // =================================================================
+
+// Conversión de pulsos del anemómetro a velocidad de viento usando el dt
+// REAL transcurrido (no un intervalo fijo asumido), porque actualizarSensores()
+// también se llama fuera de horario al recibir una solicitud MQTT.
+//   v = (pulsos / PPR) / dt_s * circunferencia * K      [m/s]
+float velocidadDesdePulsos(unsigned long pulsos, unsigned long dt_ms) {
+  if (dt_ms == 0) return 0.0;
+  float vueltas     = pulsos / PULSOS_POR_VUELTA_ANEMOMETRO;
+  float vueltasPorS = vueltas / (dt_ms / 1000.0);
+  float vCopas      = vueltasPorS * CIRCUNFERENCIA_M_ANEMOMETRO;
+  return vCopas * FACTOR_ANEMOMETRO;
+}
+
 void calcularLluviaMinuto() {
   if (millis() - ultimoMinuto < intervaloLluvia) return;
   ultimoMinuto = millis();
@@ -184,10 +208,14 @@ void actualizarSensores() {
   }
   radiacion = lux;
 
+  unsigned long ahoraViento = millis();
+  unsigned long dtViento    = ahoraViento - tUltimaVentana;
+  tUltimaVentana = ahoraViento;
+
   portDISABLE_INTERRUPTS();
   unsigned long pv = pulsosViento; pulsosViento = 0;
   portENABLE_INTERRUPTS();
-  velocidadViento = pv * 0.56548 * 3.1;
+  velocidadViento = velocidadDesdePulsos(pv, dtViento);
 
   direccion = leerDireccionViento();
 }
@@ -376,10 +404,11 @@ void setup() {
   mqttConectar();
 
   // Timers
-  ultimoMinuto  = millis();
-  lastRead      = millis();
-  lastSerial    = millis();
-  lastReconnect = millis();
+  ultimoMinuto   = millis();
+  tUltimaVentana = millis();
+  lastRead       = millis();
+  lastSerial     = millis();
+  lastReconnect  = millis();
 }
 
 // =================================================================
