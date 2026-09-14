@@ -88,7 +88,7 @@ namespace RR_Nueva_Naturaleza
             {
                 options.AddPolicy(name: rrnn, builder =>
                 {
-                    builder.WithOrigins("http://localhost:4200", "http://10.40.20.10:4200")
+                    builder.WithOrigins("http://localhost:4200", "http://192.168.0.130:4200")
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials();

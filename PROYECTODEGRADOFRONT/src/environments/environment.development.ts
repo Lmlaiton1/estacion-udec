@@ -1,3 +1,3 @@
 ﻿export const environment = {
-    endPoint: "http://10.40.20.10:5005/"
+    endPoint: "http://192.168.0.130:5005/"
 };
