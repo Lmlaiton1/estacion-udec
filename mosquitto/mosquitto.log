@@ -1,0 +1,12 @@
+1789012625: mosquitto version 2.1.2 starting
+1789012625: Config loaded from mosquitto.conf.
+1789012625: Bridge support available.
+1789012625: Persistence support available.
+1789012625: TLS support available.
+1789012625: TLS-PSK support available.
+1789012625: Websockets support available.
+1789012625: Opening ipv4 listen socket on port 1883.
+1789012625: Error: Solo se permite un uso de cada dirección de socket (protocolo/dirección de red/puerto)
+
+1789012625: mosquitto version 2.1.2 terminating
+1789012625: Saving in-memory database to C:\proyectos\estacion-udec\mosquitto\data\\mosquitto.db.

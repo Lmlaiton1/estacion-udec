@@ -24,6 +24,11 @@ namespace RR_Nueva_Naturaleza.Utilities
             CreateMap<Device_Status, Device_StatusDto>();
             CreateMap<Unit_Measurement, Unit_MeasurementDto>();
 
+            // Dominio Estación Meteorológica
+            CreateMap<LecturaMeteo, LecturaMeteoDto>();
+            CreateMap<UmbralMeteo, UmbralMeteoDto>();
+            CreateMap<AlertaMeteo, AlertaMeteoDto>();
+
         }
     }
 }

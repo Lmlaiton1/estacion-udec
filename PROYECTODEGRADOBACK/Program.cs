@@ -72,6 +72,13 @@ namespace RR_Nueva_Naturaleza
             builder.Services.AddScoped<IScheduleService, ScheduleService>();
             builder.Services.AddScoped<IChecklistService, ChecklistService>();
 
+            // Dominio Estación Meteorológica
+            builder.Services.AddScoped<IEstacionMeteoService, EstacionMeteoService>();
+            builder.Services.AddScoped<ISensorMeteoService, SensorMeteoService>();
+            builder.Services.AddScoped<ILecturaMeteoService, LecturaMeteoService>();
+            builder.Services.AddScoped<IUmbralMeteoService, UmbralMeteoService>();
+            builder.Services.AddScoped<IAlertaMeteoService, AlertaMeteoService>();
+
 
             // AutoMapper
             builder.Services.AddAutoMapper(config => config.AddMaps(Assembly.GetExecutingAssembly()));

@@ -27,6 +27,16 @@ namespace RR_Nueva_Naturaleza.DAL
         public DbSet<ChecklistDetail> ChecklistDetails { get; set; }
         public DbSet<SerialPortConfig> SerialPortConfigs { get; set; }
 
+        // Dominio Estación Meteorológica
+        public DbSet<EstacionMeteo> Estaciones_Meteo { get; set; }
+        public DbSet<SensorMeteo> Sensores_Meteo { get; set; }
+        public DbSet<LecturaMeteo> Lecturas_Meteo { get; set; }
+        public DbSet<LecturaCruda> Lecturas_Crudas { get; set; }
+        public DbSet<UmbralMeteo> Umbrales_Meteo { get; set; }
+        public DbSet<AlertaMeteo> Alertas_Meteo { get; set; }
+        public DbSet<PrediccionMeteo> Predicciones_Meteo { get; set; }
+        public DbSet<ImagenMeteo> Imagenes_Meteo { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Índice único en Id_Card
@@ -80,6 +90,37 @@ namespace RR_Nueva_Naturaleza.DAL
                 .HasOne(h => h.Usuario)
                 .WithMany()
                 .HasForeignKey(h => h.UsuarioId);
+
+            // Dominio Estación Meteorológica
+            modelBuilder.Entity<EstacionMeteo>()
+                .HasIndex(e => e.Numero)
+                .IsUnique();
+
+            // Índice compuesto para acelerar las consultas del dashboard
+            modelBuilder.Entity<LecturaMeteo>()
+                .HasIndex(l => new { l.EstacionNumero, l.Variable, l.FechaHora });
+
+            // El payload crudo debe ser JSON válido
+            modelBuilder.Entity<LecturaCruda>()
+                .ToTable(t => t.HasCheckConstraint("CK_Lecturas_Crudas_Payload_ISJSON", "ISJSON(Payload) = 1"));
+
+            // UmbralMeteo -> User (quién lo creó)
+            modelBuilder.Entity<UmbralMeteo>()
+                .HasOne(u => u.Usuario)
+                .WithMany()
+                .HasForeignKey(u => u.CreadoPor);
+
+            // AlertaMeteo -> LecturaMeteo
+            modelBuilder.Entity<AlertaMeteo>()
+                .HasOne(a => a.Lectura)
+                .WithMany()
+                .HasForeignKey(a => a.LecturaId);
+
+            // AlertaMeteo -> UmbralMeteo
+            modelBuilder.Entity<AlertaMeteo>()
+                .HasOne(a => a.Umbral)
+                .WithMany()
+                .HasForeignKey(a => a.UmbralId);
 
         }
     }

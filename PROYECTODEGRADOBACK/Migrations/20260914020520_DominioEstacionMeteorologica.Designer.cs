@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RR_Nueva_Naturaleza.DAL;
 
@@ -11,9 +12,11 @@ using RR_Nueva_Naturaleza.DAL;
 namespace RR_Nueva_Naturaleza.Migrations
 {
     [DbContext(typeof(RR_Nueva_NaturalezaContext))]
-    partial class RR_Nueva_NaturalezaContextModelSnapshot : ModelSnapshot
+    [Migration("20260914020520_DominioEstacionMeteorologica")]
+    partial class DominioEstacionMeteorologica
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
