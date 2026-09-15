@@ -17,8 +17,15 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(connectionString));
 
+        // DbContext propio del dominio Estación Meteorológica
+        services.AddDbContext<WeatherDbContext>(options =>
+            options.UseSqlServer(connectionString));
+
         // Registramos el Worker
         services.AddHostedService<Worker>();
+
+        // Registramos el suscriptor MQTT de las estaciones meteorológicas
+        services.AddHostedService<WeatherMqttWorker>();
     })
     .ConfigureLogging((context, logging) =>
     {
