@@ -1,0 +1,129 @@
+<div class="container">
+  <h2 class="title">Dashboard Meteorológico</h2>
+
+  <!-- Estado de las 3 estaciones, siempre visible -->
+  <div class="estado-row">
+    @for (estado of estadoEstaciones; track estado.numero) {
+      <mat-card class="estado-card" [ngClass]="estado.activa ? 'activa' : 'inactiva'" appearance="outlined">
+        <mat-icon class="estado-icon">{{ estado.activa ? 'wifi' : 'wifi_off' }}</mat-icon>
+        <div class="estado-info">
+          <span class="estado-nombre">{{ estado.nombre }}</span>
+          <span class="estado-detalle">
+            {{ estado.activa ? 'Transmitiendo' : 'Sin señal' }}
+            @if (estado.ultimaFecha) {
+              · última lectura: {{ estado.ultimaFecha | date:'short' }}
+            }
+          </span>
+        </div>
+      </mat-card>
+    }
+  </div>
+
+  <mat-button-toggle-group class="vista-toggle" [value]="vista" (change)="cambiarVista($event.value)">
+    <mat-button-toggle value="estacion">Por estación</mat-button-toggle>
+    <mat-button-toggle value="comparativa">Comparativa</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <!-- Filtro de fechas, compartido por ambas vistas -->
+  <div class="filtro-fechas">
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha inicio</mat-label>
+      <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio">
+      <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+      <mat-datepicker #pickerInicio></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha fin</mat-label>
+      <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin">
+      <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+      <mat-datepicker #pickerFin></mat-datepicker>
+    </mat-form-field>
+
+    <button mat-stroked-button color="primary" (click)="aplicarFiltroFechas()">Aplicar</button>
+    <button mat-button (click)="limpiarFiltroFechas()">Limpiar</button>
+
+    @if (!usaFiltroPersonalizado()) {
+      <span class="filtro-hint">Mostrando las últimas 24 horas</span>
+    }
+  </div>
+
+  <!-- Vista 1: por estación -->
+  @if (vista === 'estacion') {
+    <div class="seccion-header">
+      <mat-form-field appearance="outline" class="selector-estacion">
+        <mat-label>Estación</mat-label>
+        <mat-select [value]="estacionSeleccionada" (selectionChange)="cambiarEstacionSeleccionada($event.value)">
+          @for (numero of [1, 2, 3]; track numero) {
+            <mat-option [value]="numero">{{ nombreEstacion(numero) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" (click)="exportarCsv()">
+        ⬇️ Exportar CSV
+      </button>
+    </div>
+
+    <div class="grid">
+      @for (tarjeta of tarjetas; track tarjeta.key) {
+        <mat-card class="variable-card" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>{{ tarjeta.label }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (tarjeta.valor !== null) {
+              <p class="valor">
+                <span class="numero">{{ tarjeta.valorCardinal ?? tarjeta.valor }}</span>
+                <span class="unidad">{{ tarjeta.unidad }}</span>
+              </p>
+              <p class="fecha">Última lectura: {{ tarjeta.fechaHora | date:'short' }}</p>
+            } @else {
+              <p class="no-data">Sin lecturas registradas</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    <div class="grid graficas">
+      @for (grafica of graficasEstacion; track grafica.key) {
+        <mat-card class="grafica-card" appearance="outlined">
+          <apx-chart
+            [series]="grafica.chartOptions.series"
+            [chart]="grafica.chartOptions.chart"
+            [xaxis]="grafica.chartOptions.xaxis"
+            [yaxis]="grafica.chartOptions.yaxis"
+            [title]="grafica.chartOptions.title">
+          </apx-chart>
+        </mat-card>
+      }
+    </div>
+  }
+
+  <!-- Vista 2: comparativa entre estaciones -->
+  @if (vista === 'comparativa') {
+    <div class="seccion-header">
+      <mat-form-field appearance="outline" class="selector-estacion">
+        <mat-label>Variable</mat-label>
+        <mat-select [value]="variableSeleccionada" (selectionChange)="cambiarVariableSeleccionada($event.value)">
+          @for (v of variables; track v.key) {
+            <mat-option [value]="v.key">{{ v.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (graficaComparativa) {
+      <mat-card class="grafica-card comparativa" appearance="outlined">
+        <apx-chart
+          [series]="graficaComparativa.series"
+          [chart]="graficaComparativa.chart"
+          [xaxis]="graficaComparativa.xaxis"
+          [yaxis]="graficaComparativa.yaxis"
+          [title]="graficaComparativa.title">
+        </apx-chart>
+      </mat-card>
+    }
+  }
+</div>

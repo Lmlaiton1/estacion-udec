@@ -17,6 +17,7 @@ import { ActuatorForm } from './components/actuator-form/actuator-form';
 import { SensorForm } from './components/sensor-form/sensor-form';
 import { ChecklistFormComponent } from './components/checklist-form/checklist-form';
 import { Ia } from './components/ia/ia';
+import { EstacionDashboard } from './components/estacion-dashboard/estacion-dashboard';
 
 
 export const routes: Routes = [
@@ -100,7 +101,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'Sensors' },
       {
         path: 'Sensors',
-        component: Sensors,
+        component: EstacionDashboard,
         canActivate: [AuthGuard]
       },
       {

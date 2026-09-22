@@ -1,0 +1,142 @@
+.container {
+  padding: 16px;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #1d4d35;
+}
+
+.estado-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.estado-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  min-width: 220px;
+}
+
+.estado-card.activa {
+  border-left: 6px solid #1d4d35;
+}
+
+.estado-card.inactiva {
+  border-left: 6px solid #f44336;
+}
+
+.estado-icon {
+  font-size: 28px;
+  height: 28px;
+  width: 28px;
+}
+
+.estado-card.activa .estado-icon {
+  color: #1d4d35;
+}
+
+.estado-card.inactiva .estado-icon {
+  color: #f44336;
+}
+
+.estado-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.estado-nombre {
+  font-weight: 600;
+  color: #212121;
+}
+
+.estado-detalle {
+  font-size: 0.8rem;
+  color: #757575;
+}
+
+.vista-toggle {
+  margin-bottom: 16px;
+}
+
+.filtro-fechas {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filtro-hint {
+  color: #757575;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.seccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.selector-estacion {
+  min-width: 220px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.grid.graficas {
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+}
+
+.variable-card {
+  border-radius: 12px;
+}
+
+.valor {
+  font-size: 1.6rem;
+}
+
+.numero {
+  color: #121418;
+  font-weight: bold;
+}
+
+.unidad {
+  color: #1d4d35;
+  margin-left: 4px;
+}
+
+.fecha {
+  font-size: 0.85rem;
+  color: #424242;
+}
+
+.no-data {
+  color: #9e9e9e;
+  font-style: italic;
+}
+
+.grafica-card {
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.grafica-card.comparativa {
+  margin-top: 8px;
+}
