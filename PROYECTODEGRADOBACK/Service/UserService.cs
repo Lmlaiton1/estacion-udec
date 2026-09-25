@@ -73,16 +73,15 @@ namespace RR_Nueva_Naturaleza.Service
         {
             try
             {
-                var rolId = new Rol();
-                var admin = await _context.Rols.FirstOrDefaultAsync();
-
-                if (rol == "Administrador")
+                // Se busca el rol por nombre, no por posición en la tabla
+                var rolEntidad = await _context.Rols.FirstOrDefaultAsync(r => r.Name == rol);
+                if (rolEntidad == null)
                 {
-                    rolId = admin;
-                }
-                else
-                {
-                    rolId = await _context.Rols.Skip(1).FirstOrDefaultAsync();
+                    return new ServiceResponse()
+                    {
+                        Result = ServiceResponseType.Failed,
+                        ErrorMessage = "El rol no existe"
+                    };
                 }
 
                 var user = await _context.Users.FindAsync(UserId);
@@ -102,7 +101,7 @@ namespace RR_Nueva_Naturaleza.Service
                 {
                     user.Password = Encrypt.HashBCrypt(password);
                 }
-                user.RolId = rolId.Id;
+                user.RolId = rolEntidad.Id;
 
                 _context.Users.Update(user);
 
