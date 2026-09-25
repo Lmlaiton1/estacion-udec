@@ -7,6 +7,7 @@ using RR_Nueva_Naturaleza.Service;
 namespace RR_Nueva_Naturaleza.ApiControllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class ApiMeasurementController : ControllerBase
     {
@@ -25,6 +26,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         }
 
         [HttpPost("MeasurementForPdf")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> GetMeasurementsForPdf([FromBody] MeasurementPdfRequestDto request)
         {
             // Generar el PDF en memoria

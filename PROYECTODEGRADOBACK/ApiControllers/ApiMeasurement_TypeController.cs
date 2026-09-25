@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RR_Nueva_Naturaleza.Service;
 using RR_Nueva_Naturaleza.Models;
@@ -5,6 +6,7 @@ using RR_Nueva_Naturaleza.Models;
 namespace RR_Nueva_Naturaleza.ApiControllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class ApiMeasurement_TypeController : ControllerBase
     {
