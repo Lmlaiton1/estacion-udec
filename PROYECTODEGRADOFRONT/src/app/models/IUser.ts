@@ -1,5 +1,8 @@
 export interface IUser {
-  id: string;   
+  id: string;
   name: string;
-  last_Name : string;
+  last_Name: string;
+  id_Card: string;
+  rolId: string;
+  activo: boolean;
 }

@@ -1,0 +1,252 @@
+<div class="container">
+  <h2 class="title">Catálogo Meteorológico</h2>
+
+  <mat-button-toggle-group class="vista-toggle" [value]="vista" (change)="cambiarVista($event.value)">
+    <mat-button-toggle value="estaciones">Estaciones</mat-button-toggle>
+    <mat-button-toggle value="sensores">Sensores</mat-button-toggle>
+    <mat-button-toggle value="auditoria">Auditoría</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <!-- Estaciones -->
+  @if (vista === 'estaciones') {
+    <div class="seccion-header">
+      <button mat-raised-button color="primary" (click)="nuevaEstacion()">➕ Agregar estación</button>
+    </div>
+
+    @if (formEstacionVisible) {
+      <mat-card class="form-card" appearance="outlined">
+        <mat-card-title>{{ estacionEnEdicion ? 'Editar estación' : 'Nueva estación' }}</mat-card-title>
+        <mat-card-content>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Número</mat-label>
+              <input matInput type="number" [(ngModel)]="formEstacion.numero" [disabled]="!!estacionEnEdicion">
+              @if (estacionEnEdicion) {
+                <mat-hint>No se puede cambiar una vez creada</mat-hint>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre</mat-label>
+              <input matInput [(ngModel)]="formEstacion.nombre">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Ubicación</mat-label>
+              <input matInput [(ngModel)]="formEstacion.ubicacion">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha de instalación</mat-label>
+              <input matInput [matDatepicker]="pickerInstalacion" [(ngModel)]="fechaInstalacionDate">
+              <mat-datepicker-toggle matSuffix [for]="pickerInstalacion"></mat-datepicker-toggle>
+              <mat-datepicker #pickerInstalacion></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="descripcion-field">
+              <mat-label>Descripción (opcional)</mat-label>
+              <input matInput [(ngModel)]="formEstacion.descripcion">
+            </mat-form-field>
+
+            <mat-slide-toggle [(ngModel)]="formEstacion.activa">Activa</mat-slide-toggle>
+          </div>
+        </mat-card-content>
+        <mat-card-actions align="end">
+          <button mat-button (click)="cancelarEstacion()">Cancelar</button>
+          <button mat-raised-button color="primary" (click)="guardarEstacion()">Guardar</button>
+        </mat-card-actions>
+      </mat-card>
+    }
+
+    <table mat-table [dataSource]="estaciones" class="tabla">
+      <ng-container matColumnDef="numero">
+        <th mat-header-cell *matHeaderCellDef>Número</th>
+        <td mat-cell *matCellDef="let e">{{ e.numero }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="nombre">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let e">{{ e.nombre }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="ubicacion">
+        <th mat-header-cell *matHeaderCellDef>Ubicación</th>
+        <td mat-cell *matCellDef="let e">{{ e.ubicacion }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="activa">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let e">
+          <span class="estado" [ngClass]="e.activa ? 'activa' : 'inactiva'">
+            {{ e.activa ? 'Activa' : 'Inactiva' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let e">
+          <button mat-icon-button color="primary" (click)="editarEstacion(e)" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button [color]="e.activa ? 'warn' : 'primary'" (click)="alternarEstacion(e)"
+            [matTooltip]="e.activa ? 'Desactivar' : 'Activar'">
+            <mat-icon>{{ e.activa ? 'block' : 'check_circle' }}</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="eliminarEstacion(e)" matTooltip="Eliminar">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnasEstaciones"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnasEstaciones;"></tr>
+    </table>
+
+    @if (estaciones.length === 0) {
+      <p class="no-data">No hay estaciones registradas todavía</p>
+    }
+  }
+
+  <!-- Sensores -->
+  @if (vista === 'sensores') {
+    <div class="seccion-header">
+      <button mat-raised-button color="primary" (click)="nuevoSensor()">➕ Agregar sensor</button>
+    </div>
+
+    @if (formSensorVisible) {
+      <mat-card class="form-card" appearance="outlined">
+        <mat-card-title>{{ sensorEnEdicion ? 'Editar sensor' : 'Nuevo sensor' }}</mat-card-title>
+        <mat-card-content>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>GUID del sensor (del firmware)</mat-label>
+              <input matInput [(ngModel)]="formSensor.id" [disabled]="!!sensorEnEdicion"
+                placeholder="aa07acd0-57e0-4ae0-bf46-f8d7c94b4040">
+              @if (sensorEnEdicion) {
+                <mat-hint>No se puede cambiar, es la clave del sensor</mat-hint>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre</mat-label>
+              <input matInput [(ngModel)]="formSensor.nombre">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo</mat-label>
+              <input matInput [(ngModel)]="formSensor.tipo">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Variables (separadas por coma)</mat-label>
+              <input matInput [(ngModel)]="formSensor.variables" placeholder="temperatura,humedad">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="descripcion-field">
+              <mat-label>Descripción (opcional)</mat-label>
+              <input matInput [(ngModel)]="formSensor.descripcion">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+        <mat-card-actions align="end">
+          <button mat-button (click)="cancelarSensor()">Cancelar</button>
+          <button mat-raised-button color="primary" (click)="guardarSensor()">Guardar</button>
+        </mat-card-actions>
+      </mat-card>
+    }
+
+    <table mat-table [dataSource]="sensores" class="tabla">
+      <ng-container matColumnDef="nombre">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let s">{{ s.nombre }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="tipo">
+        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let s">{{ s.tipo }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="variables">
+        <th mat-header-cell *matHeaderCellDef>Variables</th>
+        <td mat-cell *matCellDef="let s">{{ s.variables }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="activo">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let s">
+          <span class="estado" [ngClass]="s.activo ? 'activa' : 'inactiva'">
+            {{ s.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let s">
+          <button mat-icon-button color="primary" (click)="editarSensor(s)" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button [color]="s.activo ? 'warn' : 'primary'" (click)="alternarSensor(s)"
+            [matTooltip]="s.activo ? 'Desactivar' : 'Activar'">
+            <mat-icon>{{ s.activo ? 'block' : 'check_circle' }}</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="eliminarSensor(s)" matTooltip="Eliminar">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnasSensores"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnasSensores;"></tr>
+    </table>
+
+    @if (sensores.length === 0) {
+      <p class="no-data">No hay sensores registrados todavía</p>
+    }
+  }
+
+  <!-- Auditoría -->
+  @if (vista === 'auditoria') {
+    <table mat-table [dataSource]="auditoria" class="tabla">
+      <ng-container matColumnDef="fecha">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let a">{{ a.fecha | date:'short' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="tipoEntidad">
+        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let a">{{ a.tipoEntidad }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="nombreEntidad">
+        <th mat-header-cell *matHeaderCellDef>Entidad</th>
+        <td mat-cell *matCellDef="let a">{{ a.nombreEntidad }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="accion">
+        <th mat-header-cell *matHeaderCellDef>Acción</th>
+        <td mat-cell *matCellDef="let a">
+          <span class="estado" [ngClass]="a.accion === 'Activada' ? 'activa' : 'inactiva'">{{ a.accion }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="motivo">
+        <th mat-header-cell *matHeaderCellDef>Motivo</th>
+        <td mat-cell *matCellDef="let a">{{ a.motivo }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="usuarioNombre">
+        <th mat-header-cell *matHeaderCellDef>Usuario</th>
+        <td mat-cell *matCellDef="let a">{{ a.usuarioNombre }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnasAuditoria"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnasAuditoria;"></tr>
+    </table>
+
+    @if (auditoria.length === 0) {
+      <p class="no-data">Todavía no hay cambios de estado registrados</p>
+    }
+  }
+</div>

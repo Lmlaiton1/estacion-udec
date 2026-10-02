@@ -91,3 +91,98 @@
     </button>
   </mat-card-actions>
 </mat-card>
+
+<mat-card class="user-card usuarios-list">
+  <mat-card-title>Usuarios registrados</mat-card-title>
+  <mat-card-content>
+
+    @if (formEdicionVisible) {
+      <mat-card class="edicion-card" appearance="outlined">
+        <mat-card-title>Editar usuario</mat-card-title>
+        <mat-card-content>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre</mat-label>
+              <input matInput [(ngModel)]="formEdicion.name">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Apellido</mat-label>
+              <input matInput [(ngModel)]="formEdicion.last_Name">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Cédula</mat-label>
+              <input matInput [(ngModel)]="formEdicion.id_Card">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Rol</mat-label>
+              <mat-select [(ngModel)]="formEdicion.rol">
+                @for (rol of roles; track rol.id) {
+                  <mat-option [value]="rol.name">{{ rol.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-slide-toggle [(ngModel)]="formEdicion.activo">Activo</mat-slide-toggle>
+          </div>
+        </mat-card-content>
+        <mat-card-actions align="end">
+          <button mat-button (click)="cancelarEdicion()">Cancelar</button>
+          <button mat-raised-button color="primary" (click)="guardarEdicion()">Guardar</button>
+        </mat-card-actions>
+      </mat-card>
+    }
+
+    <table mat-table [dataSource]="usuarios" class="tabla">
+      <ng-container matColumnDef="nombre">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let u">{{ u.name }} {{ u.last_Name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="cedula">
+        <th mat-header-cell *matHeaderCellDef>Cédula</th>
+        <td mat-cell *matCellDef="let u">{{ u.id_Card }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="rol">
+        <th mat-header-cell *matHeaderCellDef>Rol</th>
+        <td mat-cell *matCellDef="let u">{{ nombreRol(u.rolId) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="activo">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let u">
+          <span class="estado" [ngClass]="u.activo ? 'activo' : 'inactivo'">
+            {{ u.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let u">
+          <button mat-icon-button color="primary" (click)="editarUsuario(u)" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button [color]="u.activo ? 'warn' : 'primary'" (click)="alternarActivo(u)"
+            [matTooltip]="u.activo ? 'Desactivar' : 'Activar'">
+            <mat-icon>{{ u.activo ? 'block' : 'check_circle' }}</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="eliminarUsuario(u)" matTooltip="Eliminar">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnasUsuarios"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnasUsuarios;"></tr>
+    </table>
+
+    @if (usuarios.length === 0) {
+      <p class="no-data">No hay usuarios registrados todavía</p>
+    }
+
+  </mat-card-content>
+</mat-card>

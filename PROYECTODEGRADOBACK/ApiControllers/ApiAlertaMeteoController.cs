@@ -21,6 +21,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             _mapper = mapper;
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<AlertaMeteoDto>), 200)]
         public async Task<IEnumerable<AlertaMeteoDto>> GetAlertas()
@@ -29,6 +30,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             return _mapper.Map<List<AlertaMeteo>, List<AlertaMeteoDto>>(alertas.ToList());
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(AlertaMeteoDto), 200)]
         [ProducesResponseType(typeof(string), 404)]
@@ -40,6 +42,20 @@ namespace RR_Nueva_Naturaleza.ApiControllers
                 return NotFound();
             }
             return Ok(_mapper.Map<AlertaMeteo, AlertaMeteoDto>(alerta));
+        }
+
+        [Authorize(Roles = "Administrador")]
+        [HttpPut("MarcarVista/{id}")]
+        [ProducesResponseType(typeof(ServiceResponse), 200)]
+        [ProducesResponseType(typeof(ServiceResponse), 400)]
+        public async Task<IActionResult> MarcarVista(Guid id)
+        {
+            var response = await _alertaMeteoService.MarcarVista(id);
+            if (response.Result == ServiceResponseType.Failed)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
         }
     }
 }

@@ -4,6 +4,19 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { LecturaMeteo } from '../../models/LecturaMeteo';
 import { EstacionMeteo } from '../../models/EstacionMeteo';
+import { SensorMeteo } from '../../models/SensorMeteo';
+import { EstacionMeteoCreate } from '../../models/EstacionMeteoCreate';
+import { EstacionMeteoUpdate } from '../../models/EstacionMeteoUpdate';
+import { SensorMeteoCreate } from '../../models/SensorMeteoCreate';
+import { SensorMeteoUpdate } from '../../models/SensorMeteoUpdate';
+import { UmbralMeteo } from '../../models/UmbralMeteo';
+import { UmbralMeteoCreate } from '../../models/UmbralMeteoCreate';
+import { UmbralMeteoUpdate } from '../../models/UmbralMeteoUpdate';
+import { AlertaMeteo } from '../../models/AlertaMeteo';
+import { LecturaMeteoPdfRequest } from '../../models/LecturaMeteoPdfRequest';
+import { CambiarEstado } from '../../models/CambiarEstado';
+import { AuditoriaMeteo } from '../../models/AuditoriaMeteo';
+import { Responses } from '../../models/Response';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +26,20 @@ export class WeatherService {
   private complement1 = 'Api/ApiLecturaMeteo/GetByEstacion';
   private complement2 = 'Api/ApiLecturaMeteo/GetByEstacionAndVariable';
   private complement3 = 'Api/ApiEstacionMeteo';
+  private complement4 = 'Api/ApiEstacionMeteo/CreateEstacion';
+  private complement5 = 'Api/ApiEstacionMeteo/UpdateEstacion';
+  private complement6 = 'Api/ApiSensorMeteo';
+  private complement7 = 'Api/ApiSensorMeteo/CreateSensor';
+  private complement8 = 'Api/ApiSensorMeteo/UpdateSensor';
+  private complement9 = 'Api/ApiUmbralMeteo';
+  private complement10 = 'Api/ApiUmbralMeteo/CreateUmbral';
+  private complement11 = 'Api/ApiUmbralMeteo/UpdateUmbral';
+  private complement12 = 'Api/ApiAlertaMeteo';
+  private complement13 = 'Api/ApiAlertaMeteo/MarcarVista';
+  private complement14 = 'Api/ApiLecturaMeteo/GetLecturasForPdf';
+  private complement15 = 'Api/ApiEstacionMeteo/CambiarEstado';
+  private complement16 = 'Api/ApiSensorMeteo/CambiarEstado';
+  private complement17 = 'Api/ApiAuditoriaMeteo';
 
   constructor(private _http: HttpClient) { }
 
@@ -30,6 +57,77 @@ export class WeatherService {
 
   public getEstaciones(): Observable<EstacionMeteo[]> {
     return this._http.get<EstacionMeteo[]>(this.apiUrl + this.complement3);
+  }
+
+  public crearEstacion(estacion: EstacionMeteoCreate): Observable<Responses> {
+    return this._http.put<Responses>(this.apiUrl + this.complement4, estacion);
+  }
+
+  public actualizarEstacion(id: string, estacion: EstacionMeteoUpdate): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement5}/${id}`, estacion);
+  }
+
+  public eliminarEstacion(id: string): Observable<Responses> {
+    return this._http.delete<Responses>(`${this.apiUrl + this.complement3}/${id}`);
+  }
+
+  public getSensores(): Observable<SensorMeteo[]> {
+    return this._http.get<SensorMeteo[]>(this.apiUrl + this.complement6);
+  }
+
+  public crearSensor(sensor: SensorMeteoCreate): Observable<Responses> {
+    return this._http.put<Responses>(this.apiUrl + this.complement7, sensor);
+  }
+
+  public actualizarSensor(id: string, sensor: SensorMeteoUpdate): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement8}/${id}`, sensor);
+  }
+
+  public eliminarSensor(id: string): Observable<Responses> {
+    return this._http.delete<Responses>(`${this.apiUrl + this.complement6}/${id}`);
+  }
+
+  public getUmbrales(): Observable<UmbralMeteo[]> {
+    return this._http.get<UmbralMeteo[]>(this.apiUrl + this.complement9);
+  }
+
+  public crearUmbral(umbral: UmbralMeteoCreate): Observable<Responses> {
+    return this._http.put<Responses>(this.apiUrl + this.complement10, umbral);
+  }
+
+  public actualizarUmbral(id: string, umbral: UmbralMeteoUpdate): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement11}/${id}`, umbral);
+  }
+
+  public eliminarUmbral(id: string): Observable<Responses> {
+    return this._http.delete<Responses>(`${this.apiUrl + this.complement9}/${id}`);
+  }
+
+  public getAlertas(): Observable<AlertaMeteo[]> {
+    return this._http.get<AlertaMeteo[]>(this.apiUrl + this.complement12);
+  }
+
+  public marcarVistaAlerta(id: string): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement13}/${id}`, {});
+  }
+
+  public getLecturasParaReportePdf(filtro: LecturaMeteoPdfRequest) {
+    return this._http.post(this.apiUrl + this.complement14, filtro, {
+      responseType: 'blob',
+      observe: 'response' as const
+    });
+  }
+
+  public cambiarEstadoEstacion(id: string, cambio: CambiarEstado): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement15}/${id}`, cambio);
+  }
+
+  public cambiarEstadoSensor(id: string, cambio: CambiarEstado): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement16}/${id}`, cambio);
+  }
+
+  public getAuditoriaMeteo(): Observable<AuditoriaMeteo[]> {
+    return this._http.get<AuditoriaMeteo[]>(this.apiUrl + this.complement17);
   }
 
   private buildRangoParams(fechaInicio?: Date | null, fechaFin?: Date | null): HttpParams {

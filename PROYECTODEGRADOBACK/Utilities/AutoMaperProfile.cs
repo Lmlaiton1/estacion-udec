@@ -28,6 +28,8 @@ namespace RR_Nueva_Naturaleza.Utilities
             CreateMap<LecturaMeteo, LecturaMeteoDto>();
             CreateMap<UmbralMeteo, UmbralMeteoDto>();
             CreateMap<AlertaMeteo, AlertaMeteoDto>();
+            CreateMap<AuditoriaMeteo, AuditoriaMeteoDto>()
+                .ForMember(d => d.UsuarioNombre, opt => opt.MapFrom(o => o.Usuario != null ? (o.Usuario.Name + " " + o.Usuario.Last_Name) : string.Empty));
 
         }
     }

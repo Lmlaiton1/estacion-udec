@@ -113,7 +113,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         [ProducesResponseType(typeof(string), 400)]
         public async Task<IActionResult> UpdateUser(User_PostDto userPostDto)
         {
-            var result = await _userService.UpdateUser(userPostDto.Id, userPostDto.Name, userPostDto.Last_Name, userPostDto.Id_Card, userPostDto.Password, userPostDto.Rol);
+            var result = await _userService.UpdateUser(userPostDto.Id, userPostDto.Name, userPostDto.Last_Name, userPostDto.Id_Card, userPostDto.Activo, userPostDto.Rol);
             return result.Result == ServiceResponseType.Succeded ? Ok() : BadRequest(result.ErrorMessage);
         }
 

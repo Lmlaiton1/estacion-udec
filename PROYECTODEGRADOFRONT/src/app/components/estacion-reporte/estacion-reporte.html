@@ -1,0 +1,79 @@
+<div class="container">
+  <h2 class="title">Reporte Meteorológico</h2>
+  <p class="subtitle">Generá un PDF con las lecturas de las estaciones, filtrando por estación, variable, fechas y horario.</p>
+
+  <mat-card class="filtros-card" appearance="outlined">
+    <mat-card-content>
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Estación</mat-label>
+          <mat-select [(ngModel)]="estacionNumero">
+            <mat-option [value]="null">Todas las estaciones</mat-option>
+            <mat-option [value]="1">Estación 1</mat-option>
+            <mat-option [value]="2">Estación 2</mat-option>
+            <mat-option [value]="3">Estación 3</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Variable</mat-label>
+          <mat-select [(ngModel)]="variable">
+            @for (v of variables; track v.key) {
+              <mat-option [value]="v.key">{{ v.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha inicio</mat-label>
+          <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="fechaInicio">
+          <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInicio></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha fin</mat-label>
+          <input matInput [matDatepicker]="pickerFin" [(ngModel)]="fechaFin">
+          <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFin></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <div class="hora-row">
+        <mat-slide-toggle [(ngModel)]="filtrarPorHora">Filtrar por horario del día</mat-slide-toggle>
+
+        @if (filtrarPorHora) {
+          <div class="hora-inputs">
+            <mat-form-field appearance="outline">
+              <mat-label>Hora desde</mat-label>
+              <input matInput type="time" [(ngModel)]="horaInicio">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Hora hasta</mat-label>
+              <input matInput type="time" [(ngModel)]="horaFin">
+            </mat-form-field>
+          </div>
+        }
+      </div>
+
+      <p class="resumen">
+        {{ nombreEstacion(estacionNumero) }} ·
+        {{ variable ? variable : 'Todas las variables' }}
+        @if (filtrarPorHora) {
+          · Horario {{ horaInicio }} a {{ horaFin }}
+        }
+      </p>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-raised-button color="primary" [disabled]="generando" (click)="generarPdf()">
+        @if (generando) {
+          Generando...
+        } @else {
+          📄 Generar PDF
+        }
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

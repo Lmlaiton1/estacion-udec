@@ -21,6 +21,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             _mapper = mapper;
         }
 
+        [Authorize(Roles = "Administrador,Operario,Usuario Externo")]
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<LecturaMeteoDto>), 200)]
         public async Task<IEnumerable<LecturaMeteoDto>> GetLecturas()
@@ -29,6 +30,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             return _mapper.Map<List<LecturaMeteo>, List<LecturaMeteoDto>>(lecturas.ToList());
         }
 
+        [Authorize(Roles = "Administrador,Operario,Usuario Externo")]
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(LecturaMeteoDto), 200)]
         [ProducesResponseType(typeof(string), 404)]
@@ -42,6 +44,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             return Ok(_mapper.Map<LecturaMeteo, LecturaMeteoDto>(lectura));
         }
 
+        [Authorize(Roles = "Administrador,Operario,Usuario Externo")]
         [HttpGet("GetByEstacion/{numero}")]
         [ProducesResponseType(typeof(IEnumerable<LecturaMeteoDto>), 200)]
         public async Task<IEnumerable<LecturaMeteoDto>> GetByEstacion(int numero)
@@ -50,12 +53,24 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             return _mapper.Map<List<LecturaMeteo>, List<LecturaMeteoDto>>(lecturas.ToList());
         }
 
+        [Authorize(Roles = "Administrador,Operario,Usuario Externo")]
         [HttpGet("GetByEstacionAndVariable/{numero}/{variable}")]
         [ProducesResponseType(typeof(IEnumerable<LecturaMeteoDto>), 200)]
         public async Task<IEnumerable<LecturaMeteoDto>> GetByEstacionAndVariable(int numero, string variable)
         {
             var lecturas = await _lecturaMeteoService.GetLecturasByEstacionAndVariable(numero, variable);
             return _mapper.Map<List<LecturaMeteo>, List<LecturaMeteoDto>>(lecturas.ToList());
+        }
+
+        [Authorize(Roles = "Administrador")]
+        [HttpPost("GetLecturasForPdf")]
+        [ProducesResponseType(typeof(FileContentResult), 200)]
+        public async Task<IActionResult> GetLecturasForPdf(LecturaMeteoPdfRequestDto filtro)
+        {
+            using var ms = new MemoryStream();
+            await _lecturaMeteoService.GenerarPdf(ms, filtro);
+            var fileName = $"Reporte_Meteo_{DateTime.Now:yyyyMMddHHmm}.pdf";
+            return File(ms.ToArray(), "application/pdf", fileName);
         }
     }
 }

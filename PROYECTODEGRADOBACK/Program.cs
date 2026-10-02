@@ -25,18 +25,18 @@ namespace RR_Nueva_Naturaleza
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // Configuración de base de datos
+            // Configuraciï¿½n de base de datos
             builder.Services.AddDbContext<RR_Nueva_NaturalezaContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Configuración de AppSettings
+            // Configuraciï¿½n de AppSettings
             var appSettingsSection = builder.Configuration.GetSection("AppSettings");
             builder.Services.Configure<AppSettings>(appSettingsSection);
 
             var appSettings = appSettingsSection.Get<AppSettings>();
-            var key = Encoding.ASCII.GetBytes(appSettings.secret); // Nota: nombre en mayúscula para seguir convención
+            var key = Encoding.ASCII.GetBytes(appSettings.secret); // Nota: nombre en mayï¿½scula para seguir convenciï¿½n
 
-            // Configuración de JWT Authentication
+            // Configuraciï¿½n de JWT Authentication
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -56,7 +56,7 @@ namespace RR_Nueva_Naturaleza
                 };
             });
 
-            // Inyección de dependencias
+            // Inyecciï¿½n de dependencias
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IRolService, RolService>();
             builder.Services.AddScoped<IDeviceService, DeviceService>();
@@ -72,12 +72,13 @@ namespace RR_Nueva_Naturaleza
             builder.Services.AddScoped<IScheduleService, ScheduleService>();
             builder.Services.AddScoped<IChecklistService, ChecklistService>();
 
-            // Dominio Estación Meteorológica
+            // Dominio Estaciï¿½n Meteorolï¿½gica
             builder.Services.AddScoped<IEstacionMeteoService, EstacionMeteoService>();
             builder.Services.AddScoped<ISensorMeteoService, SensorMeteoService>();
             builder.Services.AddScoped<ILecturaMeteoService, LecturaMeteoService>();
             builder.Services.AddScoped<IUmbralMeteoService, UmbralMeteoService>();
             builder.Services.AddScoped<IAlertaMeteoService, AlertaMeteoService>();
+            builder.Services.AddScoped<IAuditoriaMeteoService, AuditoriaMeteoService>();
 
 
             // AutoMapper

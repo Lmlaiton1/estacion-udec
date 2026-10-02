@@ -47,7 +47,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         /// <response code= "200">Customers have been obtained correctly</response>
         /// <response code= "400">The server cannot satisfy a request</response>
         /// <response code= "500">Database connection failure</response>
-        [Authorize(Roles = "Administrador,Operario")]
+        // Cualquier usuario autenticado necesita poder resolver su propio rol (lo usa RoleGuard en cada navegación).
         [HttpGet("obtener/{id}")]
         [ProducesResponseType(typeof(RolDto), 200)]
         [ProducesResponseType(typeof(string), 400)]

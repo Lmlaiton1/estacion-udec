@@ -123,6 +123,48 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.ToTable("Audits");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AuditoriaMeteo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("EntidadId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("NombreEntidad")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TipoEntidad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Auditoria_Meteo");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ChecklistDetail", b =>
                 {
                     b.Property<Guid>("Id")
@@ -338,9 +380,6 @@ namespace RR_Nueva_Naturaleza.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Numero")
-                        .IsUnique();
-
                     b.ToTable("Estaciones_Meteo");
                 });
 
@@ -507,6 +546,8 @@ namespace RR_Nueva_Naturaleza.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("SensorId");
+
                     b.HasIndex("EstacionNumero", "Variable", "FechaHora");
 
                     b.ToTable("Lecturas_Meteo");
@@ -648,6 +689,9 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Descripcion")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -779,6 +823,9 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Answer")
                         .HasColumnType("nvarchar(max)");
 
@@ -864,6 +911,17 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Device");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AuditoriaMeteo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ChecklistDetail", b =>
@@ -978,6 +1036,22 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Impact");
 
                     b.Navigation("System_Type");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.LecturaMeteo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.EstacionMeteo", null)
+                        .WithMany()
+                        .HasForeignKey("EstacionNumero")
+                        .HasPrincipalKey("Numero")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.SensorMeteo", null)
+                        .WithMany()
+                        .HasForeignKey("SensorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Measurement", b =>

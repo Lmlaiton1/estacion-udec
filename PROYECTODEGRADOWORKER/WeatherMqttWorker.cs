@@ -11,6 +11,7 @@ using ServicioSensorica.Data;
 using ServicioSensorica.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -247,7 +248,25 @@ namespace ServicioSensorica.Worker
                 fechaHora = fechaRecepcion;
             }
 
-            var lecturas = ConstruirLecturas(datos, fechaHora, fechaRecepcion);
+            // El crudo ya quedó guardado arriba (rastro de auditoría). De acá en más, solo se procesa
+            // si la estación y los sensores están dados de alta Y activos en el catálogo (Estaciones_Meteo / Sensores_Meteo).
+            var estacionActiva = await db.EstacionesMeteo.AnyAsync(e => e.Numero == datos.Estacion && e.Activa, stoppingToken);
+            if (!estacionActiva)
+            {
+                _logger.LogWarning("Estación {estacion} no está registrada o está inactiva en el catálogo, se descartan sus lecturas", datos.Estacion);
+                return;
+            }
+
+            var sensoresRegistrados = (await db.SensoresMeteo.Where(s => s.Activo).Select(s => s.Id).ToListAsync(stoppingToken)).ToHashSet();
+            var lecturas = ConstruirLecturas(datos, fechaHora, fechaRecepcion)
+                .Where(l => sensoresRegistrados.Contains(l.SensorId))
+                .ToList();
+
+            if (lecturas.Count == 0)
+            {
+                _logger.LogWarning("Ningún sensor de la estación {estacion} está registrado y activo en el catálogo, no se guardan lecturas meteo", datos.Estacion);
+                return;
+            }
 
             try
             {
@@ -263,7 +282,63 @@ namespace ServicioSensorica.Worker
                 return;
             }
 
+            await EvaluarUmbralesAsync(db, lecturas, stoppingToken);
+
             await NotificarHubAsync(datos, fechaHora);
+        }
+
+        // Compara las lecturas recién guardadas contra los umbrales activos del catálogo y genera
+        // una alerta por cada una que esté fuera de rango. Un fallo acá no debe tumbar el resto del flujo.
+        private async Task EvaluarUmbralesAsync(WeatherDbContext db, List<LecturaMeteo> lecturas, CancellationToken stoppingToken)
+        {
+            try
+            {
+                var umbralesActivos = await db.UmbralesMeteo.Where(u => u.Activo).ToListAsync(stoppingToken);
+                if (umbralesActivos.Count == 0) return;
+
+                var nuevasAlertas = new List<AlertaMeteo>();
+
+                foreach (var lectura in lecturas)
+                {
+                    var umbralesAplicables = umbralesActivos.Where(u =>
+                        u.Variable == lectura.Variable &&
+                        (u.EstacionNumero == null || u.EstacionNumero == lectura.EstacionNumero));
+
+                    foreach (var umbral in umbralesAplicables)
+                    {
+                        var fueraDeRango = (umbral.ValorMin.HasValue && lectura.Valor < umbral.ValorMin.Value) ||
+                                            (umbral.ValorMax.HasValue && lectura.Valor > umbral.ValorMax.Value);
+
+                        if (!fueraDeRango) continue;
+
+                        nuevasAlertas.Add(new AlertaMeteo
+                        {
+                            Id = Guid.NewGuid(),
+                            LecturaId = lectura.Id,
+                            UmbralId = umbral.Id,
+                            EstacionNumero = lectura.EstacionNumero,
+                            Variable = lectura.Variable,
+                            ValorRegistrado = lectura.Valor,
+                            Mensaje = $"{lectura.Variable} fuera de rango en estación {lectura.EstacionNumero}: {lectura.Valor} " +
+                                      $"(límites: {umbral.ValorMin?.ToString() ?? "sin mínimo"} - {umbral.ValorMax?.ToString() ?? "sin máximo"})",
+                            NivelGravedad = umbral.NivelGravedad,
+                            FechaHora = lectura.FechaHora,
+                            Visto = false
+                        });
+                    }
+                }
+
+                if (nuevasAlertas.Count == 0) return;
+
+                db.AlertasMeteo.AddRange(nuevasAlertas);
+                await db.SaveChangesAsync(stoppingToken);
+
+                _logger.LogWarning("Generadas {count} alertas por umbrales fuera de rango", nuevasAlertas.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error evaluando umbrales");
+            }
         }
 
         private static List<LecturaMeteo> ConstruirLecturas(EstacionDatosDto datos, DateTime fechaHora, DateTime fechaRecepcion)

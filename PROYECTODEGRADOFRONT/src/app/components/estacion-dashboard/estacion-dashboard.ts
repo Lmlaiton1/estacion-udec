@@ -280,7 +280,7 @@ export class EstacionDashboard implements OnInit, OnDestroy {
 
     return {
       series: [{ name: label, data: datos } as any],
-      chart: { type: 'line', height: 250, toolbar: { show: false }, animations: { enabled: false } },
+      chart: { type: 'line', height: 250, toolbar: { show: true }, animations: { enabled: false } },
       xaxis: { type: 'datetime', labels: { datetimeUTC: false } },
       yaxis: { title: { text: unidad } },
       title: { text: label, align: 'left' }

@@ -1,0 +1,9 @@
+export interface UmbralMeteoUpdate {
+  estacionNumero: number | null;
+  variable: string;
+  valorMin: number | null;
+  valorMax: number | null;
+  nivelGravedad: string;
+  activo: boolean;
+  descripcion?: string | null;
+}

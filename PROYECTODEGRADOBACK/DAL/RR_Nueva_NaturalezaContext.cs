@@ -36,6 +36,7 @@ namespace RR_Nueva_Naturaleza.DAL
         public DbSet<AlertaMeteo> Alertas_Meteo { get; set; }
         public DbSet<PrediccionMeteo> Predicciones_Meteo { get; set; }
         public DbSet<ImagenMeteo> Imagenes_Meteo { get; set; }
+        public DbSet<AuditoriaMeteo> Auditoria_Meteo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -92,13 +93,29 @@ namespace RR_Nueva_Naturaleza.DAL
                 .HasForeignKey(h => h.UsuarioId);
 
             // Dominio Estación Meteorológica
+            // Numero es clave alterna: permite que LecturaMeteo tenga una FK real contra ella
             modelBuilder.Entity<EstacionMeteo>()
-                .HasIndex(e => e.Numero)
-                .IsUnique();
+                .HasAlternateKey(e => e.Numero);
 
             // Índice compuesto para acelerar las consultas del dashboard
             modelBuilder.Entity<LecturaMeteo>()
                 .HasIndex(l => new { l.EstacionNumero, l.Variable, l.FechaHora });
+
+            // LecturaMeteo -> EstacionMeteo: solo se guarda si la estación está registrada en el catálogo.
+            // Restrict: no se puede borrar una estación mientras tenga lecturas asociadas.
+            modelBuilder.Entity<LecturaMeteo>()
+                .HasOne<EstacionMeteo>()
+                .WithMany()
+                .HasForeignKey(l => l.EstacionNumero)
+                .HasPrincipalKey(e => e.Numero)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // LecturaMeteo -> SensorMeteo: solo se guarda si el sensor está registrado en el catálogo.
+            modelBuilder.Entity<LecturaMeteo>()
+                .HasOne<SensorMeteo>()
+                .WithMany()
+                .HasForeignKey(l => l.SensorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // El payload crudo debe ser JSON válido
             modelBuilder.Entity<LecturaCruda>()
@@ -121,6 +138,13 @@ namespace RR_Nueva_Naturaleza.DAL
                 .HasOne(a => a.Umbral)
                 .WithMany()
                 .HasForeignKey(a => a.UmbralId);
+
+            // AuditoriaMeteo -> User (quién activó/desactivó). Restrict: conserva el rastro aunque el usuario se borre.
+            modelBuilder.Entity<AuditoriaMeteo>()
+                .HasOne(a => a.Usuario)
+                .WithMany()
+                .HasForeignKey(a => a.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
     }

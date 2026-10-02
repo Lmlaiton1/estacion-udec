@@ -19,5 +19,7 @@ namespace RR_Nueva_Naturaleza.Models
         // foreign keys
         public Guid RolId { get; set; }
         public virtual Rol? Rol { get; set; }
+
+        public bool Activo { get; set; } = true;
     }
 }

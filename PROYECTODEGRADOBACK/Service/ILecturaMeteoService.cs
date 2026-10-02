@@ -1,4 +1,5 @@
 using RR_Nueva_Naturaleza.Models;
+using RR_Nueva_Naturaleza.Models.Dto;
 
 namespace RR_Nueva_Naturaleza.Service
 {
@@ -8,5 +9,7 @@ namespace RR_Nueva_Naturaleza.Service
         Task<LecturaMeteo?> GetLectura(Guid id);
         Task<IEnumerable<LecturaMeteo>> GetLecturasByEstacion(int numero);
         Task<IEnumerable<LecturaMeteo>> GetLecturasByEstacionAndVariable(int numero, string variable);
+        Task<IEnumerable<LecturaMeteo>> GetLecturasParaReporte(LecturaMeteoPdfRequestDto filtro);
+        Task GenerarPdf(Stream output, LecturaMeteoPdfRequestDto filtro);
     }
 }

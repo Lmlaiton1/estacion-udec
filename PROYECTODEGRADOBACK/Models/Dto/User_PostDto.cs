@@ -6,7 +6,7 @@
         public string Name { get; set; } = string.Empty;
         public string Last_Name { get; set; } = string.Empty;
         public string Id_Card { get; set; } = string.Empty;
-        public string? Password { get; set; } = string.Empty;
+        public bool Activo { get; set; } = true;
         // foreign keys
         public string Rol { get; set; } = string.Empty;
     }

@@ -69,7 +69,7 @@ namespace RR_Nueva_Naturaleza.Service
             return await _context.Users.ToListAsync();
         }
 
-        public async Task<ServiceResponse> UpdateUser(Guid UserId, string name, string lastName, string idCard, string password, string rol)
+        public async Task<ServiceResponse> UpdateUser(Guid UserId, string name, string lastName, string idCard, bool activo, string rol)
         {
             try
             {
@@ -97,10 +97,7 @@ namespace RR_Nueva_Naturaleza.Service
                 user.Name = name;
                 user.Last_Name = lastName;
                 user.Id_Card = idCard;
-                if (!string.IsNullOrEmpty(password))
-                {
-                    user.Password = Encrypt.HashBCrypt(password);
-                }
+                user.Activo = activo;
                 user.RolId = rolEntidad.Id;
 
                 _context.Users.Update(user);
@@ -194,6 +191,12 @@ namespace RR_Nueva_Naturaleza.Service
 
             if (!passwordOk)
             {
+                return null;
+            }
+
+            if (!user.Activo)
+            {
+                // Mismo resultado que credenciales inválidas: no se filtra si la cuenta existe pero está inactiva.
                 return null;
             }
 

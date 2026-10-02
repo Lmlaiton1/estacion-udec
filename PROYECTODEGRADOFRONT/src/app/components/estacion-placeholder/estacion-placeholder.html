@@ -64,7 +64,7 @@
       <mat-list-item role="listitem" routerLink="Sensors" routerLinkActive="active" class="menu-item">
         <div class="icon-container">
           <mat-icon class="icon-station" fontIcon="view_comfy"></mat-icon>
-          Sensores
+          Dashboard
         </div>
       </mat-list-item>
 
@@ -73,6 +73,15 @@
         <div class="icon-container">
           <mat-icon class="icon-station" fontIcon="add_circle"></mat-icon>
           Agregar sensor
+        </div>
+      </mat-list-item>
+      }
+
+      @if (esAdministrador()) {
+      <mat-list-item role="listitem" routerLink="Umbrales" routerLinkActive="active" class="menu-item">
+        <div class="icon-container">
+          <mat-icon class="icon-station" fontIcon="warning"></mat-icon>
+          Umbrales y Alertas
         </div>
       </mat-list-item>
       }

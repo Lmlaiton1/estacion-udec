@@ -22,5 +22,32 @@ namespace RR_Nueva_Naturaleza.Service
         {
             return await _context.Alertas_Meteo.FindAsync(id);
         }
+
+        public async Task<ServiceResponse> MarcarVista(Guid id)
+        {
+            ServiceResponse response = new ServiceResponse();
+            try
+            {
+                var alerta = await _context.Alertas_Meteo.FindAsync(id);
+                if (alerta == null)
+                {
+                    response.Result = ServiceResponseType.Failed;
+                    response.ErrorMessage = "La alerta no existe";
+                    return response;
+                }
+
+                alerta.Visto = true;
+                _context.Alertas_Meteo.Update(alerta);
+                await _context.SaveChangesAsync();
+
+                response.Result = ServiceResponseType.Succeded;
+            }
+            catch (Exception ex)
+            {
+                response.Result = ServiceResponseType.Failed;
+                response.ErrorMessage = ex.Message;
+            }
+            return response;
+        }
     }
 }

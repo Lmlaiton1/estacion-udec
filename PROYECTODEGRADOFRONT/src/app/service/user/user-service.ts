@@ -5,6 +5,8 @@ import { Rol } from '../../models/Rol';
 import { environment } from '../../../environments/environment';
 import { UserCreate } from '../../models/UserCreate';
 import { IUser } from '../../models/IUser';
+import { UserUpdate } from '../../models/UserUpdate';
+import { Responses } from '../../models/Response';
 
 @Injectable({
   providedIn: 'root'
@@ -29,5 +31,13 @@ export class UserService {
 
   public GetAllUsers(): Observable<IUser[]> {
     return this._http.get<IUser[]>(this.apiUrl + "Api/ApiUser");
+  }
+
+  public updateUser(user: UserUpdate): Observable<Responses> {
+    return this._http.put<Responses>(this.apiUrl + this.complement, user);
+  }
+
+  public deleteUser(id: string): Observable<Responses> {
+    return this._http.delete<Responses>(this.apiUrl + this.complement, { body: { id } });
   }
 }

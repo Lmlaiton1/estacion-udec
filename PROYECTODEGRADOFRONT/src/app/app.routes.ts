@@ -18,6 +18,9 @@ import { SensorForm } from './components/sensor-form/sensor-form';
 import { ChecklistFormComponent } from './components/checklist-form/checklist-form';
 import { Ia } from './components/ia/ia';
 import { EstacionDashboard } from './components/estacion-dashboard/estacion-dashboard';
+import { EstacionCatalogo } from './components/estacion-catalogo/estacion-catalogo';
+import { EstacionUmbrales } from './components/estacion-umbrales/estacion-umbrales';
+import { EstacionReporte } from './components/estacion-reporte/estacion-reporte';
 
 
 export const routes: Routes = [
@@ -106,7 +109,13 @@ export const routes: Routes = [
       },
       {
         path: 'SensorForm',
-        component: SensorForm,
+        component: EstacionCatalogo,
+        canActivate: [AuthGuard, RoleGuard],
+        data: { requiredRole: 'Administrador' }
+      },
+      {
+        path: 'Umbrales',
+        component: EstacionUmbrales,
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
@@ -123,7 +132,7 @@ export const routes: Routes = [
       },
       {
         path: 'report',
-        component: ReportComponent,
+        component: EstacionReporte,
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },

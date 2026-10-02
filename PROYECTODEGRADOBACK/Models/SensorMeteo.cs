@@ -19,5 +19,7 @@ namespace RR_Nueva_Naturaleza.Models
 
         [MaxLength(500)]
         public string? Descripcion { get; set; }
+
+        public bool Activo { get; set; } = true;
     }
 }
