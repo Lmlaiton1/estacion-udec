@@ -84,6 +84,12 @@ export class EstacionDashboard implements OnInit, OnDestroy {
   fechaInicio: Date | null = null;
   fechaFin: Date | null = null;
 
+  // Filtro por horario del día (igual al del reporte). Cubre las 24 horas:
+  // si "hasta" es menor que "desde" (ej. 18:00 a 06:00) se toma como horario nocturno.
+  filtrarPorHora = false;
+  horaInicio = '00:00';
+  horaFin = '23:59';
+
   cargando = false;
 
   private refreshInterval: any;
@@ -131,6 +137,9 @@ export class EstacionDashboard implements OnInit, OnDestroy {
   limpiarFiltroFechas(): void {
     this.fechaInicio = null;
     this.fechaFin = null;
+    this.filtrarPorHora = false;
+    this.horaInicio = '00:00';
+    this.horaFin = '23:59';
     this.aplicarFiltroFechas();
   }
 
@@ -216,7 +225,7 @@ export class EstacionDashboard implements OnInit, OnDestroy {
     this.graficasEstacion = this.variables.map(v => {
       const datos = this.lecturasEstacionRaw
         .filter(l => l.variable === v.key)
-        .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta))
+        .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta) && this.dentroDelHorario(l.fechaHora))
         .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime());
 
       const unidad = datos.length ? datos[0].unidad : '';
@@ -255,7 +264,7 @@ export class EstacionDashboard implements OnInit, OnDestroy {
     let unidad = '';
     const series: ApexAxisChartSeries = this.comparativaRaw.map(estacion => {
       const datos = estacion.lecturas
-        .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta))
+        .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta) && this.dentroDelHorario(l.fechaHora))
         .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime());
 
       if (!unidad && datos.length) unidad = datos[0].unidad;
@@ -307,6 +316,33 @@ export class EstacionDashboard implements OnInit, OnDestroy {
     return t >= desde && t <= hasta;
   }
 
+  // Compara solo la hora del día (minuto a minuto). "hasta" es inclusivo hasta el segundo 59.
+  private dentroDelHorario(fechaHora: string): boolean {
+    if (!this.filtrarPorHora) return true;
+
+    const inicio = this.minutosDelDia(this.horaInicio);
+    const fin = this.minutosDelDia(this.horaFin);
+    if (inicio === null || fin === null) return true;
+
+    const fecha = new Date(fechaHora);
+    const minuto = fecha.getHours() * 60 + fecha.getMinutes();
+
+    return inicio <= fin
+      ? minuto >= inicio && minuto <= fin
+      : minuto >= inicio || minuto <= fin; // Horario que cruza la medianoche
+  }
+
+  private minutosDelDia(hora: string): number | null {
+    const [h, m] = (hora ?? '').split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  }
+
+  textoHorario(): string {
+    const nocturno = (this.minutosDelDia(this.horaFin) ?? 0) < (this.minutosDelDia(this.horaInicio) ?? 0);
+    return `Horario ${this.horaInicio} a ${this.horaFin}${nocturno ? ' (cruza la medianoche)' : ''}`;
+  }
+
   usaFiltroPersonalizado(): boolean {
     return !!(this.fechaInicio && this.fechaFin);
   }
@@ -322,13 +358,14 @@ export class EstacionDashboard implements OnInit, OnDestroy {
       `Estación: ${estacion} (N°${this.estacionSeleccionada})`,
       `Fecha de exportación: ${fechaExportacion}`,
       `Rango: ${rango}`,
+      `Horario: ${this.filtrarPorHora ? this.textoHorario() : 'Todo el día'}`,
       '',
       'FechaHora,Variable,Valor,ValorCardinal,Unidad'
     ];
 
     const { desde, hasta } = this.rangoEfectivo();
     const filas = this.lecturasEstacionRaw
-      .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta))
+      .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta) && this.dentroDelHorario(l.fechaHora))
       .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())
       .map(l => `${l.fechaHora},${l.variable},${l.valor},${l.valorCardinal ?? ''},${l.unidad}`);
 

@@ -43,8 +43,30 @@
     <button mat-stroked-button color="primary" (click)="aplicarFiltroFechas()">Aplicar</button>
     <button mat-button (click)="limpiarFiltroFechas()">Limpiar</button>
 
-    @if (!usaFiltroPersonalizado()) {
-      <span class="filtro-hint">Mostrando las últimas 24 horas</span>
+    <span class="filtro-hint">
+      {{ usaFiltroPersonalizado() ? 'Rango de fechas personalizado' : 'Mostrando las últimas 24 horas' }}
+      @if (filtrarPorHora) {
+        · {{ textoHorario() }}
+      }
+    </span>
+  </div>
+
+  <!-- Filtro por horario del día, igual al del reporte de mediciones -->
+  <div class="hora-row">
+    <mat-slide-toggle [(ngModel)]="filtrarPorHora" (change)="aplicarFiltroFechas()">Filtrar por horario del día</mat-slide-toggle>
+
+    @if (filtrarPorHora) {
+      <div class="hora-inputs">
+        <mat-form-field appearance="outline">
+          <mat-label>Hora desde</mat-label>
+          <input matInput type="time" [(ngModel)]="horaInicio">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Hora hasta</mat-label>
+          <input matInput type="time" [(ngModel)]="horaFin">
+        </mat-form-field>
+      </div>
     }
   </div>
 
