@@ -21,6 +21,7 @@ import { EstacionDashboard } from './components/estacion-dashboard/estacion-dash
 import { EstacionCatalogo } from './components/estacion-catalogo/estacion-catalogo';
 import { EstacionUmbrales } from './components/estacion-umbrales/estacion-umbrales';
 import { EstacionReporte } from './components/estacion-reporte/estacion-reporte';
+import { EstacionEstadistica } from './components/estacion-estadistica/estacion-estadistica';
 
 
 export const routes: Routes = [
@@ -135,6 +136,12 @@ export const routes: Routes = [
         component: EstacionReporte,
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
+      },
+      {
+        path: 'Estadistica',
+        component: EstacionEstadistica,
+        canActivate: [AuthGuard, RoleGuard],
+        data: { requiredRole: ['Administrador', 'Operario'] }
       },
     ]
   }

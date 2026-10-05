@@ -1,0 +1,133 @@
+<div class="container">
+  <h2 class="title">Análisis estadístico</h2>
+  <p class="subtitle">Medidas de tendencia central (media, mediana y moda) sobre las últimas lecturas de una estación.</p>
+
+  <mat-card class="filtros-card" appearance="outlined">
+    <mat-card-content>
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Estación</mat-label>
+          <mat-select [(ngModel)]="estacionNumero">
+            <mat-option [value]="1">Estación 1</mat-option>
+            <mat-option [value]="2">Estación 2</mat-option>
+            <mat-option [value]="3">Estación 3</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Variable</mat-label>
+          <mat-select [(ngModel)]="variable">
+            @for (v of variables; track v.key) {
+              <mat-option [value]="v.key">{{ v.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Cantidad de datos</mat-label>
+          <input matInput type="number" min="1" max="10000" [(ngModel)]="cantidad">
+          <mat-hint>Últimas N lecturas (máx. 10000)</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <div class="chips">
+        @for (c of cantidadesRapidas; track c) {
+          <button mat-stroked-button type="button" [class.activo]="cantidad === c" (click)="elegirCantidad(c)">{{ c }}</button>
+        }
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-raised-button color="primary" [disabled]="cargando" (click)="calcular()">
+        @if (cargando) {
+          Calculando...
+        } @else {
+          📊 Calcular
+        }
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  @if (resultado && resultado.cantidadUsada > 0) {
+    <p class="resumen">
+      Estación {{ resultado.estacionNumero }} · {{ variableLabel }} ·
+      {{ resultado.cantidadUsada }} lecturas
+      @if (resultado.cantidadUsada < resultado.cantidadSolicitada) {
+        (se pidieron {{ resultado.cantidadSolicitada }}, solo hay {{ resultado.cantidadUsada }})
+      }
+      · del {{ resultado.fechaDesde | date:'dd/MM/yyyy HH:mm' }} al {{ resultado.fechaHasta | date:'dd/MM/yyyy HH:mm' }}
+    </p>
+
+    <h3 class="seccion">Medidas de tendencia central</h3>
+    <div class="tarjetas">
+      <mat-card class="tarjeta principal" appearance="outlined">
+        <div class="etiqueta">Media</div>
+        <div class="valor">{{ resultado.media }} <span class="unidad">{{ resultado.unidad }}</span></div>
+        <div class="ayuda">Promedio de los valores</div>
+      </mat-card>
+      <mat-card class="tarjeta principal" appearance="outlined">
+        <div class="etiqueta">Mediana</div>
+        <div class="valor">{{ resultado.mediana }} <span class="unidad">{{ resultado.unidad }}</span></div>
+        <div class="ayuda">Valor central de los datos ordenados</div>
+      </mat-card>
+      <mat-card class="tarjeta principal" appearance="outlined">
+        <div class="etiqueta">Moda</div>
+        <div class="valor">{{ textoModa(resultado) }} @if (resultado.modas.length > 0) {<span class="unidad">{{ resultado.unidad }}</span>}</div>
+        <div class="ayuda">
+          @if (resultado.modas.length > 0) {
+            Se repite {{ resultado.frecuenciaModa }} veces (redondeado a 1 decimal)
+          } @else {
+            Ningún valor se repite
+          }
+        </div>
+      </mat-card>
+    </div>
+
+    <h3 class="seccion">Medidas de dispersión</h3>
+    <div class="tarjetas">
+      <mat-card class="tarjeta" appearance="outlined">
+        <div class="etiqueta">Mínimo</div>
+        <div class="valor chico">{{ resultado.minimo }} <span class="unidad">{{ resultado.unidad }}</span></div>
+      </mat-card>
+      <mat-card class="tarjeta" appearance="outlined">
+        <div class="etiqueta">Máximo</div>
+        <div class="valor chico">{{ resultado.maximo }} <span class="unidad">{{ resultado.unidad }}</span></div>
+      </mat-card>
+      <mat-card class="tarjeta" appearance="outlined">
+        <div class="etiqueta">Rango</div>
+        <div class="valor chico">{{ resultado.rango }} <span class="unidad">{{ resultado.unidad }}</span></div>
+      </mat-card>
+      <mat-card class="tarjeta" appearance="outlined">
+        <div class="etiqueta">Desviación estándar</div>
+        <div class="valor chico">{{ resultado.desviacionEstandar }} <span class="unidad">{{ resultado.unidad }}</span></div>
+      </mat-card>
+    </div>
+
+    <div class="graficas">
+      <mat-card class="grafica" appearance="outlined">
+        <h4>Distribución de frecuencias</h4>
+        <apx-chart
+          [series]="histogramaSeries"
+          [chart]="histogramaChart"
+          [xaxis]="histogramaXAxis"
+          [yaxis]="histogramaYAxis"
+          [dataLabels]="histogramaDataLabels"
+          [colors]="['#2e7d4f']">
+        </apx-chart>
+      </mat-card>
+
+      <mat-card class="grafica" appearance="outlined">
+        <h4>Valores con media y mediana</h4>
+        <apx-chart
+          [series]="serieSeries"
+          [chart]="serieChart"
+          [xaxis]="serieXAxis"
+          [yaxis]="serieYAxis"
+          [stroke]="serieStroke"
+          [annotations]="serieAnnotations"
+          [colors]="['#5c8f74']">
+        </apx-chart>
+      </mat-card>
+    </div>
+  }
+</div>

@@ -62,6 +62,26 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             return _mapper.Map<List<LecturaMeteo>, List<LecturaMeteoDto>>(lecturas.ToList());
         }
 
+        [Authorize(Roles = "Administrador,Operario")]
+        [HttpGet("Estadisticas/{numero}/{variable}")]
+        [ProducesResponseType(typeof(EstadisticaMeteoDto), 200)]
+        [ProducesResponseType(typeof(string), 400)]
+        public async Task<IActionResult> GetEstadisticas(int numero, string variable, [FromQuery] int cantidad = 100)
+        {
+            // La dirección del viento es angular: media/mediana aritmética no aplican
+            if (variable == "direccion")
+            {
+                return BadRequest("La dirección del viento no se analiza con estas medidas.");
+            }
+            if (cantidad < 1 || cantidad > 10000)
+            {
+                return BadRequest("La cantidad de datos debe estar entre 1 y 10000.");
+            }
+
+            var estadisticas = await _lecturaMeteoService.GetEstadisticas(numero, variable, cantidad);
+            return Ok(estadisticas);
+        }
+
         [Authorize(Roles = "Administrador")]
         [HttpPost("GetLecturasForPdf")]
         [ProducesResponseType(typeof(FileContentResult), 200)]

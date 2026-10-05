@@ -74,6 +74,81 @@ namespace RR_Nueva_Naturaleza.Service
             return lecturas;
         }
 
+        public async Task<EstadisticaMeteoDto> GetEstadisticas(int estacionNumero, string variable, int cantidad)
+        {
+            // Se toman las N lecturas más recientes y se reordenan cronológicamente
+            var lecturas = (await _context.Lecturas_Meteo
+                .Where(l => l.EstacionNumero == estacionNumero && l.Variable == variable)
+                .OrderByDescending(l => l.FechaHora)
+                .Take(cantidad)
+                .ToListAsync())
+                .OrderBy(l => l.FechaHora)
+                .ToList();
+
+            var resultado = new EstadisticaMeteoDto
+            {
+                EstacionNumero = estacionNumero,
+                Variable = variable,
+                CantidadSolicitada = cantidad,
+                CantidadUsada = lecturas.Count
+            };
+
+            if (lecturas.Count == 0)
+            {
+                return resultado;
+            }
+
+            var valores = lecturas.Select(l => l.Valor).ToList();
+            var ordenados = valores.OrderBy(v => v).ToList();
+            var n = ordenados.Count;
+
+            resultado.Unidad = lecturas[^1].Unidad;
+            resultado.FechaDesde = lecturas[0].FechaHora;
+            resultado.FechaHasta = lecturas[^1].FechaHora;
+            resultado.Valores = valores;
+
+            var media = valores.Average();
+            resultado.Media = Math.Round(media, 2);
+
+            resultado.Mediana = n % 2 == 1
+                ? ordenados[n / 2]
+                : Math.Round((ordenados[n / 2 - 1] + ordenados[n / 2]) / 2, 2);
+
+            // Moda: los valores son continuos, así que se agrupan redondeados a 1 decimal.
+            // Si ningún valor se repite no hay moda; si hay empate se devuelven todas.
+            var frecuencias = valores
+                .GroupBy(v => Math.Round(v, 1))
+                .Select(g => new { Valor = g.Key, Frecuencia = g.Count() })
+                .ToList();
+            var frecuenciaMax = frecuencias.Max(f => f.Frecuencia);
+            if (frecuenciaMax > 1)
+            {
+                resultado.FrecuenciaModa = frecuenciaMax;
+                resultado.Modas = frecuencias
+                    .Where(f => f.Frecuencia == frecuenciaMax)
+                    .Select(f => f.Valor)
+                    .OrderBy(v => v)
+                    .ToList();
+            }
+
+            resultado.Minimo = ordenados[0];
+            resultado.Maximo = ordenados[^1];
+            resultado.Rango = ordenados[^1] - ordenados[0];
+
+            // Desviación estándar muestral (n - 1)
+            if (n > 1)
+            {
+                var sumaCuadrados = valores.Sum(v => (double)((v - media) * (v - media)));
+                resultado.DesviacionEstandar = Math.Round((decimal)Math.Sqrt(sumaCuadrados / (n - 1)), 2);
+            }
+            else
+            {
+                resultado.DesviacionEstandar = 0;
+            }
+
+            return resultado;
+        }
+
         public async Task GenerarPdf(Stream output, LecturaMeteoPdfRequestDto filtro)
         {
             var lecturas = (await GetLecturasParaReporte(filtro)).ToList();

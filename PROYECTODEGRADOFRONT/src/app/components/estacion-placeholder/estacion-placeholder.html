@@ -111,6 +111,15 @@
         </div>
       </mat-list-item>
       }
+
+      @if (puedeVerEstadistica()) {
+      <mat-list-item role="listitem" routerLink="Estadistica" routerLinkActive="active" class="menu-item">
+        <div class="icon-container">
+          <mat-icon class="icon-station" fontIcon="analytics"></mat-icon>
+          Análisis estadístico
+        </div>
+      </mat-list-item>
+      }
     </mat-list>
 
     <!-- Créditos al pie del menú lateral, igual que en Nueva Naturaleza -->
@@ -128,7 +137,7 @@
         <div class="mensaje-linea">Jaime Eduardo Andrade Ramírez</div>
 
         <div class="mensaje-linea-titulo">Equipo de desarrolladoras:</div>
-        <div class="mensaje-linea">Laura Milena Laiton</div>
+        <div class="mensaje-linea">Laura Milena Laiton Rodríguez</div>
         <div class="mensaje-linea">Valentina Julieth Sandoval Tarazona</div>
       </div>
     </div>

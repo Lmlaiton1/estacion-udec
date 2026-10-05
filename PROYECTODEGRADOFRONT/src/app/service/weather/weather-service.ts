@@ -16,6 +16,7 @@ import { AlertaMeteo } from '../../models/AlertaMeteo';
 import { LecturaMeteoPdfRequest } from '../../models/LecturaMeteoPdfRequest';
 import { CambiarEstado } from '../../models/CambiarEstado';
 import { AuditoriaMeteo } from '../../models/AuditoriaMeteo';
+import { EstadisticaMeteo } from '../../models/EstadisticaMeteo';
 import { Responses } from '../../models/Response';
 
 @Injectable({
@@ -40,6 +41,7 @@ export class WeatherService {
   private complement15 = 'Api/ApiEstacionMeteo/CambiarEstado';
   private complement16 = 'Api/ApiSensorMeteo/CambiarEstado';
   private complement17 = 'Api/ApiAuditoriaMeteo';
+  private complement18 = 'Api/ApiLecturaMeteo/Estadisticas';
 
   constructor(private _http: HttpClient) { }
 
@@ -128,6 +130,11 @@ export class WeatherService {
 
   public getAuditoriaMeteo(): Observable<AuditoriaMeteo[]> {
     return this._http.get<AuditoriaMeteo[]>(this.apiUrl + this.complement17);
+  }
+
+  public getEstadisticas(numero: number, variable: string, cantidad: number): Observable<EstadisticaMeteo> {
+    const params = new HttpParams().set('cantidad', cantidad);
+    return this._http.get<EstadisticaMeteo>(`${this.apiUrl + this.complement18}/${numero}/${variable}`, { params });
   }
 
   private buildRangoParams(fechaInicio?: Date | null, fechaFin?: Date | null): HttpParams {

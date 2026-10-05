@@ -11,5 +11,6 @@ namespace RR_Nueva_Naturaleza.Service
         Task<IEnumerable<LecturaMeteo>> GetLecturasByEstacionAndVariable(int numero, string variable);
         Task<IEnumerable<LecturaMeteo>> GetLecturasParaReporte(LecturaMeteoPdfRequestDto filtro);
         Task GenerarPdf(Stream output, LecturaMeteoPdfRequestDto filtro);
+        Task<EstadisticaMeteoDto> GetEstadisticas(int estacionNumero, string variable, int cantidad);
     }
 }

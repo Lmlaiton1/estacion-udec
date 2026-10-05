@@ -36,7 +36,11 @@ export class RoleGuard implements CanActivate {
         return this._rolService.getRol(this.id).pipe(map(data => {
             const roleName = data.name;
             console.log(roleName);
-            if (roleName && roleName === requiredRole) {
+            // requiredRole puede ser un solo rol (string) o una lista de roles permitidos
+            const permitido = Array.isArray(requiredRole)
+                ? requiredRole.includes(roleName)
+                : roleName === requiredRole;
+            if (roleName && permitido) {
                 return true;
             }
           

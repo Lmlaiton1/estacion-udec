@@ -83,6 +83,10 @@ export class EstacionPlaceholder implements OnInit {
     return this.rolUsuario === 'Administrador';
   }
 
+  puedeVerEstadistica(): boolean {
+    return this.rolUsuario === 'Administrador' || this.rolUsuario === 'Operario';
+  }
+
   logOut() {
     this._authService.logout();
   }
