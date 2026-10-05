@@ -60,7 +60,8 @@
 
 <mat-drawer-container class="station-container">
   <mat-drawer #drawer mode="side" opened class="station-drawer">
-    <mat-list role="list">
+    <div class="drawer-body">
+    <mat-list role="list" class="drawer-list">
       <mat-list-item role="listitem" routerLink="Sensors" routerLinkActive="active" class="menu-item">
         <div class="icon-container">
           <mat-icon class="icon-station" fontIcon="view_comfy"></mat-icon>
@@ -111,6 +112,27 @@
       </mat-list-item>
       }
     </mat-list>
+
+    <!-- Créditos al pie del menú lateral, igual que en Nueva Naturaleza -->
+    <div class="mensaje-creditos">
+      <div class="logo-fondo">
+        <img src="images/UdeC.jpg" alt="Logo UdeC" class="logo-udec">
+        <img src="images/GISTFA.png" alt="Logo GISTFA" class="logo-gistfa">
+      </div>
+
+      <div class="mensaje-contenido">
+        <div class="mensaje-linea-titulo">Grupo de investigación GISTFA</div>
+        <div class="mensaje-linea-titulo">Semillero de investigación SERFAC</div>
+
+        <div class="mensaje-linea-titulo">Director:</div>
+        <div class="mensaje-linea">Jaime Eduardo Andrade Ramírez</div>
+
+        <div class="mensaje-linea-titulo">Equipo de desarrolladoras:</div>
+        <div class="mensaje-linea">Laura Milena Laiton</div>
+        <div class="mensaje-linea">Valentina Julieth Sandoval Tarazona</div>
+      </div>
+    </div>
+    </div>
   </mat-drawer>
 
   <mat-drawer-content>
