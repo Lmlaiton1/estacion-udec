@@ -1,25 +1,271 @@
+// Paleta institucional (verdes de Nueva Naturaleza)
+$verde-oscuro: #1d4d35;
+$verde: #2e7d4f;
+$verde-claro: #8bc34a;
+
 .inicio-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0 24px;
+  background: radial-gradient(circle at 10% 10%, #f3faf4 0%, #dcefe1 50%, #c3e0cb 100%);
+  color: $verde-oscuro;
+}
+
+// Burbujas decorativas que flotan lentamente
+.burbuja {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.35;
+  z-index: 0;
+  animation: flotar 12s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.burbuja-1 { width: 320px; height: 320px; background: $verde-claro; top: -90px; right: -80px; }
+.burbuja-2 { width: 220px; height: 220px; background: #4fc3f7; bottom: -60px; left: -60px; animation-delay: -4s; }
+.burbuja-3 { width: 140px; height: 140px; background: #ffd54f; top: 45%; left: 8%; animation-delay: -8s; }
+
+@keyframes flotar {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-24px) scale(1.05); }
+}
+
+// Encabezado con logos y usuario
+.inicio-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-block: 20px;
+
+  .logos {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+
+    img {
+      height: 48px;
+      width: auto;
+      background: #fff;
+      border-radius: 10px;
+      padding: 4px;
+      box-shadow: 0 4px 12px rgba(29, 77, 53, 0.12);
+    }
+  }
+
+  .usuario {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-salir {
+    color: $verde-oscuro;
+    border-color: rgba(29, 77, 53, 0.4);
+    border-radius: 20px;
+  }
+}
+
+.inicio-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 20px;
   text-align: center;
+  padding-block: 16px 32px;
+}
+
+.titulo {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+  margin: 8px 0 4px;
+  color: $verde-oscuro;
+}
+
+.subtitulo {
+  margin: 0 0 32px;
+  color: #4f6b5a;
 }
 
 .tarjetas {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 32px;
   justify-content: center;
-  margin-top: 24px;
+  width: 100%;
 }
 
+// Tarjeta de módulo
 .tarjeta {
-  width: 280px;
-  cursor: pointer;
-  transition: transform 0.15s ease-in-out;
+  --color-a: #{$verde};
+  --color-b: #{$verde-claro};
+  --sombra: rgba(46, 125, 79, 0.35);
 
-  &:hover {
-    transform: translateY(-4px);
+  width: 320px;
+  max-width: 100%;
+  background: #fff;
+  border-radius: 22px;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(29, 77, 53, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: aparecer 0.5s ease both;
+  outline: none;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px var(--sombra);
+
+    .icono-principal { transform: scale(1.15) rotate(-6deg); }
+    .icono-secundario { transform: translate(6px, -6px) rotate(20deg); }
+    .entrar { background: linear-gradient(135deg, var(--color-a), var(--color-b)); color: #fff; }
+    .entrar mat-icon { transform: translateX(4px); }
   }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--color-a), 0 20px 40px var(--sombra);
+  }
+
+  &:active {
+    transform: translateY(-4px) scale(0.99);
+  }
+}
+
+// Colores propios de cada módulo
+.tarjeta-naturaleza {
+  --color-a: #1d4d35;
+  --color-b: #66bb6a;
+  --sombra: rgba(46, 125, 79, 0.4);
+}
+
+.tarjeta-estacion {
+  --color-a: #0277bd;
+  --color-b: #4dd0e1;
+  --sombra: rgba(2, 119, 189, 0.35);
+
+  .icono-secundario { color: #ffd54f; }
+}
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tarjeta-banner {
+  position: relative;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-a), var(--color-b));
+
+  // Brillo diagonal del banner
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.35), transparent 55%);
+  }
+
+  .icono-principal {
+    font-size: 72px;
+    width: 72px;
+    height: 72px;
+    color: #fff;
+    transition: transform 0.3s ease;
+  }
+
+  .icono-secundario {
+    position: absolute;
+    top: 22px;
+    right: 34%;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: rgba(255, 255, 255, 0.9);
+    transition: transform 0.3s ease;
+  }
+}
+
+.tarjeta-cuerpo {
+  padding: 20px 22px 22px;
+
+  h2 {
+    margin: 0 0 6px;
+    font-size: 1.3rem;
+    color: var(--color-a);
+  }
+
+  p {
+    margin: 0 0 16px;
+    color: #555;
+    line-height: 1.4;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-a);
+  background: color-mix(in srgb, var(--color-b) 18%, transparent);
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.entrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: var(--color-a);
+  border: 2px solid var(--color-a);
+  transition: background 0.25s ease, color 0.25s ease;
+
+  mat-icon { transition: transform 0.25s ease; }
+}
+
+.inicio-footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #4f6b5a;
+  padding-block: 16px;
+}
+
+// Respeta a quienes prefieren menos movimiento
+@media (prefers-reduced-motion: reduce) {
+  .burbuja, .tarjeta { animation: none; }
+  .tarjeta, .tarjeta * { transition: none !important; }
 }

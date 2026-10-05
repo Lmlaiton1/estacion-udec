@@ -1,29 +1,64 @@
 <div class="inicio-container">
-  <h1>¿Qué quieres gestionar?</h1>
+  <!-- Burbujas decorativas de fondo -->
+  <span class="burbuja burbuja-1"></span>
+  <span class="burbuja burbuja-2"></span>
+  <span class="burbuja burbuja-3"></span>
 
-  <div class="tarjetas">
-    <mat-card class="tarjeta" (click)="irANuevaNaturaleza()">
-      <mat-card-header>
-        <mat-card-title>Nueva Naturaleza</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p>Acuaponía: dispositivos, sensores, actuadores y control.</p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-raised-button color="primary" (click)="irANuevaNaturaleza()">Entrar</button>
-      </mat-card-actions>
-    </mat-card>
+  <header class="inicio-header">
+    <div class="logos">
+      <img src="images/UdeC.jpg" alt="Logo UdeC" />
+      <img src="images/Lestoma.png" alt="Logo LESTOMA" />
+      <img src="images/GISTFA.png" alt="Logo GISTFA" />
+    </div>
 
-    <mat-card class="tarjeta" (click)="irAEstacion()">
-      <mat-card-header>
-        <mat-card-title>Estación Meteorológica</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p>Red de estaciones ESP32: monitoreo y predicción de microclima.</p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-raised-button color="primary" (click)="irAEstacion()">Entrar</button>
-      </mat-card-actions>
-    </mat-card>
-  </div>
+    <div class="usuario">
+      <span class="saludo">Hola, <strong>{{ nombreUsuario }}</strong> 👋</span>
+      <button mat-stroked-button class="btn-salir" (click)="cerrarSesion()">
+        <mat-icon>logout</mat-icon>
+        Salir
+      </button>
+    </div>
+  </header>
+
+  <main class="inicio-main">
+    <h1 class="titulo">¿Qué quieres gestionar hoy?</h1>
+    <p class="subtitulo">Selecciona un módulo para continuar</p>
+
+    <div class="tarjetas">
+      @for (modulo of modulos; track modulo.id; let i = $index) {
+      <div class="tarjeta" [class]="'tarjeta-' + modulo.id" [style.animation-delay]="(i * 120) + 'ms'"
+        role="button" tabindex="0" [attr.aria-label]="'Entrar a ' + modulo.titulo" (click)="entrar(modulo)"
+        (keydown.enter)="entrar(modulo)" (keydown.space)="$event.preventDefault(); entrar(modulo)">
+
+        <div class="tarjeta-banner">
+          <mat-icon class="icono-principal">{{ modulo.icono }}</mat-icon>
+          <mat-icon class="icono-secundario">{{ modulo.iconoSecundario }}</mat-icon>
+        </div>
+
+        <div class="tarjeta-cuerpo">
+          <h2>{{ modulo.titulo }}</h2>
+          <p>{{ modulo.descripcion }}</p>
+
+          <div class="chips">
+            @for (c of modulo.caracteristicas; track c.texto) {
+            <span class="chip">
+              <mat-icon>{{ c.icono }}</mat-icon>
+              {{ c.texto }}
+            </span>
+            }
+          </div>
+
+          <span class="entrar">
+            Entrar
+            <mat-icon>arrow_forward</mat-icon>
+          </span>
+        </div>
+      </div>
+      }
+    </div>
+  </main>
+
+  <footer class="inicio-footer">
+    Universidad de Cundinamarca · Extensión Facatativá · Laboratorio LESTOMA
+  </footer>
 </div>
