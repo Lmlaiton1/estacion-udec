@@ -27,9 +27,10 @@ export class EstacionReporte {
   variable = '';
   fechaInicio: Date | null = null;
   fechaFin: Date | null = null;
+  // Por defecto cubre las 24 horas; si "hasta" < "desde" (ej. 18:00 a 06:00) se toma como horario nocturno.
   filtrarPorHora = false;
-  horaInicio = '08:00';
-  horaFin = '18:00';
+  horaInicio = '00:00';
+  horaFin = '23:59';
 
   generando = false;
 

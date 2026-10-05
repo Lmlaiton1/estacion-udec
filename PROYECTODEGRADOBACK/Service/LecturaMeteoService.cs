@@ -67,11 +67,24 @@ namespace RR_Nueva_Naturaleza.Service
             if (filtro.HoraInicio.HasValue && filtro.HoraFin.HasValue)
             {
                 lecturas = lecturas
-                    .Where(l => l.FechaHora.TimeOfDay >= filtro.HoraInicio.Value && l.FechaHora.TimeOfDay <= filtro.HoraFin.Value)
+                    .Where(l => DentroDelHorario(l.FechaHora, filtro.HoraInicio.Value, filtro.HoraFin.Value))
                     .ToList();
             }
 
             return lecturas;
+        }
+
+        // Compara minuto a minuto, así "hasta" incluye todo ese minuto (23:59 cubre hasta 23:59:59).
+        // Si inicio > fin (ej. 18:00 a 06:00) el horario cruza la medianoche.
+        private static bool DentroDelHorario(DateTime fechaHora, TimeSpan horaInicio, TimeSpan horaFin)
+        {
+            var minuto = fechaHora.Hour * 60 + fechaHora.Minute;
+            var inicio = (int)horaInicio.TotalMinutes;
+            var fin = (int)horaFin.TotalMinutes;
+
+            return inicio <= fin
+                ? minuto >= inicio && minuto <= fin
+                : minuto >= inicio || minuto <= fin;
         }
 
         public async Task<EstadisticaMeteoDto> GetEstadisticas(int estacionNumero, string variable, int cantidad)
@@ -158,6 +171,7 @@ namespace RR_Nueva_Naturaleza.Service
             var variableTexto = string.IsNullOrEmpty(filtro.Variable) ? "Todas las variables" : filtro.Variable;
             var horaTexto = (filtro.HoraInicio.HasValue && filtro.HoraFin.HasValue)
                 ? $" · Horario: {filtro.HoraInicio:hh\\:mm} a {filtro.HoraFin:hh\\:mm}"
+                  + (filtro.HoraInicio > filtro.HoraFin ? " (cruza la medianoche)" : string.Empty)
                 : string.Empty;
 
             QuestPDF.Settings.License = LicenseType.Community;

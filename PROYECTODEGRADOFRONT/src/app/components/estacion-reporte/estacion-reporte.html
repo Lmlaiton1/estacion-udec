@@ -61,7 +61,7 @@
         {{ nombreEstacion(estacionNumero) }} ·
         {{ variable ? variable : 'Todas las variables' }}
         @if (filtrarPorHora) {
-          · Horario {{ horaInicio }} a {{ horaFin }}
+          · Horario {{ horaInicio }} a {{ horaFin }}{{ horaFin < horaInicio ? ' (cruza la medianoche)' : '' }}
         }
       </p>
     </mat-card-content>
