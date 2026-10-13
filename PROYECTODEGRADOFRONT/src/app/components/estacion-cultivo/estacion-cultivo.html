@@ -1,0 +1,893 @@
+<div class="container">
+  <div class="encabezado">
+    <h2 class="title">Control de umbrales y alarmas de cultivo</h2>
+
+    <div class="filtros">
+      <mat-form-field appearance="outline" class="filtro-cultivo">
+        <mat-label>Cultivo</mat-label>
+        <mat-select [(ngModel)]="cultivoFiltro" (selectionChange)="cambiarFiltroCultivo()">
+          <mat-option [value]="null">Todos los cultivos</mat-option>
+          @for (c of cultivos; track c.id) {
+            <mat-option [value]="c.id">{{ c.numero }} · {{ c.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (aviso.permiso !== 'granted') {
+        <button mat-stroked-button color="primary" (click)="activarNotificaciones()"
+          [matTooltip]="aviso.contextoSeguro ? 'Muestra un aviso en el escritorio cuando se dispare una alarma' : 'Solo funciona entrando por localhost o HTTPS'">
+          <mat-icon>notifications_active</mat-icon> Activar avisos de escritorio
+        </button>
+      } @else {
+        <span class="aviso-ok"><mat-icon>notifications_active</mat-icon> Avisos de escritorio activos</span>
+      }
+    </div>
+  </div>
+
+  @if (!aviso.contextoSeguro) {
+    <p class="nota">
+      Estás entrando por una dirección IP sin HTTPS: el navegador no permite avisos de escritorio aquí.
+      Las alarmas igual suenan y aparecen en pantalla. Para avisos de escritorio, abre el sistema en el PC del laboratorio con <b>localhost</b>.
+    </p>
+  }
+
+  <mat-tab-group [selectedIndex]="tabIndex" (selectedIndexChange)="cambiarTab($event)" animationDuration="0ms">
+
+    <!-- ===================== CULTIVOS Y ETAPAS ===================== -->
+    <mat-tab label="Cultivos y etapas">
+      <section class="seccion">
+        <div class="seccion-header">
+          <h3>Cultivos</h3>
+          @if (esAdmin) {
+            <button mat-raised-button color="primary" (click)="nuevoCultivo()"><mat-icon>add</mat-icon> Agregar cultivo</button>
+          }
+        </div>
+
+        @if (formCultivo) {
+          <mat-card class="form-card" appearance="outlined">
+            <mat-card-title>{{ cultivoEnEdicion ? 'Editar cultivo' : 'Nuevo cultivo' }}</mat-card-title>
+            <mat-card-content>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Número</mat-label>
+                  <input matInput type="number" min="1" [(ngModel)]="formCultivo.numero">
+                  <mat-hint>Topic MQTT: cultivo/{{ formCultivo.numero }}/datos</mat-hint>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombre</mat-label>
+                  <input matInput [(ngModel)]="formCultivo.nombre" placeholder="Ej.: Invernadero de orellanas">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Especie</mat-label>
+                  <input matInput [(ngModel)]="formCultivo.especie" placeholder="Ej.: Pleurotus ostreatus">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Variedad (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formCultivo.variedad">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Ubicación (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formCultivo.ubicacion">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Área m² (opcional)</mat-label>
+                  <input matInput type="number" [(ngModel)]="formCultivo.areaM2">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Fecha de siembra</mat-label>
+                  <input matInput type="date" [(ngModel)]="formCultivo.fechaSiembra">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Estaciones meteorológicas</mat-label>
+                  <mat-select multiple [(ngModel)]="formCultivo.estaciones">
+                    @for (e of estaciones; track e.numero) {
+                      <mat-option [value]="e.numero">{{ e.numero }} · {{ e.nombre }}{{ e.activa ? '' : ' (inactiva)' }}</mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint>Una, varias o todas</mat-hint>
+                </mat-form-field>
+                <mat-checkbox [checked]="todasLasEstaciones" (change)="alternarTodasLasEstaciones($event.checked)">
+                  Todas las estaciones
+                </mat-checkbox>
+                <mat-form-field appearance="outline" class="campo-ancho">
+                  <mat-label>Descripción (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formCultivo.descripcion">
+                </mat-form-field>
+                @if (cultivoEnEdicion) {
+                  <mat-form-field appearance="outline" class="campo-ancho">
+                    <mat-label>Motivo del cambio (opcional, queda en la auditoría)</mat-label>
+                    <input matInput [(ngModel)]="formCultivo.motivo">
+                  </mat-form-field>
+                }
+              </div>
+            </mat-card-content>
+            <mat-card-actions align="end">
+              <button mat-button (click)="formCultivo = null">Cancelar</button>
+              <button mat-raised-button color="primary" [disabled]="enviando" (click)="guardarCultivo()">Guardar</button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        @if (formEtapa) {
+          <mat-card class="form-card" appearance="outlined">
+            <mat-card-title>{{ etapaEnEdicion ? 'Editar etapa' : 'Nueva etapa productiva' }}</mat-card-title>
+            <mat-card-content>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombre</mat-label>
+                  <input matInput [(ngModel)]="formEtapa.nombre" placeholder="Ej.: Incubación, Fructificación">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Orden</mat-label>
+                  <input matInput type="number" min="1" [(ngModel)]="formEtapa.orden">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Duración (días, opcional)</mat-label>
+                  <input matInput type="number" min="1" [(ngModel)]="formEtapa.duracionDias">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Fecha de inicio (opcional)</mat-label>
+                  <input matInput type="date" [(ngModel)]="formEtapa.fechaInicio">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="campo-ancho">
+                  <mat-label>Descripción (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formEtapa.descripcion">
+                </mat-form-field>
+                @if (etapaEnEdicion) {
+                  <mat-form-field appearance="outline" class="campo-ancho">
+                    <mat-label>Motivo del cambio (opcional, queda en la auditoría)</mat-label>
+                    <input matInput [(ngModel)]="formEtapa.motivo">
+                  </mat-form-field>
+                }
+              </div>
+            </mat-card-content>
+            <mat-card-actions align="end">
+              <button mat-button (click)="formEtapa = null">Cancelar</button>
+              <button mat-raised-button color="primary" [disabled]="enviando" (click)="guardarEtapa()">Guardar</button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        <div class="tarjetas">
+          @for (c of cultivosVisibles; track c.id) {
+            <mat-card class="tarjeta-cultivo" appearance="outlined">
+              <div class="tarjeta-header">
+                <div>
+                  <div class="tarjeta-titulo">{{ c.numero }} · {{ c.nombre }}</div>
+                  <div class="tarjeta-sub">{{ c.especie }}{{ c.variedad ? ' — ' + c.variedad : '' }}</div>
+                </div>
+                <span class="estado" [ngClass]="c.activo ? 'activo' : 'inactivo'">{{ c.activo ? 'Activo' : 'Inactivo' }}</span>
+              </div>
+
+              <div class="datos">
+                @if (c.ubicacion) { <span><mat-icon>place</mat-icon>{{ c.ubicacion }}</span> }
+                @if (c.areaM2) { <span><mat-icon>square_foot</mat-icon>{{ c.areaM2 }} m²</span> }
+                @if (c.fechaSiembra) { <span><mat-icon>event</mat-icon>Siembra {{ c.fechaSiembra | date:'dd/MM/yyyy' }}</span> }
+                <span><mat-icon>cloud</mat-icon>{{ textoEstaciones(c.estaciones) }}</span>
+                <span><mat-icon>sensors</mat-icon>{{ sensoresDe(c.id).length }} sensores · {{ actuadoresDe(c.id).length }} actuadores</span>
+              </div>
+
+              <div class="etapas">
+                <div class="etapas-titulo">
+                  Etapas productivas
+                  @if (esAdmin) {
+                    <button mat-icon-button (click)="nuevaEtapa(c)" matTooltip="Agregar etapa"><mat-icon>add</mat-icon></button>
+                  }
+                </div>
+                @for (e of c.etapas; track e.id) {
+                  <div class="etapa" [class.etapa-activa]="e.activa">
+                    <span class="etapa-orden">{{ e.orden }}</span>
+                    <span class="etapa-nombre">
+                      {{ e.nombre }}
+                      @if (e.duracionDias) { <small>({{ e.duracionDias }} días)</small> }
+                      @if (e.activa) { <span class="chip-activa">Etapa actual</span> }
+                    </span>
+                    @if (esAdmin) {
+                      @if (!e.activa) {
+                        <button mat-icon-button (click)="activarEtapa(e)" matTooltip="Activar: pasar a esta etapa"><mat-icon>play_circle</mat-icon></button>
+                      } @else {
+                        <button mat-icon-button (click)="quitarEtapaActual(e)" matTooltip="Desactivar: dejar sin etapa actual"><mat-icon>pause_circle</mat-icon></button>
+                      }
+                      <button mat-icon-button (click)="editarEtapa(e)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                      <button mat-icon-button color="warn" (click)="eliminarEtapa(e)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+                    }
+                  </div>
+                } @empty {
+                  <p class="no-data">Sin etapas: los umbrales aplican siempre.</p>
+                }
+              </div>
+
+              @if (esAdmin) {
+                <mat-card-actions align="end">
+                  <button mat-button color="primary" (click)="editarCultivo(c)"><mat-icon>edit</mat-icon> Editar</button>
+                  <button mat-button (click)="cambiarEstadoCultivo(c)">
+                    <mat-icon>{{ c.activo ? 'toggle_on' : 'toggle_off' }}</mat-icon> {{ c.activo ? 'Desactivar' : 'Reactivar' }}
+                  </button>
+                  <button mat-button color="warn" (click)="eliminarCultivo(c)"><mat-icon>delete</mat-icon> Eliminar</button>
+                </mat-card-actions>
+              }
+            </mat-card>
+          } @empty {
+            <p class="no-data">No hay cultivos registrados. {{ esAdmin ? 'Empieza agregando uno.' : '' }}</p>
+          }
+        </div>
+      </section>
+    </mat-tab>
+
+    <!-- ===================== SENSORES ===================== -->
+    <mat-tab label="Sensores">
+      <section class="seccion">
+        <div class="seccion-header">
+          <h3>Sensores del cultivo</h3>
+          @if (esAdmin && cultivos.length) {
+            <button mat-raised-button color="primary" (click)="nuevoSensor()"><mat-icon>add</mat-icon> Agregar sensor</button>
+          }
+        </div>
+
+        @if (formSensor) {
+          <mat-card class="form-card" appearance="outlined">
+            <mat-card-title>{{ sensorEnEdicion ? 'Editar sensor' : 'Nuevo sensor' }}</mat-card-title>
+            <mat-card-content>
+              @if (!sensorEnEdicion) {
+                <div class="plantillas">
+                  Plantilla rápida:
+                  <button mat-stroked-button (click)="plantillaDht22('temperatura')">DHT22 temperatura</button>
+                  <button mat-stroked-button (click)="plantillaDht22('humedad')">DHT22 humedad</button>
+                  <small>El DHT22 mide dos variables: regístralo como dos sensores.</small>
+                </div>
+              }
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Cultivo</mat-label>
+                  <mat-select [(ngModel)]="formSensor.cultivoId" [disabled]="!!sensorEnEdicion">
+                    @for (c of cultivos; track c.id) { <mat-option [value]="c.id">{{ c.numero }} · {{ c.nombre }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombre</mat-label>
+                  <input matInput [(ngModel)]="formSensor.nombre">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Clave en el JSON del ESP</mat-label>
+                  <input matInput [(ngModel)]="formSensor.clave" placeholder="temperatura">
+                  <mat-hint>{{ '{' }}"{{ formSensor.clave || 'clave' }}": 24.5{{ '}' }}</mat-hint>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo / modelo</mat-label>
+                  <input matInput [(ngModel)]="formSensor.tipo" placeholder="DHT22">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Variable</mat-label>
+                  <input matInput [(ngModel)]="formSensor.variable" placeholder="temperatura, humedad, humedadSuelo...">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Unidad</mat-label>
+                  <input matInput [(ngModel)]="formSensor.unidad" placeholder="°C, %">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Rango de medida mín.</mat-label>
+                  <input matInput type="number" [(ngModel)]="formSensor.rangoMin">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Rango de medida máx.</mat-label>
+                  <input matInput type="number" [(ngModel)]="formSensor.rangoMax">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Precisión (±)</mat-label>
+                  <input matInput type="number" [(ngModel)]="formSensor.precision">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Marca (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formSensor.marca">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Fecha de instalación</mat-label>
+                  <input matInput type="date" [(ngModel)]="formSensor.fechaInstalacion">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="campo-ancho">
+                  <mat-label>Especificaciones (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formSensor.especificaciones">
+                </mat-form-field>
+                @if (sensorEnEdicion) {
+                  <mat-form-field appearance="outline" class="campo-ancho">
+                    <mat-label>Motivo del cambio (opcional, queda en la auditoría)</mat-label>
+                    <input matInput [(ngModel)]="formSensor.motivo">
+                  </mat-form-field>
+                }
+              </div>
+            </mat-card-content>
+            <mat-card-actions align="end">
+              <button mat-button (click)="formSensor = null">Cancelar</button>
+              <button mat-raised-button color="primary" [disabled]="enviando" (click)="guardarSensor()">Guardar</button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        <div class="tabla-scroll">
+          <table mat-table [dataSource]="sensores" class="tabla">
+            <ng-container matColumnDef="cultivo">
+              <th mat-header-cell *matHeaderCellDef>Cultivo</th>
+              <td mat-cell *matCellDef="let s">{{ s.cultivoNombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef>Sensor</th>
+              <td mat-cell *matCellDef="let s">{{ s.nombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let s">{{ s.tipo }}{{ s.marca ? ' · ' + s.marca : '' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="variable">
+              <th mat-header-cell *matHeaderCellDef>Variable</th>
+              <td mat-cell *matCellDef="let s">{{ s.variable }} ({{ s.unidad }})</td>
+            </ng-container>
+            <ng-container matColumnDef="clave">
+              <th mat-header-cell *matHeaderCellDef>Clave MQTT</th>
+              <td mat-cell *matCellDef="let s"><code>{{ s.clave }}</code></td>
+            </ng-container>
+            <ng-container matColumnDef="rango">
+              <th mat-header-cell *matHeaderCellDef>Especificación</th>
+              <td mat-cell *matCellDef="let s">
+                {{ rango(s.rangoMin, s.rangoMax, s.unidad) }}
+                @if (s.precision !== null) { <small>· ±{{ s.precision }}</small> }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="ultimo">
+              <th mat-header-cell *matHeaderCellDef>Último valor</th>
+              <td mat-cell *matCellDef="let s">
+                @if (s.ultimoValor !== null) {
+                  <b>{{ s.ultimoValor }} {{ s.unidad }}</b><br><small>{{ s.fechaUltimoValor | date:'dd/MM HH:mm:ss' }}</small>
+                } @else { <span class="no-data">Sin lecturas</span> }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let s">
+                <span class="estado" [ngClass]="s.activo ? 'activo' : 'inactivo'">{{ s.activo ? 'Activo' : 'Inactivo' }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let s">
+                @if (esAdmin) {
+                  <button mat-icon-button (click)="editarSensor(s)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button (click)="cambiarEstadoSensor(s)" [matTooltip]="s.activo ? 'Desactivar' : 'Reactivar'">
+                    <mat-icon>{{ s.activo ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="eliminarSensor(s)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+                }
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columnasSensores"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnasSensores;"></tr>
+          </table>
+        </div>
+        @if (sensores.length === 0) { <p class="no-data">No hay sensores registrados</p> }
+      </section>
+    </mat-tab>
+
+    <!-- ===================== ACTUADORES ===================== -->
+    <mat-tab label="Actuadores">
+      <section class="seccion">
+        <div class="seccion-header">
+          <h3>Actuadores del cultivo</h3>
+          @if (esAdmin && cultivos.length) {
+            <button mat-raised-button color="primary" (click)="nuevoActuador()"><mat-icon>add</mat-icon> Agregar actuador</button>
+          }
+        </div>
+
+        @if (formActuador) {
+          <mat-card class="form-card" appearance="outlined">
+            <mat-card-title>{{ actuadorEnEdicion ? 'Editar actuador' : 'Nuevo actuador' }}</mat-card-title>
+            <mat-card-content>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Cultivo</mat-label>
+                  <mat-select [(ngModel)]="formActuador.cultivoId" [disabled]="!!actuadorEnEdicion">
+                    @for (c of cultivos; track c.id) { <mat-option [value]="c.id">{{ c.numero }} · {{ c.nombre }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombre</mat-label>
+                  <input matInput [(ngModel)]="formActuador.nombre" placeholder="Ventilador principal">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo</mat-label>
+                  <mat-select [(ngModel)]="formActuador.tipo">
+                    @for (t of tiposActuador; track t) { <mat-option [value]="t">{{ t }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Clave MQTT</mat-label>
+                  <input matInput [(ngModel)]="formActuador.clave" placeholder="ventilador1">
+                  <mat-hint>.../actuadores/{{ formActuador.clave || 'clave' }}/cmd</mat-hint>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Marca (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formActuador.marca">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Potencia (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formActuador.potencia" placeholder="12 V · 0.2 A">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="campo-ancho">
+                  <mat-label>Especificaciones (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formActuador.especificaciones" placeholder="Controlado por relé en ESP del cultivo">
+                </mat-form-field>
+                @if (actuadorEnEdicion) {
+                  <mat-form-field appearance="outline" class="campo-ancho">
+                    <mat-label>Motivo del cambio (opcional, queda en la auditoría)</mat-label>
+                    <input matInput [(ngModel)]="formActuador.motivo">
+                  </mat-form-field>
+                }
+              </div>
+            </mat-card-content>
+            <mat-card-actions align="end">
+              <button mat-button (click)="formActuador = null">Cancelar</button>
+              <button mat-raised-button color="primary" [disabled]="enviando" (click)="guardarActuador()">Guardar</button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        <div class="tarjetas">
+          @for (a of actuadores; track a.id) {
+            <mat-card class="tarjeta-actuador" appearance="outlined" [class.inactivo-card]="!a.activo">
+              <div class="tarjeta-header">
+                <div>
+                  <div class="tarjeta-titulo">{{ a.nombre }}</div>
+                  <div class="tarjeta-sub">{{ a.tipo }} · {{ a.cultivoNombre }} · <code>{{ a.clave }}</code></div>
+                </div>
+                <span class="foco" [class.on]="a.encendido">{{ a.encendido ? 'ENCENDIDO' : 'APAGADO' }}</span>
+              </div>
+
+              <div class="datos">
+                <span><mat-icon>{{ a.modo === 'Automatico' ? 'smart_toy' : 'pan_tool' }}</mat-icon>Modo {{ a.modo === 'Automatico' ? 'automático' : 'manual' }}</span>
+                @if (a.potencia) { <span><mat-icon>bolt</mat-icon>{{ a.potencia }}</span> }
+                @if (a.fechaUltimoCambio) { <span><mat-icon>schedule</mat-icon>{{ a.fechaUltimoCambio | date:'dd/MM HH:mm' }}</span> }
+                @if (!a.activo) { <span class="estado inactivo">Desactivado</span> }
+              </div>
+
+              <mat-card-actions class="acciones-actuador">
+                <button mat-raised-button [color]="a.encendido ? 'warn' : 'primary'" [disabled]="!a.activo" (click)="accionarActuador(a)">
+                  <mat-icon>power_settings_new</mat-icon> {{ a.encendido ? 'Apagar' : 'Encender' }}
+                </button>
+                <button mat-stroked-button [disabled]="!a.activo" (click)="cambiarModo(a)">
+                  Pasar a {{ a.modo === 'Automatico' ? 'manual' : 'automático' }}
+                </button>
+                @if (esAdmin) {
+                  <span class="espaciador"></span>
+                  <button mat-icon-button (click)="editarActuador(a)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button (click)="cambiarEstadoActuador(a)" [matTooltip]="a.activo ? 'Desactivar' : 'Reactivar'">
+                    <mat-icon>{{ a.activo ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="eliminarActuador(a)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+                }
+              </mat-card-actions>
+            </mat-card>
+          } @empty {
+            <p class="no-data">No hay actuadores registrados</p>
+          }
+        </div>
+      </section>
+    </mat-tab>
+
+    <!-- ===================== UMBRALES ===================== -->
+    <mat-tab label="Umbrales">
+      <section class="seccion">
+        <div class="seccion-header">
+          <h3>Umbrales por cultivo y etapa</h3>
+          @if (esAdmin && cultivos.length) {
+            <button mat-raised-button color="primary" (click)="nuevoUmbral()"><mat-icon>add</mat-icon> Agregar umbral</button>
+          }
+        </div>
+
+        @if (formUmbral) {
+          <mat-card class="form-card" appearance="outlined">
+            <mat-card-title>{{ umbralEnEdicion ? 'Editar umbral' : 'Nuevo umbral' }}</mat-card-title>
+            <mat-card-content>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Cultivo</mat-label>
+                  <mat-select [(ngModel)]="formUmbral.cultivoId" (selectionChange)="cambioCultivoUmbral()">
+                    @for (c of cultivos; track c.id) { <mat-option [value]="c.id">{{ c.numero }} · {{ c.nombre }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Sensor</mat-label>
+                  <mat-select [(ngModel)]="formUmbral.sensorCultivoId">
+                    @for (s of sensoresDe(formUmbral.cultivoId); track s.id) {
+                      <mat-option [value]="s.id">{{ s.nombre }} ({{ s.unidad }})</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Etapa productiva</mat-label>
+                  <mat-select [(ngModel)]="formUmbral.etapaCultivoId">
+                    <mat-option [value]="null">Todas las etapas</mat-option>
+                    @for (e of etapasDe(formUmbral.cultivoId); track e.id) { <mat-option [value]="e.id">{{ e.nombre }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Valor mínimo (opcional)</mat-label>
+                  <input matInput type="number" [(ngModel)]="formUmbral.valorMin">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Valor máximo (opcional)</mat-label>
+                  <input matInput type="number" [(ngModel)]="formUmbral.valorMax">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Gravedad</mat-label>
+                  <mat-select [(ngModel)]="formUmbral.nivelGravedad">
+                    @for (n of niveles; track n) { <mat-option [value]="n">{{ n }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Actuador automático (opcional)</mat-label>
+                  <mat-select [(ngModel)]="formUmbral.actuadorCultivoId">
+                    <mat-option [value]="null">Ninguno, solo alarma</mat-option>
+                    @for (a of actuadoresDe(formUmbral.cultivoId); track a.id) { <mat-option [value]="a.id">{{ a.nombre }}</mat-option> }
+                  </mat-select>
+                </mat-form-field>
+                @if (formUmbral.actuadorCultivoId) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Al salir de rango</mat-label>
+                    <mat-select [(ngModel)]="formUmbral.encenderActuador">
+                      <mat-option [value]="true">Encender</mat-option>
+                      <mat-option [value]="false">Apagar</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-slide-toggle [(ngModel)]="formUmbral.revertirAlNormalizar">Revertir cuando vuelva a rango</mat-slide-toggle>
+                }
+                <mat-form-field appearance="outline">
+                  <mat-label>SMS si nadie la ve en (min)</mat-label>
+                  <input matInput type="number" min="1" [(ngModel)]="formUmbral.minutosEscalamientoSms" placeholder="Vacío = sin SMS">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="campo-ancho">
+                  <mat-label>Descripción (opcional)</mat-label>
+                  <input matInput [(ngModel)]="formUmbral.descripcion">
+                </mat-form-field>
+                @if (umbralEnEdicion) {
+                  <mat-form-field appearance="outline" class="campo-ancho">
+                    <mat-label>Motivo del cambio (opcional, queda en la auditoría)</mat-label>
+                    <input matInput [(ngModel)]="formUmbral.motivo">
+                  </mat-form-field>
+                }
+              </div>
+            </mat-card-content>
+            <mat-card-actions align="end">
+              <button mat-button (click)="formUmbral = null">Cancelar</button>
+              <button mat-raised-button color="primary" [disabled]="enviando" (click)="guardarUmbral()">Guardar</button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        <div class="tabla-scroll">
+          <table mat-table [dataSource]="umbrales" class="tabla">
+            <ng-container matColumnDef="cultivo">
+              <th mat-header-cell *matHeaderCellDef>Cultivo</th>
+              <td mat-cell *matCellDef="let u">{{ u.cultivoNombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="sensor">
+              <th mat-header-cell *matHeaderCellDef>Sensor</th>
+              <td mat-cell *matCellDef="let u">{{ u.sensorNombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="etapa">
+              <th mat-header-cell *matHeaderCellDef>Etapa</th>
+              <td mat-cell *matCellDef="let u">{{ u.etapaNombre ?? 'Todas' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="rango">
+              <th mat-header-cell *matHeaderCellDef>Rango permitido</th>
+              <td mat-cell *matCellDef="let u">{{ rango(u.valorMin, u.valorMax, u.unidad) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="nivel">
+              <th mat-header-cell *matHeaderCellDef>Gravedad</th>
+              <td mat-cell *matCellDef="let u"><span class="estado" [ngClass]="'nivel-' + u.nivelGravedad.toLowerCase()">{{ u.nivelGravedad }}</span></td>
+            </ng-container>
+            <ng-container matColumnDef="accion">
+              <th mat-header-cell *matHeaderCellDef>Acción automática</th>
+              <td mat-cell *matCellDef="let u">
+                @if (u.actuadorNombre) { {{ u.encenderActuador ? 'Encender' : 'Apagar' }} {{ u.actuadorNombre }} } @else { — }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="sms">
+              <th mat-header-cell *matHeaderCellDef>SMS</th>
+              <td mat-cell *matCellDef="let u">{{ u.minutosEscalamientoSms ? 'a los ' + u.minutosEscalamientoSms + ' min' : '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let u"><span class="estado" [ngClass]="u.activo ? 'activo' : 'inactivo'">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
+            </ng-container>
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let u">
+                @if (esAdmin) {
+                  <button mat-icon-button (click)="editarUmbral(u)" matTooltip="Editar"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button (click)="cambiarEstadoUmbral(u)" [matTooltip]="u.activo ? 'Desactivar' : 'Reactivar'">
+                    <mat-icon>{{ u.activo ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="eliminarUmbral(u)" matTooltip="Eliminar"><mat-icon>delete</mat-icon></button>
+                }
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columnasUmbrales"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnasUmbrales;"></tr>
+          </table>
+        </div>
+        @if (umbrales.length === 0) { <p class="no-data">No hay umbrales configurados</p> }
+      </section>
+    </mat-tab>
+
+    <!-- ===================== ALARMAS ===================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <span [matBadge]="alarmasAbiertas || null" matBadgeColor="warn" matBadgeOverlap="false">Alarmas</span>
+      </ng-template>
+
+      <section class="seccion">
+        <div class="seccion-header">
+          <h3>Alarmas</h3>
+          <mat-slide-toggle [checked]="soloAbiertas" (change)="toggleSoloAbiertas()">Solo sin resolver</mat-slide-toggle>
+        </div>
+
+        <mat-accordion multi>
+          @for (a of alarmas; track a.id) {
+            <mat-expansion-panel class="alarma" [ngClass]="'alarma-' + a.estado.toLowerCase()">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <span class="estado" [ngClass]="'nivel-' + a.nivelGravedad.toLowerCase()">{{ a.nivelGravedad }}</span>
+                  <span class="alarma-mensaje">{{ a.mensaje }}</span>
+                </mat-panel-title>
+                <mat-panel-description>
+                  <span class="estado-alarma" [ngClass]="'ea-' + a.estado.toLowerCase()">{{ nombreEstado(a.estado) }}</span>
+                  {{ a.fechaDisparo | date:'dd/MM HH:mm' }}
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <div class="alarma-resumen">
+                <div><b>Cultivo:</b> {{ a.cultivoNombre }}{{ a.etapaNombre ? ' · etapa ' + a.etapaNombre : '' }}</div>
+                <div><b>Valor:</b> {{ a.valorRegistrado }} → último {{ a.ultimoValor }} ({{ a.ocurrencias }} lecturas fuera de rango)</div>
+                <div><b>Vista por:</b> {{ a.vistaPorNombre ?? '—' }} {{ a.fechaVista ? '(' + (a.fechaVista | date:'dd/MM HH:mm') + ')' : '' }}</div>
+                <div><b>Tomó el control:</b> {{ a.atendidaPorNombre ?? '—' }} {{ a.fechaAtencion ? '(' + (a.fechaAtencion | date:'dd/MM HH:mm') + ')' : '' }}</div>
+                <div><b>Resuelta por:</b> {{ a.resueltaPorNombre ?? '—' }} {{ a.fechaResolucion ? '(' + (a.fechaResolucion | date:'dd/MM HH:mm') + ')' : '' }}</div>
+                @if (a.solucion) { <div><b>Solución:</b> {{ a.solucion }}</div> }
+                @if (a.smsEnviado) { <div><b>SMS:</b> {{ a.fechaSms | date:'dd/MM HH:mm' }}</div> }
+              </div>
+
+              <h4>Auditoría de la alarma</h4>
+              <ol class="linea-tiempo">
+                @for (b of a.bitacora; track b.id) {
+                  <li [ngClass]="'lt-' + b.accion.toLowerCase()">
+                    <span class="lt-fecha">{{ b.fecha | date:'dd/MM HH:mm:ss' }}</span>
+                    <b>{{ nombresAccion[b.accion] ?? b.accion }}</b> — {{ b.usuarioNombre }}
+                    @if (b.comentario) { <div class="lt-comentario">{{ b.comentario }}</div> }
+                  </li>
+                }
+              </ol>
+
+              @if (esAbierta(a)) {
+                <div class="acciones-alarma">
+                  @if (a.estado === 'Activa') {
+                    <button mat-stroked-button color="primary" (click)="marcarVista(a)"><mat-icon>visibility</mat-icon> Vi la alarma</button>
+                  }
+                  <button mat-raised-button color="primary" (click)="tomarControl(a)"><mat-icon>pan_tool</mat-icon> Tomar el control</button>
+                  <button mat-stroked-button (click)="comentarAlarma(a)"><mat-icon>comment</mat-icon> Comentar</button>
+                  <button mat-raised-button color="accent" (click)="resolverAlarma(a)"><mat-icon>check_circle</mat-icon> Resolver</button>
+                </div>
+
+                @if (actuadoresDe(a.cultivoId).length) {
+                  <div class="control-rapido">
+                    <span>Control manual del cultivo:</span>
+                    @for (act of actuadoresDe(a.cultivoId); track act.id) {
+                      <button mat-stroked-button [disabled]="!act.activo" (click)="accionarActuador(act, a)">
+                        <mat-icon>power_settings_new</mat-icon> {{ act.encendido ? 'Apagar' : 'Encender' }} {{ act.nombre }}
+                      </button>
+                    }
+                  </div>
+                }
+              }
+
+              <!-- Administración de la alarma: siempre con motivo y auditoría -->
+              @if (esAdmin) {
+                <div class="admin-alarma">
+                  <span>Administración:</span>
+                  <button mat-button (click)="modificarAlarma(a)"><mat-icon>edit</mat-icon> Modificar</button>
+                  @if (esAbierta(a)) {
+                    <button mat-button (click)="anularAlarma(a)"><mat-icon>toggle_off</mat-icon> Desactivar (anular)</button>
+                  } @else {
+                    <button mat-button (click)="reactivarAlarma(a)"><mat-icon>toggle_on</mat-icon> Reactivar</button>
+                  }
+                  <button mat-button color="warn" (click)="eliminarAlarma(a)"><mat-icon>delete</mat-icon> Eliminar</button>
+                </div>
+              }
+            </mat-expansion-panel>
+          }
+        </mat-accordion>
+
+        @if (alarmas.length === 0) {
+          <p class="no-data">{{ soloAbiertas ? 'No hay alarmas sin resolver' : 'No hay alarmas registradas' }}</p>
+        }
+      </section>
+    </mat-tab>
+
+    <!-- ===================== AUDITORÍA ===================== -->
+    <mat-tab label="Auditoría">
+      <section class="seccion">
+        <div class="seccion-header">
+          <h3>Cambios de configuración: quién creó, modificó, eliminó, desactivó o reactivó</h3>
+          <div class="filtros">
+            <mat-form-field appearance="outline">
+              <mat-label>Elemento</mat-label>
+              <mat-select [(ngModel)]="filtroTipoEntidad" (selectionChange)="cargarAuditoria()">
+                <mat-option [value]="null">Todos</mat-option>
+                @for (t of tiposEntidad; track t) { <mat-option [value]="t">{{ t }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Desde</mat-label>
+              <input matInput type="date" [(ngModel)]="filtroDesde" (change)="cargarAuditoria()">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="tabla-scroll">
+          <table mat-table [dataSource]="auditoria" class="tabla">
+            <ng-container matColumnDef="fecha">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let r">{{ r.fecha | date:'dd/MM/yy HH:mm:ss' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="entidad">
+              <th mat-header-cell *matHeaderCellDef>Elemento</th>
+              <td mat-cell *matCellDef="let r">{{ r.nombreEntidad }} <small>({{ r.tipoEntidad }})</small></td>
+            </ng-container>
+            <ng-container matColumnDef="accion">
+              <th mat-header-cell *matHeaderCellDef>Acción</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="estado" [ngClass]="'acc-' + r.accion.toLowerCase()">{{ nombresAuditoria[r.accion] ?? r.accion }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="detalle">
+              <th mat-header-cell *matHeaderCellDef>Qué cambió</th>
+              <td mat-cell *matCellDef="let r" class="celda-detalle">{{ r.detalle ?? '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="motivo">
+              <th mat-header-cell *matHeaderCellDef>Por qué</th>
+              <td mat-cell *matCellDef="let r">{{ r.motivo ?? '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="usuario">
+              <th mat-header-cell *matHeaderCellDef>Quién</th>
+              <td mat-cell *matCellDef="let r">{{ r.usuarioNombre }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columnasAuditoria"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnasAuditoria;"></tr>
+          </table>
+        </div>
+        @if (auditoria.length === 0) { <p class="no-data">Sin cambios en el periodo</p> }
+      </section>
+
+      <section class="seccion">
+        <div class="seccion-header">
+          <h3>Sensores y actuadores: qué pasó, quién y para qué</h3>
+          <div class="filtros">
+            <mat-form-field appearance="outline">
+              <mat-label>Dispositivo</mat-label>
+              <mat-select [(ngModel)]="filtroTipoDispositivo" (selectionChange)="cargarAuditoria()">
+                <mat-option [value]="null">Todos</mat-option>
+                <mat-option value="Sensor">Sensores</mat-option>
+                <mat-option value="Actuador">Actuadores</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="tabla-scroll">
+          <table mat-table [dataSource]="eventos" class="tabla">
+            <ng-container matColumnDef="fecha">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let e">{{ e.fecha | date:'dd/MM/yy HH:mm:ss' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="dispositivo">
+              <th mat-header-cell *matHeaderCellDef>Dispositivo</th>
+              <td mat-cell *matCellDef="let e">{{ e.nombreDispositivo }} <small>({{ e.tipoDispositivo }})</small></td>
+            </ng-container>
+            <ng-container matColumnDef="accion">
+              <th mat-header-cell *matHeaderCellDef>Acción</th>
+              <td mat-cell *matCellDef="let e">{{ e.accion }}</td>
+            </ng-container>
+            <ng-container matColumnDef="origen">
+              <th mat-header-cell *matHeaderCellDef>Origen</th>
+              <td mat-cell *matCellDef="let e">
+                <span class="estado" [ngClass]="e.origen === 'Automatico' ? 'origen-auto' : 'origen-manual'">
+                  {{ e.origen === 'Automatico' ? 'Automático' : 'Manual' }}
+                </span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="usuario">
+              <th mat-header-cell *matHeaderCellDef>Quién</th>
+              <td mat-cell *matCellDef="let e">{{ e.usuarioNombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="motivo">
+              <th mat-header-cell *matHeaderCellDef>Para qué / motivo</th>
+              <td mat-cell *matCellDef="let e">
+                {{ e.motivo }}
+                @if (e.alarmaCultivoId) { <mat-icon class="icono-alarma" matTooltip="Asociado a una alarma">warning</mat-icon> }
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columnasEventos"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnasEventos;"></tr>
+          </table>
+        </div>
+        @if (eventos.length === 0) { <p class="no-data">Sin eventos en el periodo</p> }
+      </section>
+
+      <section class="seccion">
+        <div class="seccion-header"><h3>Bitácora de alarmas</h3></div>
+        <div class="tabla-scroll">
+          <table mat-table [dataSource]="bitacora" class="tabla">
+            <ng-container matColumnDef="fecha">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let b">{{ b.fecha | date:'dd/MM/yy HH:mm:ss' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="accion">
+              <th mat-header-cell *matHeaderCellDef>Acción</th>
+              <td mat-cell *matCellDef="let b">{{ nombresAccion[b.accion] ?? b.accion }}</td>
+            </ng-container>
+            <ng-container matColumnDef="usuario">
+              <th mat-header-cell *matHeaderCellDef>Quién</th>
+              <td mat-cell *matCellDef="let b">{{ b.usuarioNombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="comentario">
+              <th mat-header-cell *matHeaderCellDef>Detalle</th>
+              <td mat-cell *matCellDef="let b">{{ b.comentario ?? '—' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columnasBitacora"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnasBitacora;"></tr>
+          </table>
+        </div>
+        @if (bitacora.length === 0) { <p class="no-data">Sin movimientos en el periodo</p> }
+      </section>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+
+<!-- Ventana para pedir motivo / cómo se atendió (todo queda en la auditoría) -->
+@if (accion) {
+  <div class="overlay" (click)="cancelarAccion()">
+    <mat-card class="dialogo" (click)="$event.stopPropagation()">
+      <mat-card-title>{{ accion.titulo }}</mat-card-title>
+      <mat-card-content>
+        <p class="dialogo-desc">{{ accion.descripcion }}</p>
+        @if (accion.alarmasCultivo?.length) {
+          <mat-form-field appearance="outline" class="campo-completo">
+            <mat-label>¿Atiende una alarma?</mat-label>
+            <mat-select [(ngModel)]="accion.alarmaId">
+              <mat-option [value]="null">No</mat-option>
+              @for (al of accion.alarmasCultivo; track al.id) { <mat-option [value]="al.id">{{ al.mensaje }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+        }
+        @if (accion.editarAlarma) {
+          <mat-form-field appearance="outline" class="campo-completo">
+            <mat-label>Gravedad</mat-label>
+            <mat-select [(ngModel)]="accion.gravedad">
+              @for (n of niveles; track n) { <mat-option [value]="n">{{ n }}</mat-option> }
+            </mat-select>
+          </mat-form-field>
+          @if (accion.solucionEditable) {
+            <mat-form-field appearance="outline" class="campo-completo">
+              <mat-label>Solución registrada</mat-label>
+              <textarea matInput rows="2" [(ngModel)]="accion.solucion"></textarea>
+            </mat-form-field>
+          }
+        }
+        <mat-form-field appearance="outline" class="campo-completo">
+          <mat-label>{{ accion.etiqueta }}</mat-label>
+          <textarea matInput rows="3" [(ngModel)]="accion.texto" cdkFocusInitial></textarea>
+        </mat-form-field>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-button (click)="cancelarAccion()">Cancelar</button>
+        <button mat-raised-button [color]="accion.peligro ? 'warn' : 'primary'" [disabled]="!accion.texto.trim() || enviando" (click)="confirmarAccion()">Confirmar</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+}

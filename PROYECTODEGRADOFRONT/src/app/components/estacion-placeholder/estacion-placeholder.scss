@@ -164,3 +164,16 @@
   margin: 2px 0;
   font-weight: bold;
 }
+
+// Contador de alarmas de cultivo sin resolver en el menú lateral
+.badge-alarmas {
+  margin-left: 8px;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #f44336;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}

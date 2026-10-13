@@ -31,6 +31,39 @@ namespace RR_Nueva_Naturaleza.Utilities
             CreateMap<AuditoriaMeteo, AuditoriaMeteoDto>()
                 .ForMember(d => d.UsuarioNombre, opt => opt.MapFrom(o => o.Usuario != null ? (o.Usuario.Name + " " + o.Usuario.Last_Name) : string.Empty));
 
+            // Control de cultivo
+            CreateMap<EtapaCultivo, EtapaCultivoDto>();
+            CreateMap<Cultivo, CultivoDto>()
+                .ForMember(d => d.Etapas, opt => opt.MapFrom(o => o.Etapas != null ? o.Etapas.OrderBy(e => e.Orden).ToList() : new List<EtapaCultivo>()))
+                .ForMember(d => d.EtapaActual, opt => opt.MapFrom(o => o.Etapas != null ? o.Etapas.Where(e => e.Activa).Select(e => e.Nombre).FirstOrDefault() : null))
+                .ForMember(d => d.Estaciones, opt => opt.MapFrom(o => o.Estaciones != null ? o.Estaciones.Select(e => e.EstacionNumero).OrderBy(n => n).ToList() : new List<int>()));
+            CreateMap<SensorCultivo, SensorCultivoDto>()
+                .ForMember(d => d.CultivoNombre, opt => opt.MapFrom(o => o.Cultivo != null ? o.Cultivo.Nombre : string.Empty))
+                .ForMember(d => d.UltimoValor, opt => opt.Ignore())
+                .ForMember(d => d.FechaUltimoValor, opt => opt.Ignore());
+            CreateMap<ActuadorCultivo, ActuadorCultivoDto>()
+                .ForMember(d => d.CultivoNombre, opt => opt.MapFrom(o => o.Cultivo != null ? o.Cultivo.Nombre : string.Empty));
+            CreateMap<UmbralCultivo, UmbralCultivoDto>()
+                .ForMember(d => d.CultivoNombre, opt => opt.MapFrom(o => o.Cultivo != null ? o.Cultivo.Nombre : string.Empty))
+                .ForMember(d => d.SensorNombre, opt => opt.MapFrom(o => o.Sensor != null ? o.Sensor.Nombre : string.Empty))
+                .ForMember(d => d.Variable, opt => opt.MapFrom(o => o.Sensor != null ? o.Sensor.Variable : string.Empty))
+                .ForMember(d => d.Unidad, opt => opt.MapFrom(o => o.Sensor != null ? o.Sensor.Unidad : string.Empty))
+                .ForMember(d => d.EtapaNombre, opt => opt.MapFrom(o => o.Etapa != null ? o.Etapa.Nombre : null))
+                .ForMember(d => d.ActuadorNombre, opt => opt.MapFrom(o => o.Actuador != null ? o.Actuador.Nombre : null));
+            CreateMap<LecturaCultivo, LecturaCultivoDto>();
+            CreateMap<BitacoraAlarmaCultivo, BitacoraAlarmaCultivoDto>()
+                .ForMember(d => d.UsuarioNombre, opt => opt.MapFrom(o => o.Usuario != null ? (o.Usuario.Name + " " + o.Usuario.Last_Name) : "Sistema"));
+            CreateMap<AlarmaCultivo, AlarmaCultivoDto>()
+                .ForMember(d => d.CultivoNombre, opt => opt.MapFrom(o => o.Cultivo != null ? o.Cultivo.Nombre : string.Empty))
+                .ForMember(d => d.VistaPorNombre, opt => opt.MapFrom(o => o.VistaPor != null ? (o.VistaPor.Name + " " + o.VistaPor.Last_Name) : null))
+                .ForMember(d => d.AtendidaPorNombre, opt => opt.MapFrom(o => o.AtendidaPor != null ? (o.AtendidaPor.Name + " " + o.AtendidaPor.Last_Name) : null))
+                .ForMember(d => d.ResueltaPorNombre, opt => opt.MapFrom(o => o.ResueltaPor != null ? (o.ResueltaPor.Name + " " + o.ResueltaPor.Last_Name) : null))
+                .ForMember(d => d.Bitacora, opt => opt.MapFrom(o => o.Bitacora != null ? o.Bitacora.OrderBy(b => b.Fecha).ToList() : new List<BitacoraAlarmaCultivo>()));
+            CreateMap<EventoDispositivoCultivo, EventoDispositivoCultivoDto>()
+                .ForMember(d => d.UsuarioNombre, opt => opt.MapFrom(o => o.Usuario != null ? (o.Usuario.Name + " " + o.Usuario.Last_Name) : "Sistema"));
+            CreateMap<AuditoriaCultivo, AuditoriaCultivoDto>()
+                .ForMember(d => d.UsuarioNombre, opt => opt.MapFrom(o => o.Usuario != null ? (o.Usuario.Name + " " + o.Usuario.Last_Name) : string.Empty));
+
         }
     }
 }

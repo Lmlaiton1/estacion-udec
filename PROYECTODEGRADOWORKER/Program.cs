@@ -21,11 +21,18 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddDbContext<WeatherDbContext>(options =>
             options.UseSqlServer(connectionString));
 
+        // DbContext propio del control de umbrales y alarmas de cultivo
+        services.AddDbContext<CultivoDbContext>(options =>
+            options.UseSqlServer(connectionString));
+
         // Registramos el Worker
         services.AddHostedService<Worker>();
 
         // Registramos el suscriptor MQTT de las estaciones meteorológicas
         services.AddHostedService<WeatherMqttWorker>();
+
+        // Control de cultivo: sensores, actuadores, alarmas y escalamiento a SMS
+        services.AddHostedService<CultivoMqttWorker>();
     })
     .ConfigureLogging((context, logging) =>
     {

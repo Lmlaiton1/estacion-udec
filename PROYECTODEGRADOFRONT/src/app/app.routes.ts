@@ -2,95 +2,86 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './security/auth.guard';
 import { RoleGuard } from './security/role.guard';
 import { Login } from './components/login/login';
-import { Inicio } from './components/inicio/inicio';
-import { EstacionPlaceholder } from './components/estacion-placeholder/estacion-placeholder';
-import { Unauthorized } from './components/unauthorized/unauthorized';
-import { Actuator } from './components/actuator/actuator';
-import { Menu } from './components/menu/menu';
-import { UserForm } from './components/user-form/user-form';
-import { Sensors } from './components/sensors/sensors';
-import { Report as ReportComponent } from './components/report/report';
-import { ForgetPassword } from './components/forget-password/forget-password';
-import { AuditUser } from './components/audit-user/audit-user';
-import { Control } from './components/control/control';
-import { ActuatorForm } from './components/actuator-form/actuator-form';
-import { SensorForm } from './components/sensor-form/sensor-form';
-import { ChecklistFormComponent } from './components/checklist-form/checklist-form';
-import { Ia } from './components/ia/ia';
-import { EstacionDashboard } from './components/estacion-dashboard/estacion-dashboard';
-import { EstacionCatalogo } from './components/estacion-catalogo/estacion-catalogo';
-import { EstacionUmbrales } from './components/estacion-umbrales/estacion-umbrales';
-import { EstacionReporte } from './components/estacion-reporte/estacion-reporte';
-import { EstacionEstadistica } from './components/estacion-estadistica/estacion-estadistica';
 
-
+// El resto de los componentes se carga con loadComponent (lazy): cada pantalla se descarga
+// solo cuando se visita, en vez de meter toda la app (acuaponía + meteo) en el bundle inicial.
 export const routes: Routes = [
   { path: 'login', component: Login },
-  { path: 'forget-password', component: ForgetPassword },
+  {
+    path: 'forget-password',
+    loadComponent: () => import('./components/forget-password/forget-password').then(m => m.ForgetPassword)
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'inicio', component: Inicio, canActivate: [AuthGuard] },
-  { path: 'Unauthorized', component: Unauthorized },
+  {
+    path: 'inicio',
+    loadComponent: () => import('./components/inicio/inicio').then(m => m.Inicio),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'Unauthorized',
+    loadComponent: () => import('./components/unauthorized/unauthorized').then(m => m.Unauthorized)
+  },
   { path: 'menu', redirectTo: 'menu/Actuator' },
   { path: 'audit-user', redirectTo: 'menu/audit-user' },
 
   {
     path: 'menu',
-    component: Menu,
+    loadComponent: () => import('./components/menu/menu').then(m => m.Menu),
     canActivate: [AuthGuard],
     children: [
       {
         path: 'Control',
-        component: Control,
+        loadComponent: () => import('./components/control/control').then(m => m.Control),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
         path: 'ActuatorForm',
-        component: ActuatorForm,
+        loadComponent: () => import('./components/actuator-form/actuator-form').then(m => m.ActuatorForm),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
         path: 'Actuator',
-        component: Actuator,
+        loadComponent: () => import('./components/actuator/actuator').then(m => m.Actuator),
         canActivate: [AuthGuard]
       },
       {
         path: 'registerUser',
-        component: UserForm,
+        loadComponent: () => import('./components/user-form/user-form').then(m => m.UserForm),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
         path: 'ChecklistForm',
-        component: ChecklistFormComponent,
+        loadComponent: () => import('./components/checklist-form/checklist-form').then(m => m.ChecklistFormComponent),
         canActivate: [AuthGuard]
       },
       {
         path: 'report',
-        component: ReportComponent,
+        loadComponent: () => import('./components/report/report').then(m => m.Report),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
         path: 'audit-user',
-        component: AuditUser,
+        loadComponent: () => import('./components/audit-user/audit-user').then(m => m.AuditUser),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
         path: 'Sensors',
-        component: Sensors,
+        loadComponent: () => import('./components/sensors/sensors').then(m => m.Sensors),
         canActivate: [AuthGuard]
       },
       {
         path: 'Ia',
-        component: Ia,
+        loadComponent: () => import('./components/ia/ia').then(m => m.Ia),
         canActivate: [AuthGuard]
       },
       {
         path: 'SensorForm',
-        component: SensorForm,
+        loadComponent: () => import('./components/sensor-form/sensor-form').then(m => m.SensorForm),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
@@ -99,47 +90,53 @@ export const routes: Routes = [
 
   {
     path: 'estacion',
-    component: EstacionPlaceholder,
+    loadComponent: () => import('./components/estacion-placeholder/estacion-placeholder').then(m => m.EstacionPlaceholder),
     canActivate: [AuthGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'Sensors' },
       {
         path: 'Sensors',
-        component: EstacionDashboard,
+        loadComponent: () => import('./components/estacion-dashboard/estacion-dashboard').then(m => m.EstacionDashboard),
         canActivate: [AuthGuard]
       },
       {
         path: 'SensorForm',
-        component: EstacionCatalogo,
+        loadComponent: () => import('./components/estacion-catalogo/estacion-catalogo').then(m => m.EstacionCatalogo),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
         path: 'Umbrales',
-        component: EstacionUmbrales,
+        loadComponent: () => import('./components/estacion-umbrales/estacion-umbrales').then(m => m.EstacionUmbrales),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
         path: 'registerUser',
-        component: UserForm,
+        loadComponent: () => import('./components/user-form/user-form').then(m => m.UserForm),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
+        path: 'Cultivo',
+        loadComponent: () => import('./components/estacion-cultivo/estacion-cultivo').then(m => m.EstacionCultivo),
+        canActivate: [AuthGuard, RoleGuard],
+        data: { requiredRole: ['Administrador', 'Operario'] }
+      },
+      {
         path: 'Ia',
-        component: Ia,
+        loadComponent: () => import('./components/ia/ia').then(m => m.Ia),
         canActivate: [AuthGuard]
       },
       {
         path: 'report',
-        component: EstacionReporte,
+        loadComponent: () => import('./components/estacion-reporte/estacion-reporte').then(m => m.EstacionReporte),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: 'Administrador' }
       },
       {
         path: 'Estadistica',
-        component: EstacionEstadistica,
+        loadComponent: () => import('./components/estacion-estadistica/estacion-estadistica').then(m => m.EstacionEstadistica),
         canActivate: [AuthGuard, RoleGuard],
         data: { requiredRole: ['Administrador', 'Operario'] }
       },

@@ -41,6 +41,13 @@
       }
     </mat-menu>
 
+    @if (puedeVerCultivo()) {
+    <button mat-icon-button routerLink="Cultivo" aria-label="Alarmas de cultivo" matTooltip="Alarmas de cultivo sin resolver"
+      [matBadge]="alarmasCultivoAbiertas || null" matBadgeOverlap="false" matBadgeColor="warn" class="toolbar-button">
+      <mat-icon>{{ alarmasCultivoAbiertas > 0 ? 'notification_important' : 'eco' }}</mat-icon>
+    </button>
+    }
+
     <span class="toolbar-button greeting">
       Hola,
       {{ this.user?.name?.toUpperCase() }}
@@ -92,6 +99,18 @@
         <div class="icon-container">
           <mat-icon class="icon-station" fontIcon="person_add"></mat-icon>
           Registrar usuarios
+        </div>
+      </mat-list-item>
+      }
+
+      @if (puedeVerCultivo()) {
+      <mat-list-item role="listitem" routerLink="Cultivo" routerLinkActive="active" class="menu-item">
+        <div class="icon-container">
+          <mat-icon class="icon-station" fontIcon="eco"></mat-icon>
+          Control de cultivo
+          @if (alarmasCultivoAbiertas > 0) {
+          <span class="badge-alarmas">{{ alarmasCultivoAbiertas }}</span>
+          }
         </div>
       </mat-list-item>
       }

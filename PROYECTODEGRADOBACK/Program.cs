@@ -80,6 +80,14 @@ namespace RR_Nueva_Naturaleza
             builder.Services.AddScoped<IAlertaMeteoService, AlertaMeteoService>();
             builder.Services.AddScoped<IAuditoriaMeteoService, AuditoriaMeteoService>();
 
+            // Control de umbrales y alarmas de cultivo
+            builder.Services.AddScoped<IBitacoraCultivoService, BitacoraCultivoService>();
+            builder.Services.AddScoped<ICultivoService, CultivoService>();
+            builder.Services.AddScoped<ISensorCultivoService, SensorCultivoService>();
+            builder.Services.AddScoped<IActuadorCultivoService, ActuadorCultivoService>();
+            builder.Services.AddScoped<IUmbralCultivoService, UmbralCultivoService>();
+            builder.Services.AddScoped<IAlarmaCultivoService, AlarmaCultivoService>();
+
 
             // AutoMapper
             builder.Services.AddAutoMapper(config => config.AddMaps(Assembly.GetExecutingAssembly()));
@@ -118,6 +126,7 @@ namespace RR_Nueva_Naturaleza
             app.MapHub<ActuatorHub>("/Hubs/Actuators").RequireCors(rrnn);
             app.MapHub<StateHub>("/Hubs/State").RequireCors(rrnn);
             app.MapHub<SdTransferHub>("/Hubs/SdTransfer").RequireCors(rrnn);
+            app.MapHub<CultivoHub>("/Hubs/Cultivo").RequireCors(rrnn);
 
             app.Run();
         }
