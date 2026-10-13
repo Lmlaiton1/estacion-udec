@@ -72,6 +72,7 @@ export class EstacionDashboard implements OnInit, OnDestroy {
   // Vista 1 - por estación
   estacionSeleccionada = 1;
   private lecturasEstacionRaw: LecturaMeteo[] = [];
+  private ultimasLecturas: LecturaMeteo[] = [];
   tarjetas: TarjetaVariable[] = [];
   graficasEstacion: GraficaVariable[] = [];
 
@@ -114,6 +115,7 @@ export class EstacionDashboard implements OnInit, OnDestroy {
 
   cambiarEstacionSeleccionada(numero: number): void {
     this.estacionSeleccionada = numero;
+    this.procesarTarjetas();
     this.cargarLecturasEstacion();
   }
 
@@ -123,9 +125,12 @@ export class EstacionDashboard implements OnInit, OnDestroy {
   }
 
   aplicarFiltroFechas(): void {
-    // El filtro ya está cargado en memoria: solo se reprocesa, sin volver a pedir al backend.
-    this.procesarLecturasEstacion();
-    this.procesarComparativa();
+    // El rango se manda al backend: hay que volver a pedir los datos, no solo reprocesar en el cliente.
+    if (this.vista === 'estacion') {
+      this.cargarLecturasEstacion();
+    } else {
+      this.cargarComparativa();
+    }
   }
 
   limpiarFiltroFechas(): void {
@@ -154,20 +159,21 @@ export class EstacionDashboard implements OnInit, OnDestroy {
   }
 
   private cargarEstadoEstaciones(): void {
-    const numeros = this.numerosEstaciones();
+    this._weatherService.getUltimasLecturas().pipe(
+      catchError(() => of([] as LecturaMeteo[]))
+    ).subscribe(lecturas => {
+      this.ultimasLecturas = lecturas;
 
-    forkJoin(
-      numeros.map(numero =>
-        this._weatherService.getByEstacion(numero).pipe(catchError(() => of([] as LecturaMeteo[])))
-      )
-    ).subscribe(resultados => {
-      this.estadoEstaciones = numeros.map((numero, i) => {
-        const lecturas = resultados[i];
-        const ultimaFecha = this.ultimaFechaDe(lecturas);
+      const numeros = this.numerosEstaciones();
+      this.estadoEstaciones = numeros.map(numero => {
+        const deLaEstacion = lecturas.filter(l => l.estacionNumero === numero);
+        const ultimaFecha = this.ultimaFechaDe(deLaEstacion);
         const activa = ultimaFecha !== null && (Date.now() - ultimaFecha.getTime()) < MINUTOS_ACTIVA * 60 * 1000;
 
         return { numero, nombre: this.nombreEstacion(numero), activa, ultimaFecha };
       });
+
+      this.procesarTarjetas();
     });
   }
 
@@ -183,23 +189,21 @@ export class EstacionDashboard implements OnInit, OnDestroy {
   }
 
   private cargarLecturasEstacion(): void {
-    this._weatherService.getByEstacion(this.estacionSeleccionada).pipe(
+    const { desde, hasta } = this.rangoEfectivo();
+
+    this._weatherService.getByEstacion(this.estacionSeleccionada, new Date(desde), new Date(hasta)).pipe(
       catchError(() => of([] as LecturaMeteo[]))
     ).subscribe(lecturas => {
       this.lecturasEstacionRaw = lecturas;
-      this.procesarLecturasEstacion();
+      this.procesarGraficas();
       this.cargando = false;
     });
   }
 
-  private procesarLecturasEstacion(): void {
-    // Las tarjetas siempre muestran el último valor real, sin importar el filtro de fechas.
+  // Las tarjetas muestran el último valor real (viene de /UltimasLecturas), sin importar el filtro de fechas.
+  private procesarTarjetas(): void {
     this.tarjetas = this.variables.map(v => {
-      const lecturasVariable = this.lecturasEstacionRaw
-        .filter(l => l.variable === v.key)
-        .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime());
-
-      const ultima = lecturasVariable.length ? lecturasVariable[lecturasVariable.length - 1] : null;
+      const ultima = this.ultimasLecturas.find(l => l.estacionNumero === this.estacionSeleccionada && l.variable === v.key) ?? null;
 
       return {
         key: v.key,
@@ -210,13 +214,13 @@ export class EstacionDashboard implements OnInit, OnDestroy {
         fechaHora: ultima ? ultima.fechaHora : null
       };
     });
+  }
 
-    const { desde, hasta } = this.rangoEfectivo();
-
+  // lecturasEstacionRaw ya viene filtrada por fecha desde el backend, acá solo se separa por variable.
+  private procesarGraficas(): void {
     this.graficasEstacion = this.variables.map(v => {
       const datos = this.lecturasEstacionRaw
         .filter(l => l.variable === v.key)
-        .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta))
         .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime());
 
       const unidad = datos.length ? datos[0].unidad : '';
@@ -231,10 +235,11 @@ export class EstacionDashboard implements OnInit, OnDestroy {
 
   private cargarComparativa(): void {
     const numeros = this.numerosEstaciones();
+    const { desde, hasta } = this.rangoEfectivo();
 
     forkJoin(
       numeros.map(numero =>
-        this._weatherService.getByEstacionAndVariable(numero, this.variableSeleccionada)
+        this._weatherService.getByEstacionAndVariable(numero, this.variableSeleccionada, new Date(desde), new Date(hasta))
           .pipe(catchError(() => of([] as LecturaMeteo[])))
       )
     ).subscribe(resultados => {
@@ -248,15 +253,13 @@ export class EstacionDashboard implements OnInit, OnDestroy {
     });
   }
 
+  // comparativaRaw ya viene filtrada por fecha desde el backend.
   private procesarComparativa(): void {
-    const { desde, hasta } = this.rangoEfectivo();
     const label = this.variables.find(v => v.key === this.variableSeleccionada)?.label ?? this.variableSeleccionada;
 
     let unidad = '';
     const series: ApexAxisChartSeries = this.comparativaRaw.map(estacion => {
-      const datos = estacion.lecturas
-        .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta))
-        .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime());
+      const datos = [...estacion.lecturas].sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime());
 
       if (!unidad && datos.length) unidad = datos[0].unidad;
 

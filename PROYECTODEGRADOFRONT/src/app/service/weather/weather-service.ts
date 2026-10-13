@@ -42,6 +42,7 @@ export class WeatherService {
   private complement16 = 'Api/ApiSensorMeteo/CambiarEstado';
   private complement17 = 'Api/ApiAuditoriaMeteo';
   private complement18 = 'Api/ApiLecturaMeteo/Estadisticas';
+  private complement19 = 'Api/ApiLecturaMeteo/UltimasLecturas';
 
   constructor(private _http: HttpClient) { }
 
@@ -135,6 +136,11 @@ export class WeatherService {
   public getEstadisticas(numero: number, variable: string, cantidad: number): Observable<EstadisticaMeteo> {
     const params = new HttpParams().set('cantidad', cantidad);
     return this._http.get<EstadisticaMeteo>(`${this.apiUrl + this.complement18}/${numero}/${variable}`, { params });
+  }
+
+  // Última lectura de cada variable para las 3 estaciones, en una sola llamada liviana.
+  public getUltimasLecturas(): Observable<LecturaMeteo[]> {
+    return this._http.get<LecturaMeteo[]>(this.apiUrl + this.complement19);
   }
 
   private buildRangoParams(fechaInicio?: Date | null, fechaFin?: Date | null): HttpParams {

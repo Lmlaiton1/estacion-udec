@@ -27,19 +27,41 @@ namespace RR_Nueva_Naturaleza.Service
             return await _context.Lecturas_Meteo.FindAsync(id);
         }
 
-        public async Task<IEnumerable<LecturaMeteo>> GetLecturasByEstacion(int numero)
+        public async Task<IEnumerable<LecturaMeteo>> GetLecturasByEstacion(int numero, DateTime? fechaInicio, DateTime? fechaFin)
         {
+            var (desde, hasta) = RangoConDefecto(fechaInicio, fechaFin);
+
             return await _context.Lecturas_Meteo
-                .Where(l => l.EstacionNumero == numero)
+                .Where(l => l.EstacionNumero == numero && l.FechaHora >= desde && l.FechaHora <= hasta)
                 .OrderByDescending(l => l.FechaHora)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<LecturaMeteo>> GetLecturasByEstacionAndVariable(int numero, string variable)
+        public async Task<IEnumerable<LecturaMeteo>> GetLecturasByEstacionAndVariable(int numero, string variable, DateTime? fechaInicio, DateTime? fechaFin)
+        {
+            var (desde, hasta) = RangoConDefecto(fechaInicio, fechaFin);
+
+            return await _context.Lecturas_Meteo
+                .Where(l => l.EstacionNumero == numero && l.Variable == variable && l.FechaHora >= desde && l.FechaHora <= hasta)
+                .OrderByDescending(l => l.FechaHora)
+                .ToListAsync();
+        }
+
+        // Sin fechaInicio/fechaFin, el rango por defecto son las últimas 24 horas.
+        private static (DateTime desde, DateTime hasta) RangoConDefecto(DateTime? fechaInicio, DateTime? fechaFin)
+        {
+            var hasta = fechaFin ?? DateTime.Now;
+            var desde = fechaInicio ?? hasta.AddHours(-24);
+            return (desde, hasta);
+        }
+
+        // Última lectura de cada variable, para las 3 estaciones, en una sola consulta liviana
+        // (usa el índice compuesto EstacionNumero/Variable/FechaHora en vez de traer el historial completo).
+        public async Task<IEnumerable<LecturaMeteo>> GetUltimasLecturas()
         {
             return await _context.Lecturas_Meteo
-                .Where(l => l.EstacionNumero == numero && l.Variable == variable)
-                .OrderByDescending(l => l.FechaHora)
+                .GroupBy(l => new { l.EstacionNumero, l.Variable })
+                .Select(g => g.OrderByDescending(l => l.FechaHora).First())
                 .ToListAsync();
         }
 

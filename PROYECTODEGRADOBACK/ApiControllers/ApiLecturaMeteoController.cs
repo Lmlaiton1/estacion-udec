@@ -47,18 +47,27 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         [Authorize(Roles = "Administrador,Operario,Usuario Externo")]
         [HttpGet("GetByEstacion/{numero}")]
         [ProducesResponseType(typeof(IEnumerable<LecturaMeteoDto>), 200)]
-        public async Task<IEnumerable<LecturaMeteoDto>> GetByEstacion(int numero)
+        public async Task<IEnumerable<LecturaMeteoDto>> GetByEstacion(int numero, [FromQuery] DateTime? fechaInicio, [FromQuery] DateTime? fechaFin)
         {
-            var lecturas = await _lecturaMeteoService.GetLecturasByEstacion(numero);
+            var lecturas = await _lecturaMeteoService.GetLecturasByEstacion(numero, fechaInicio, fechaFin);
             return _mapper.Map<List<LecturaMeteo>, List<LecturaMeteoDto>>(lecturas.ToList());
         }
 
         [Authorize(Roles = "Administrador,Operario,Usuario Externo")]
         [HttpGet("GetByEstacionAndVariable/{numero}/{variable}")]
         [ProducesResponseType(typeof(IEnumerable<LecturaMeteoDto>), 200)]
-        public async Task<IEnumerable<LecturaMeteoDto>> GetByEstacionAndVariable(int numero, string variable)
+        public async Task<IEnumerable<LecturaMeteoDto>> GetByEstacionAndVariable(int numero, string variable, [FromQuery] DateTime? fechaInicio, [FromQuery] DateTime? fechaFin)
         {
-            var lecturas = await _lecturaMeteoService.GetLecturasByEstacionAndVariable(numero, variable);
+            var lecturas = await _lecturaMeteoService.GetLecturasByEstacionAndVariable(numero, variable, fechaInicio, fechaFin);
+            return _mapper.Map<List<LecturaMeteo>, List<LecturaMeteoDto>>(lecturas.ToList());
+        }
+
+        [Authorize(Roles = "Administrador,Operario,Usuario Externo")]
+        [HttpGet("UltimasLecturas")]
+        [ProducesResponseType(typeof(IEnumerable<LecturaMeteoDto>), 200)]
+        public async Task<IEnumerable<LecturaMeteoDto>> GetUltimasLecturas()
+        {
+            var lecturas = await _lecturaMeteoService.GetUltimasLecturas();
             return _mapper.Map<List<LecturaMeteo>, List<LecturaMeteoDto>>(lecturas.ToList());
         }
 
