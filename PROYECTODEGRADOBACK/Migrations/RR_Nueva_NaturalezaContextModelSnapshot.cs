@@ -22,6 +22,68 @@ namespace RR_Nueva_Naturaleza.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ActuadorCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Clave")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("Encendido")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Especificaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("FechaUltimoCambio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Marca")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Modo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Potencia")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CultivoId", "Clave")
+                        .IsUnique()
+                        .HasFilter("[Eliminado] = 0");
+
+                    b.ToTable("Actuadores_Cultivo");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ActuatorMode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -42,6 +104,106 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.HasIndex("DeviceId");
 
                     b.ToTable("ActuatorModes");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AlarmaCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AtendidaPorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("EtapaNombre")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("FechaAtencion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaDisparo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaResolucion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaSms")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaUltimaOcurrencia")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaVista")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("NivelGravedad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Ocurrencias")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ResueltaPorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SensorCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("SmsEnviado")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Solucion")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("UltimoValor")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<Guid>("UmbralCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("ValorRegistrado")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("Variable")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid?>("VistaPorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtendidaPorId");
+
+                    b.HasIndex("ResueltaPorId");
+
+                    b.HasIndex("UmbralCultivoId");
+
+                    b.HasIndex("VistaPorId");
+
+                    b.HasIndex("CultivoId", "Estado");
+
+                    b.ToTable("Alarmas_Cultivo");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AlertaMeteo", b =>
@@ -123,6 +285,56 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.ToTable("Audits");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AuditoriaCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid?>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Detalle")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("EntidadId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("NombreEntidad")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("TipoEntidad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("CultivoId", "Fecha");
+
+                    b.ToTable("Auditoria_Cultivo");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AuditoriaMeteo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -163,6 +375,39 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Auditoria_Meteo");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.BitacoraAlarmaCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("AlarmaCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Comentario")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlarmaCultivoId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Bitacora_Alarmas_Cultivo");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ChecklistDetail", b =>
@@ -262,6 +507,81 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.HasIndex("DeviceId");
 
                     b.ToTable("ControlRules");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Cultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("AreaM2")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Especie")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaSiembra")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Ubicacion")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Variedad")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreadoPor");
+
+                    b.HasIndex("Numero")
+                        .IsUnique()
+                        .HasFilter("[Eliminado] = 0");
+
+                    b.ToTable("Cultivos");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.CultivoEstacion", b =>
+                {
+                    b.Property<Guid>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("EstacionNumero")
+                        .HasColumnType("int");
+
+                    b.HasKey("CultivoId", "EstacionNumero");
+
+                    b.HasIndex("EstacionNumero");
+
+                    b.ToTable("Cultivo_Estaciones");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Device", b =>
@@ -383,6 +703,46 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.ToTable("Estaciones_Meteo");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.EtapaCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("DuracionDias")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("FechaInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CultivoId");
+
+                    b.ToTable("Etapas_Cultivo");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Event", b =>
                 {
                     b.Property<Guid>("Id")
@@ -418,6 +778,64 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.HasIndex("System_TypeId");
 
                     b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.EventoDispositivoCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid?>("AlarmaCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("DispositivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("NombreDispositivo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TipoDispositivo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid?>("UmbralCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("CultivoId", "Fecha");
+
+                    b.ToTable("Eventos_Dispositivo_Cultivo");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ImagenMeteo", b =>
@@ -501,6 +919,41 @@ namespace RR_Nueva_Naturaleza.Migrations
                         {
                             t.HasCheckConstraint("CK_Lecturas_Crudas_Payload_ISJSON", "ISJSON(Payload) = 1");
                         });
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.LecturaCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("FechaHora")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("SensorCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Unidad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("Valor")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("Variable")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SensorCultivoId", "FechaHora");
+
+                    b.ToTable("Lecturas_Cultivo");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.LecturaMeteo", b =>
@@ -683,6 +1136,75 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.ToTable("Schedules");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.SensorCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Clave")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Especificaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("FechaInstalacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Marca")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal?>("Precision")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("RangoMax")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("RangoMin")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Unidad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Variable")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CultivoId", "Clave")
+                        .IsUnique()
+                        .HasFilter("[Eliminado] = 0");
+
+                    b.ToTable("Sensores_Cultivo");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.SensorMeteo", b =>
                 {
                     b.Property<Guid>("Id")
@@ -751,6 +1273,75 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .IsUnique();
 
                     b.ToTable("System_Types");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.UmbralCultivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("ActuadorCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("EncenderActuador")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("EtapaCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("MinutosEscalamientoSms")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NivelGravedad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("RevertirAlNormalizar")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("SensorCultivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("ValorMax")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("ValorMin")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActuadorCultivoId");
+
+                    b.HasIndex("CreadoPor");
+
+                    b.HasIndex("CultivoId");
+
+                    b.HasIndex("EtapaCultivoId");
+
+                    b.HasIndex("SensorCultivoId");
+
+                    b.ToTable("Umbrales_Cultivo");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.UmbralMeteo", b =>
@@ -864,6 +1455,17 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ActuadorCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.Cultivo", "Cultivo")
+                        .WithMany()
+                        .HasForeignKey("CultivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cultivo");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ActuatorMode", b =>
                 {
                     b.HasOne("RR_Nueva_Naturaleza.Models.Device", "Device")
@@ -873,6 +1475,46 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .IsRequired();
 
                     b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AlarmaCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "AtendidaPor")
+                        .WithMany()
+                        .HasForeignKey("AtendidaPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.Cultivo", "Cultivo")
+                        .WithMany()
+                        .HasForeignKey("CultivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "ResueltaPor")
+                        .WithMany()
+                        .HasForeignKey("ResueltaPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.UmbralCultivo", "Umbral")
+                        .WithMany()
+                        .HasForeignKey("UmbralCultivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "VistaPor")
+                        .WithMany()
+                        .HasForeignKey("VistaPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AtendidaPor");
+
+                    b.Navigation("Cultivo");
+
+                    b.Navigation("ResueltaPor");
+
+                    b.Navigation("Umbral");
+
+                    b.Navigation("VistaPor");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AlertaMeteo", b =>
@@ -913,6 +1555,17 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AuditoriaCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AuditoriaMeteo", b =>
                 {
                     b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
@@ -920,6 +1573,24 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.BitacoraAlarmaCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.AlarmaCultivo", "Alarma")
+                        .WithMany("Bitacora")
+                        .HasForeignKey("AlarmaCultivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Alarma");
 
                     b.Navigation("Usuario");
                 });
@@ -984,6 +1655,35 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Device");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Cultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("CreadoPor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.CultivoEstacion", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.Cultivo", "Cultivo")
+                        .WithMany("Estaciones")
+                        .HasForeignKey("CultivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.EstacionMeteo", null)
+                        .WithMany()
+                        .HasForeignKey("EstacionNumero")
+                        .HasPrincipalKey("Numero")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cultivo");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Device", b =>
                 {
                     b.HasOne("RR_Nueva_Naturaleza.Models.Device_Status", "Device_Status")
@@ -1011,6 +1711,17 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("System_Type");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.EtapaCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.Cultivo", "Cultivo")
+                        .WithMany("Etapas")
+                        .HasForeignKey("CultivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cultivo");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Event", b =>
                 {
                     b.HasOne("RR_Nueva_Naturaleza.Models.Device", "Device")
@@ -1036,6 +1747,25 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Impact");
 
                     b.Navigation("System_Type");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.EventoDispositivoCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.LecturaCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.SensorCultivo", null)
+                        .WithMany()
+                        .HasForeignKey("SensorCultivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.LecturaMeteo", b =>
@@ -1095,6 +1825,58 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Device");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.SensorCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.Cultivo", "Cultivo")
+                        .WithMany()
+                        .HasForeignKey("CultivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Cultivo");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.UmbralCultivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.ActuadorCultivo", "Actuador")
+                        .WithMany()
+                        .HasForeignKey("ActuadorCultivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("CreadoPor")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.Cultivo", "Cultivo")
+                        .WithMany()
+                        .HasForeignKey("CultivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.EtapaCultivo", "Etapa")
+                        .WithMany()
+                        .HasForeignKey("EtapaCultivoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.SensorCultivo", "Sensor")
+                        .WithMany()
+                        .HasForeignKey("SensorCultivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Actuador");
+
+                    b.Navigation("Cultivo");
+
+                    b.Navigation("Etapa");
+
+                    b.Navigation("Sensor");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.UmbralMeteo", b =>
                 {
                     b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
@@ -1117,6 +1899,11 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Rol");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.AlarmaCultivo", b =>
+                {
+                    b.Navigation("Bitacora");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ChecklistHeader", b =>
                 {
                     b.Navigation("Detalles");
@@ -1125,6 +1912,13 @@ namespace RR_Nueva_Naturaleza.Migrations
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ControlRules", b =>
                 {
                     b.Navigation("ControlRuleActuators");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Cultivo", b =>
+                {
+                    b.Navigation("Estaciones");
+
+                    b.Navigation("Etapas");
                 });
 #pragma warning restore 612, 618
         }

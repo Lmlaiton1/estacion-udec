@@ -10,6 +10,7 @@ using MQTTnet.Extensions.ManagedClient;
 using ServicioSensorica.Data;
 using ServicioSensorica.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,6 +35,11 @@ namespace ServicioSensorica.Worker
         private readonly int _mqttPort;
         private readonly string _weatherHubUrl;
 
+        // Sirena de cada estación: cuánto suena y cada cuánto se puede volver a disparar
+        private readonly int _alarmaDuracionSeg;
+        private readonly TimeSpan _alarmaEnfriamiento;
+        private readonly ConcurrentDictionary<int, (DateTime Fecha, string Nivel)> _ultimaAlarmaPorEstacion = new();
+
         // GUIDs de sensores, iguales a los que envía el firmware
         private static readonly Guid SensorTemperaturaHumedad = Guid.Parse("aa07acd0-57e0-4ae0-bf46-f8d7c94b4040");
         private static readonly Guid SensorRadiacion = Guid.Parse("6319081a-9f85-4e87-8759-6895d08d935a");
@@ -50,6 +56,8 @@ namespace ServicioSensorica.Worker
             _mqttBroker = _configuration["Mqtt:Broker"] ?? "localhost";
             _mqttPort = int.TryParse(_configuration["Mqtt:Port"], out var port) ? port : 1883;
             _weatherHubUrl = _configuration["WeatherHub:Url"] ?? "http://localhost:5005/Hubs/Weather";
+            _alarmaDuracionSeg = int.TryParse(_configuration["Alarma:DuracionSeg"], out var dur) ? dur : 10;
+            _alarmaEnfriamiento = TimeSpan.FromMinutes(int.TryParse(_configuration["Alarma:EnfriamientoMin"], out var enf) ? enf : 5);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -334,12 +342,59 @@ namespace ServicioSensorica.Worker
                 await db.SaveChangesAsync(stoppingToken);
 
                 _logger.LogWarning("Generadas {count} alertas por umbrales fuera de rango", nuevasAlertas.Count);
+
+                await ActivarSirenasAsync(nuevasAlertas);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error evaluando umbrales");
             }
         }
+
+        // Publica en estacionN/alarma para que la placa haga sonar su sirena. Un mensaje por estación con el
+        // nivel más grave. Mientras el valor siga fuera de rango no se repite hasta pasar el enfriamiento,
+        // salvo que la gravedad suba (ej. de Media a Alta).
+        private async Task ActivarSirenasAsync(List<AlertaMeteo> alertas)
+        {
+            if (_mqttClient == null) return;
+
+            foreach (var grupo in alertas.GroupBy(a => a.EstacionNumero))
+            {
+                var nivel = grupo.OrderByDescending(a => PesoGravedad(a.NivelGravedad)).First().NivelGravedad;
+                var ahora = DateTime.Now;
+
+                if (_ultimaAlarmaPorEstacion.TryGetValue(grupo.Key, out var ultima) &&
+                    ahora - ultima.Fecha < _alarmaEnfriamiento &&
+                    PesoGravedad(nivel) <= PesoGravedad(ultima.Nivel))
+                {
+                    continue;
+                }
+
+                var payload = JsonSerializer.Serialize(new { accion = "ON", nivel, duracionSeg = _alarmaDuracionSeg });
+                var mensaje = new MqttApplicationMessageBuilder()
+                    .WithTopic($"estacion{grupo.Key}/alarma")
+                    .WithPayload(payload)
+                    .Build();
+
+                try
+                {
+                    await _mqttClient.EnqueueAsync(mensaje);
+                    _ultimaAlarmaPorEstacion[grupo.Key] = (ahora, nivel);
+                    _logger.LogWarning("Sirena activada en estación {estacion} (nivel {nivel})", grupo.Key, nivel);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error enviando la alarma a la estación {estacion}", grupo.Key);
+                }
+            }
+        }
+
+        private static int PesoGravedad(string? nivel) => nivel?.Trim().ToLowerInvariant() switch
+        {
+            "alta" => 3,
+            "media" => 2,
+            _ => 1
+        };
 
         private static List<LecturaMeteo> ConstruirLecturas(EstacionDatosDto datos, DateTime fechaHora, DateTime fechaRecepcion)
         {
