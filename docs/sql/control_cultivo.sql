@@ -580,10 +580,12 @@ IF NOT EXISTS (
     WHERE [MigrationId] = N'20261013050841_CultivoVariasEstaciones'
 )
 BEGIN
-    INSERT INTO Cultivo_Estaciones (CultivoId, EstacionNumero)
-                    SELECT c.Id, c.EstacionNumero FROM Cultivos c
-                    WHERE c.EstacionNumero IS NOT NULL
-                      AND EXISTS (SELECT 1 FROM Estaciones_Meteo e WHERE e.Numero = c.EstacionNumero)
+    -- EXEC: Cultivos.EstacionNumero se elimina en esta misma migración; sin EXEC el script
+    -- no compila en una base que ya la aplicó (SQL Server valida todo el lote).
+    EXEC(N'INSERT INTO Cultivo_Estaciones (CultivoId, EstacionNumero)
+          SELECT c.Id, c.EstacionNumero FROM Cultivos c
+          WHERE c.EstacionNumero IS NOT NULL
+            AND EXISTS (SELECT 1 FROM Estaciones_Meteo e WHERE e.Numero = c.EstacionNumero)');
 END;
 
 IF NOT EXISTS (
