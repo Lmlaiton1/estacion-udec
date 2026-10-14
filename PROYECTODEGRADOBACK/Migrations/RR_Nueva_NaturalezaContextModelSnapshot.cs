@@ -39,6 +39,9 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Property<Guid>("CultivoId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("DeviceId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("Eliminado")
                         .HasColumnType("bit");
 
@@ -76,6 +79,8 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
 
                     b.HasIndex("CultivoId", "Clave")
                         .IsUnique()
@@ -1169,6 +1174,9 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Property<Guid>("CultivoId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("DeviceId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("Eliminado")
                         .HasColumnType("bit");
 
@@ -1213,6 +1221,8 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
 
                     b.HasIndex("CultivoId", "Clave")
                         .IsUnique()
@@ -1479,7 +1489,14 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RR_Nueva_Naturaleza.Models.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Cultivo");
+
+                    b.Navigation("Device");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.ActuatorMode", b =>
@@ -1856,7 +1873,14 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RR_Nueva_Naturaleza.Models.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Cultivo");
+
+                    b.Navigation("Device");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.UmbralCultivo", b =>

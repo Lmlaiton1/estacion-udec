@@ -69,6 +69,8 @@ export interface SensorCultivo {
   fechaInstalacion: string;
   ultimoValor: number | null;
   fechaUltimoValor: string | null;
+  // Sensor de Nueva Naturaleza (acuaponía) vinculado; null = ESP por MQTT
+  deviceId: string | null;
 }
 
 export interface SensorCultivoCreate {
@@ -84,6 +86,7 @@ export interface SensorCultivoCreate {
   marca: string | null;
   especificaciones: string | null;
   fechaInstalacion: string | null;
+  deviceId: string | null;
   motivo?: string | null;
 }
 
@@ -101,6 +104,8 @@ export interface ActuadorCultivo {
   encendido: boolean;
   activo: boolean;
   fechaUltimoCambio: string | null;
+  // Actuador de Nueva Naturaleza (acuaponía) vinculado; null = ESP por MQTT
+  deviceId: string | null;
 }
 
 export interface ActuadorCultivoCreate {
@@ -111,7 +116,20 @@ export interface ActuadorCultivoCreate {
   marca: string | null;
   potencia: string | null;
   especificaciones: string | null;
+  deviceId: string | null;
   motivo?: string | null;
+}
+
+// Sensor o actuador del sistema de acuaponía (Nueva Naturaleza) que se puede vincular a un cultivo
+export interface DispositivoNuevaNaturaleza {
+  id: string;
+  nombre: string;
+  tipo: 'Sensor' | 'Actuador';
+  sistema: string;
+  estado: string;
+  modoAutomaticoAcuaponia: boolean;
+  ultimoValor: number | null;
+  fechaUltimoValor: string | null;
 }
 
 export interface AccionarActuador {

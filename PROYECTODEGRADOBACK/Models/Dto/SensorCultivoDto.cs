@@ -16,6 +16,7 @@ namespace RR_Nueva_Naturaleza.Models.Dto
         public string? Marca { get; set; }
         public string? Especificaciones { get; set; }
         public bool Activo { get; set; }
+        public Guid? DeviceId { get; set; }
         public DateTime FechaInstalacion { get; set; }
         public decimal? UltimoValor { get; set; }
         public DateTime? FechaUltimoValor { get; set; }

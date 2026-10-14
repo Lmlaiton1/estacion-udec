@@ -8,7 +8,7 @@ import { CambiarEstado } from '../../models/CambiarEstado';
 import {
   AccionarActuador, ActuadorCultivo, ActuadorCultivoCreate, ActuadorCultivoEnVivo, AlarmaCultivo, AlarmaCultivoEnVivo,
   BitacoraAlarmaCultivo, Cultivo, CultivoCreate, EtapaCultivo, EtapaCultivoCreate, EventoDispositivoCultivo,
-  SensorCultivo, SensorCultivoCreate, UmbralCultivo, UmbralCultivoCreate, AuditoriaCultivo
+  SensorCultivo, SensorCultivoCreate, UmbralCultivo, UmbralCultivoCreate, AuditoriaCultivo, DispositivoNuevaNaturaleza
 } from '../../models/Cultivo';
 
 @Injectable({
@@ -50,6 +50,11 @@ export class CultivoService {
   // Cultivos y etapas
   public getCultivos(): Observable<Cultivo[]> {
     return this._http.get<Cultivo[]>(this.apiUrl + this.cultivo);
+  }
+
+  // Sensores y actuadores de acuaponía que se pueden vincular a un cultivo
+  public getDispositivosNuevaNaturaleza(): Observable<DispositivoNuevaNaturaleza[]> {
+    return this._http.get<DispositivoNuevaNaturaleza[]>(`${this.apiUrl + this.cultivo}/DispositivosNuevaNaturaleza`);
   }
 
   public crearCultivo(cultivo: CultivoCreate): Observable<Responses> {

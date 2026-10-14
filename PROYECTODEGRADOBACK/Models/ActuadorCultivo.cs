@@ -42,6 +42,11 @@ namespace RR_Nueva_Naturaleza.Models
         public bool Eliminado { get; set; } = false;
 
         public DateTime? FechaUltimoCambio { get; set; }
+
+        // Actuador de Nueva Naturaleza (acuaponía) vinculado. Si tiene valor, se acciona por el puerto
+        // serial del worker de acuaponía (ReceiveCommand) en vez del MQTT del ESP.
+        public Guid? DeviceId { get; set; }
+        public virtual Device? Device { get; set; }
     }
 
     public static class ModosActuador

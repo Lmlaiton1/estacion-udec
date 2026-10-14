@@ -236,6 +236,21 @@
                   <small>El DHT22 mide dos variables: regístralo como dos sensores.</small>
                 </div>
               }
+              <div class="nn-vinculo">
+                <mat-form-field appearance="outline" class="campo-completo">
+                  <mat-label>Traer de Nueva Naturaleza (acuaponía)</mat-label>
+                  <mat-select [(ngModel)]="formSensor.deviceId" (selectionChange)="traerSensorNN()">
+                    <mat-option [value]="null">No: sensor propio del cultivo (ESP por MQTT)</mat-option>
+                    @for (d of sensoresNN; track d.id) {
+                      <mat-option [value]="d.id">
+                        {{ d.nombre }} · {{ d.sistema }}
+                        @if (d.ultimoValor !== null) { · último: {{ d.ultimoValor }} ({{ d.fechaUltimoValor | date:'dd/MM HH:mm' }}) }
+                      </mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint>Si eliges uno, sus lecturas se toman del puerto serial de acuaponía cada 10 s.</mat-hint>
+                </mat-form-field>
+              </div>
               <div class="form-grid">
                 <mat-form-field appearance="outline">
                   <mat-label>Cultivo</mat-label>
@@ -380,6 +395,18 @@
           <mat-card class="form-card" appearance="outlined">
             <mat-card-title>{{ actuadorEnEdicion ? 'Editar actuador' : 'Nuevo actuador' }}</mat-card-title>
             <mat-card-content>
+              <div class="nn-vinculo">
+                <mat-form-field appearance="outline" class="campo-completo">
+                  <mat-label>Traer de Nueva Naturaleza (acuaponía)</mat-label>
+                  <mat-select [(ngModel)]="formActuador.deviceId" (selectionChange)="traerActuadorNN()">
+                    <mat-option [value]="null">No: actuador propio del cultivo (ESP por MQTT)</mat-option>
+                    @for (d of actuadoresNN; track d.id) {
+                      <mat-option [value]="d.id">{{ d.nombre }} · {{ d.sistema }} · {{ d.estado }}</mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint>Si eliges uno, se enciende y apaga por el puerto serial de acuaponía.</mat-hint>
+                </mat-form-field>
+              </div>
               <div class="form-grid">
                 <mat-form-field appearance="outline">
                   <mat-label>Cultivo</mat-label>
@@ -844,6 +871,122 @@
           </table>
         </div>
         @if (bitacora.length === 0) { <p class="no-data">Sin movimientos en el periodo</p> }
+      </section>
+    </mat-tab>
+    <!-- ===================== CONTROL AUTOMÁTICO ===================== -->
+    <mat-tab label="Control">
+      <section class="seccion">
+        <div class="seccion-header">
+          <h3>Control automático</h3>
+        </div>
+        <p class="dialogo-desc">
+          El sistema vigila la temperatura y enciende el actuador solo cuando supera el máximo; lo apaga cuando vuelve a rango.
+          Todo queda en la auditoría.
+        </p>
+
+        @for (c of cultivosVisibles; track c.id) {
+          @if (control[c.id]; as ctl) {
+            <mat-card class="control-card" appearance="outlined">
+              <mat-card-title>{{ c.numero }} · {{ c.nombre }}</mat-card-title>
+              <mat-card-content>
+                @let sensor = sensorControl(c);
+                @let actuador = actuadorControl(c);
+                @let estado = estadoControl(c);
+
+                <div class="control-estado" [ngClass]="estado.activo ? 'control-ok' : 'control-pendiente'">
+                  <mat-icon>{{ estado.activo ? 'autorenew' : 'info' }}</mat-icon>
+                  <span>{{ estado.texto }}</span>
+                </div>
+
+                <div class="control-lecturas">
+                  <div class="control-valor">
+                    <span class="control-etiqueta">{{ sensor?.nombre || 'Sensor' }}</span>
+                    <span class="control-numero">{{ sensor?.ultimoValor ?? '—' }} {{ sensor?.unidad }}</span>
+                    @if (sensor?.fechaUltimoValor) {
+                      <small>{{ sensor?.fechaUltimoValor | date:'dd/MM/yyyy HH:mm:ss' }}</small>
+                    }
+                  </div>
+                  <div class="control-valor">
+                    <span class="control-etiqueta">{{ actuador?.nombre || 'Actuador' }}</span>
+                    <span class="control-numero" [ngClass]="actuador?.encendido ? 'encendido' : 'apagado'">
+                      {{ actuador ? (actuador.encendido ? 'Encendido' : 'Apagado') : '—' }}
+                    </span>
+                    @if (actuador) {
+                      <small>Modo {{ actuador.modo === 'Automatico' ? 'automático' : 'manual' }}</small>
+                    }
+                  </div>
+                </div>
+
+                @if (dispositivoNN(actuador?.deviceId)?.modoAutomaticoAcuaponia) {
+                  <div class="control-estado control-alerta">
+                    <mat-icon>warning</mat-icon>
+                    <span>{{ actuador?.nombre }} también está en modo automático en acuaponía: los dos sistemas podrían contradecirse.
+                      Pásalo a manual en Nueva Naturaleza para que lo controle solo este cultivo.</span>
+                  </div>
+                }
+
+                @if (esAdmin) {
+                  <div class="form-grid">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Sensor que se vigila</mat-label>
+                      <mat-select [(ngModel)]="ctl.sensorId">
+                        @for (s of sensoresDe(c.id); track s.id) {
+                          <mat-option [value]="s.id">{{ s.nombre }}{{ s.deviceId ? ' (Nueva Naturaleza)' : '' }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Actuador que se enciende</mat-label>
+                      <mat-select [(ngModel)]="ctl.actuadorId">
+                        @for (a of actuadoresDe(c.id); track a.id) {
+                          <mat-option [value]="a.id">{{ a.nombre }}{{ a.deviceId ? ' (Nueva Naturaleza)' : '' }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Encender si supera ({{ sensor?.unidad || '°C' }})</mat-label>
+                      <input matInput type="number" [(ngModel)]="ctl.maximo" placeholder="28">
+                    </mat-form-field>
+                  </div>
+                  @if (sensoresDe(c.id).length === 0 || actuadoresDe(c.id).length === 0) {
+                    <p class="no-data">Primero agrega el sensor y el actuador en sus pestañas (puedes traerlos de Nueva Naturaleza).</p>
+                  }
+                }
+              </mat-card-content>
+              <mat-card-actions align="end">
+                @if (actuador && actuador.activo) {
+                  <button mat-stroked-button (click)="cambiarModo(actuador)">
+                    {{ actuador.modo === 'Automatico' ? 'Pasar a manual' : 'Volver a automático' }}
+                  </button>
+                  <button mat-stroked-button (click)="accionarActuador(actuador)">
+                    {{ actuador.encendido ? 'Apagar' : 'Encender' }} manualmente
+                  </button>
+                }
+                @if (esAdmin) {
+                  <button mat-raised-button color="primary" [disabled]="enviando" (click)="guardarControl(c)">Guardar control</button>
+                }
+              </mat-card-actions>
+
+              @if (actuador) {
+                <div class="control-historial">
+                  <h4>Últimos movimientos de {{ actuador.nombre }}</h4>
+                  @for (e of eventosDeActuador(actuador.id); track e.id) {
+                    <div class="control-evento">
+                      <span class="nowrap">{{ e.fecha | date:'dd/MM HH:mm:ss' }}</span>
+                      <strong>{{ e.accion }}</strong>
+                      <span>{{ e.origen === 'Automatico' ? 'Automático' : (e.usuarioNombre || 'Manual') }}</span>
+                      <span class="control-motivo">{{ e.motivo }}</span>
+                    </div>
+                  } @empty {
+                    <p class="no-data">Sin movimientos registrados todavía</p>
+                  }
+                </div>
+              }
+            </mat-card>
+          }
+        } @empty {
+          <p class="no-data">No hay cultivos registrados</p>
+        }
       </section>
     </mat-tab>
   </mat-tab-group>

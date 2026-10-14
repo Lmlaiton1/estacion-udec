@@ -166,6 +166,19 @@ namespace RR_Nueva_Naturaleza.DAL
                 .HasForeignKey(a => a.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Sensores y actuadores de cultivo vinculados a dispositivos de Nueva Naturaleza (acuaponía)
+            modelBuilder.Entity<SensorCultivo>()
+                .HasOne(s => s.Device)
+                .WithMany()
+                .HasForeignKey(s => s.DeviceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ActuadorCultivo>()
+                .HasOne(a => a.Device)
+                .WithMany()
+                .HasForeignKey(a => a.DeviceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Control de cultivo
             // Todo en Restrict (salvo etapas y bitácora) para conservar la auditoría y evitar
             // múltiples rutas de borrado en cascada en SQL Server.

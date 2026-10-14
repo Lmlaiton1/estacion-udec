@@ -64,6 +64,7 @@ namespace RR_Nueva_Naturaleza.Service
                     CultivoId = sensor.CultivoId,
                     Nombre = sensor.Nombre.Trim(),
                     Clave = sensor.Clave.Trim(),
+                    DeviceId = sensor.DeviceId,
                     Tipo = sensor.Tipo.Trim(),
                     Variable = sensor.Variable.Trim(),
                     Unidad = sensor.Unidad.Trim(),
@@ -120,6 +121,7 @@ namespace RR_Nueva_Naturaleza.Service
                 // El cultivo no se cambia: las lecturas y umbrales ya están ligados a él
                 existente.Nombre = sensor.Nombre.Trim();
                 existente.Clave = sensor.Clave.Trim();
+                existente.DeviceId = sensor.DeviceId;
                 existente.Tipo = sensor.Tipo.Trim();
                 existente.Variable = sensor.Variable.Trim();
                 existente.Unidad = sensor.Unidad.Trim();
@@ -234,6 +236,16 @@ namespace RR_Nueva_Naturaleza.Service
             var claveRepetida = await _context.Sensores_Cultivo
                 .AnyAsync(s => s.CultivoId == cultivoId && s.Clave == sensor.Clave.Trim() && s.Id != idActual && !s.Eliminado);
             if (claveRepetida) return $"Ya existe un sensor con la clave '{sensor.Clave}' en este cultivo";
+
+            if (sensor.DeviceId.HasValue)
+            {
+                var esSensor = await _context.Devices.AnyAsync(d => d.Id == sensor.DeviceId && d.Device_Type!.Device_Type_Name == "Sensor");
+                if (!esSensor) return "El dispositivo de Nueva Naturaleza no existe o no es un sensor";
+
+                var yaVinculado = await _context.Sensores_Cultivo
+                    .AnyAsync(s => s.CultivoId == cultivoId && s.DeviceId == sensor.DeviceId && s.Id != idActual && !s.Eliminado);
+                if (yaVinculado) return "Ese sensor de Nueva Naturaleza ya está vinculado a este cultivo";
+            }
 
             return null;
         }

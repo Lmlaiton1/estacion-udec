@@ -14,6 +14,7 @@ namespace RR_Nueva_Naturaleza.Models.Dto
         public string Modo { get; set; } = string.Empty;
         public bool Encendido { get; set; }
         public bool Activo { get; set; }
+        public Guid? DeviceId { get; set; }
         public DateTime? FechaUltimoCambio { get; set; }
     }
 }

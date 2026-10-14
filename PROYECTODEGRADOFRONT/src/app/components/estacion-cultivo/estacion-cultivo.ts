@@ -13,8 +13,19 @@ import { EstacionMeteo } from '../../models/EstacionMeteo';
 import { Responses } from '../../models/Response';
 import {
   ActuadorCultivo, ActuadorCultivoCreate, AlarmaCultivo, AuditoriaCultivo, BitacoraAlarmaCultivo, Cultivo, CultivoCreate,
-  EtapaCultivo, EtapaCultivoCreate, EventoDispositivoCultivo, SensorCultivo, SensorCultivoCreate, UmbralCultivo, UmbralCultivoCreate
+  EtapaCultivo, EtapaCultivoCreate, EventoDispositivoCultivo, SensorCultivo, SensorCultivoCreate, UmbralCultivo, UmbralCultivoCreate,
+  DispositivoNuevaNaturaleza
 } from '../../models/Cultivo';
+
+// Pestaña Control: qué sensor vigila, qué actuador enciende y a partir de qué valor
+interface ControlCultivo {
+  sensorId: string;
+  actuadorId: string;
+  maximo: number | null;
+}
+
+// Pestaña Control (índice de la pestaña en el mat-tab-group)
+const TAB_CONTROL = 6;
 
 // Ventana para pedir el "por qué" / "cómo" antes de ejecutar una acción auditada
 interface AccionPendiente {
@@ -114,6 +125,12 @@ export class EstacionCultivo implements OnInit, OnDestroy {
   accion: AccionPendiente | null = null;
   enviando = false;
 
+  // Sensores y actuadores de Nueva Naturaleza (acuaponía) que se pueden vincular
+  dispositivosNN: DispositivoNuevaNaturaleza[] = [];
+  // Pestaña Control: configuración en edición por cultivo e historial de encendidos/apagados
+  control: Record<string, ControlCultivo> = {};
+  eventosControl: EventoDispositivoCultivo[] = [];
+
   private subs: Subscription[] = [];
   private alTerminarAccion: () => void = () => { };
 
@@ -134,6 +151,7 @@ export class EstacionCultivo implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.cargarCultivos();
     this.cargarEstaciones();
+    this.cargarDispositivosNN();
     this.cargarTodo();
 
     // Tiempo real: refresca alarmas y actuadores cuando cambian en otra pantalla o por el sistema
@@ -148,6 +166,7 @@ export class EstacionCultivo implements OnInit, OnDestroy {
           actuador.activo = a.activo;
         }
         if (this.tabIndex === 5) this.cargarAuditoria();
+        if (this.tabIndex === TAB_CONTROL) this.cargarEventosControl();
       }),
       this._cultivoService.lectura$.subscribe(() => this.cargarSensores())
     );
@@ -177,6 +196,11 @@ export class EstacionCultivo implements OnInit, OnDestroy {
   cambiarTab(index: number): void {
     this.tabIndex = index;
     if (index === 5) this.cargarAuditoria();
+    if (index === TAB_CONTROL) {
+      this.prepararControl();
+      this.cargarEventosControl();
+      this.cargarDispositivosNN();
+    }
   }
 
   private cargarTodo(): void {
@@ -185,11 +209,22 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     this.cargarUmbrales();
     this.cargarAlarmas();
     if (this.tabIndex === 5) this.cargarAuditoria();
+    if (this.tabIndex === TAB_CONTROL) this.cargarEventosControl();
+  }
+
+  private cargarDispositivosNN(): void {
+    this._cultivoService.getDispositivosNuevaNaturaleza().subscribe({
+      next: data => this.dispositivosNN = data,
+      error: () => this.mostrarError('No se pudieron cargar los dispositivos de Nueva Naturaleza')
+    });
   }
 
   private cargarCultivos(): void {
     this._cultivoService.getCultivos().subscribe({
-      next: data => this.cultivos = data,
+      next: data => {
+        this.cultivos = data;
+        this.prepararControl();
+      },
       error: () => this.mostrarError('No se pudieron cargar los cultivos')
     });
   }
@@ -203,21 +238,30 @@ export class EstacionCultivo implements OnInit, OnDestroy {
 
   private cargarSensores(): void {
     this._cultivoService.getSensores(this.cultivoFiltro).subscribe({
-      next: data => this.sensores = data,
+      next: data => {
+        this.sensores = data;
+        this.prepararControl();
+      },
       error: () => this.mostrarError('No se pudieron cargar los sensores')
     });
   }
 
   private cargarActuadores(): void {
     this._cultivoService.getActuadores(this.cultivoFiltro).subscribe({
-      next: data => this.actuadores = data,
+      next: data => {
+        this.actuadores = data;
+        this.prepararControl();
+      },
       error: () => this.mostrarError('No se pudieron cargar los actuadores')
     });
   }
 
   private cargarUmbrales(): void {
     this._cultivoService.getUmbrales(this.cultivoFiltro).subscribe({
-      next: data => this.umbrales = data,
+      next: data => {
+        this.umbrales = data;
+        this.prepararControl();
+      },
       error: () => this.mostrarError('No se pudieron cargar los umbrales')
     });
   }
@@ -394,8 +438,43 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     this.formSensor = {
       cultivoId: this.cultivoFiltro ?? this.cultivos[0]?.id ?? '', nombre: '', clave: '', tipo: 'DHT22',
       variable: 'temperatura', unidad: '°C', rangoMin: -40, rangoMax: 80, precision: 0.5,
-      marca: null, especificaciones: null, fechaInstalacion: null, motivo: null
+      marca: null, especificaciones: null, fechaInstalacion: null, deviceId: null, motivo: null
     };
+  }
+
+  get sensoresNN(): DispositivoNuevaNaturaleza[] {
+    return this.dispositivosNN.filter(d => d.tipo === 'Sensor');
+  }
+
+  get actuadoresNN(): DispositivoNuevaNaturaleza[] {
+    return this.dispositivosNN.filter(d => d.tipo === 'Actuador');
+  }
+
+  dispositivoNN(deviceId: string | null | undefined): DispositivoNuevaNaturaleza | undefined {
+    return deviceId ? this.dispositivosNN.find(d => d.id === deviceId) : undefined;
+  }
+
+  // Al elegir un sensor de Nueva Naturaleza se llenan los datos; sus lecturas llegan por el puerto serial de acuaponía
+  traerSensorNN(): void {
+    if (!this.formSensor) return;
+    const d = this.dispositivoNN(this.formSensor.deviceId);
+    if (!d) return;
+    const nombre = d.nombre.toLowerCase();
+    const esTemperatura = nombre.includes('temp');
+    const esHumedad = nombre.includes('humedad');
+    Object.assign(this.formSensor, {
+      nombre: d.nombre,
+      clave: this.claveDesde(d.nombre),
+      tipo: 'Nueva Naturaleza',
+      variable: esTemperatura ? 'temperatura' : esHumedad ? 'humedad' : this.claveDesde(d.nombre),
+      unidad: esTemperatura ? '°C' : esHumedad ? '%' : this.formSensor.unidad,
+      especificaciones: `Sensor de Nueva Naturaleza (${d.sistema}), lectura por el puerto serial de acuaponía`
+    });
+  }
+
+  // "Temperatura Aire" -> "temperaturaaire": sin tildes, espacios ni símbolos
+  private claveDesde(nombre: string): string {
+    return nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   }
 
   // Plantilla rápida: el DHT22 mide dos variables, se registran como dos sensores
@@ -420,7 +499,8 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     this.formSensor = {
       cultivoId: s.cultivoId, nombre: s.nombre, clave: s.clave, tipo: s.tipo, variable: s.variable, unidad: s.unidad,
       rangoMin: s.rangoMin, rangoMax: s.rangoMax, precision: s.precision, marca: s.marca,
-      especificaciones: s.especificaciones, fechaInstalacion: s.fechaInstalacion?.substring(0, 10) ?? null, motivo: null
+      especificaciones: s.especificaciones, fechaInstalacion: s.fechaInstalacion?.substring(0, 10) ?? null,
+      deviceId: s.deviceId, motivo: null
     };
   }
 
@@ -469,15 +549,29 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     this.actuadorEnEdicion = null;
     this.formActuador = {
       cultivoId: this.cultivoFiltro ?? this.cultivos[0]?.id ?? '', nombre: '', clave: '', tipo: 'Ventilador',
-      marca: null, potencia: null, especificaciones: null, motivo: null
+      marca: null, potencia: null, especificaciones: null, deviceId: null, motivo: null
     };
+  }
+
+  // Al elegir un actuador de Nueva Naturaleza se llenan los datos; se acciona por el puerto serial de acuaponía
+  traerActuadorNN(): void {
+    if (!this.formActuador) return;
+    const d = this.dispositivoNN(this.formActuador.deviceId);
+    if (!d) return;
+    const tipo = this.tiposActuador.find(t => d.nombre.toLowerCase().includes(t.toLowerCase())) ?? 'Otro';
+    Object.assign(this.formActuador, {
+      nombre: d.nombre,
+      clave: this.claveDesde(d.nombre),
+      tipo,
+      especificaciones: `Actuador de Nueva Naturaleza (${d.sistema}), se acciona por el puerto serial de acuaponía`
+    });
   }
 
   editarActuador(a: ActuadorCultivo): void {
     this.actuadorEnEdicion = a.id;
     this.formActuador = {
       cultivoId: a.cultivoId, nombre: a.nombre, clave: a.clave, tipo: a.tipo, marca: a.marca,
-      potencia: a.potencia, especificaciones: a.especificaciones, motivo: null
+      potencia: a.potencia, especificaciones: a.especificaciones, deviceId: a.deviceId, motivo: null
     };
   }
 
@@ -620,6 +714,110 @@ export class EstacionCultivo implements OnInit, OnDestroy {
       exito: 'Umbral eliminado',
       peligro: true,
       ejecutar: motivo => this._cultivoService.eliminarUmbral(u.id, motivo)
+    }, () => this.cargarUmbrales());
+  }
+
+  // ---------- Control automático ----------
+  // Arma la configuración de cada cultivo a partir del umbral que ya acciona un actuador, o propone
+  // el sensor de temperatura y el ventilador (prefiriendo los de Nueva Naturaleza)
+  prepararControl(): void {
+    for (const c of this.cultivosVisibles) {
+      // Se respeta lo que el usuario ya eligió; solo se completa lo que falta (los datos llegan en distinto orden)
+      const actual = this.control[c.id];
+      if (actual?.sensorId && actual?.actuadorId) continue;
+      const sensores = this.sensoresDe(c.id);
+      const actuadores = this.actuadoresDe(c.id);
+      const existente = this.umbrales.find(u => u.cultivoId === c.id && u.actuadorCultivoId);
+      if (existente) {
+        this.control[c.id] = { sensorId: existente.sensorCultivoId, actuadorId: existente.actuadorCultivoId!, maximo: existente.valorMax };
+        continue;
+      }
+      const sensor = sensores.find(s => s.deviceId && s.variable.toLowerCase().includes('temp'))
+        ?? sensores.find(s => s.variable.toLowerCase().includes('temp')) ?? sensores[0];
+      const actuador = actuadores.find(a => a.deviceId && a.tipo === 'Ventilador')
+        ?? actuadores.find(a => a.tipo === 'Ventilador') ?? actuadores[0];
+      this.control[c.id] = { sensorId: sensor?.id ?? '', actuadorId: actuador?.id ?? '', maximo: null };
+    }
+  }
+
+  private cargarEventosControl(): void {
+    this._cultivoService.getEventos(this.cultivoFiltro, 'Actuador', null).subscribe({
+      next: data => this.eventosControl = data,
+      error: () => this.mostrarError('No se pudo cargar el historial del actuador')
+    });
+  }
+
+  sensorControl(c: Cultivo): SensorCultivo | undefined {
+    return this.sensores.find(s => s.id === this.control[c.id]?.sensorId);
+  }
+
+  actuadorControl(c: Cultivo): ActuadorCultivo | undefined {
+    return this.actuadores.find(a => a.id === this.control[c.id]?.actuadorId);
+  }
+
+  umbralControl(c: Cultivo): UmbralCultivo | undefined {
+    const ctl = this.control[c.id];
+    if (!ctl) return undefined;
+    return this.umbrales.find(u => u.cultivoId === c.id && u.sensorCultivoId === ctl.sensorId && u.actuadorCultivoId === ctl.actuadorId);
+  }
+
+  eventosDeActuador(actuadorId: string | undefined): EventoDispositivoCultivo[] {
+    return this.eventosControl.filter(e => e.dispositivoId === actuadorId).slice(0, 10);
+  }
+
+  // Resumen de si el control está actuando solo o por qué no
+  estadoControl(c: Cultivo): { activo: boolean; texto: string } {
+    const sensor = this.sensorControl(c);
+    const actuador = this.actuadorControl(c);
+    const umbral = this.umbralControl(c);
+    if (!sensor || !actuador) return { activo: false, texto: 'Elige el sensor y el actuador del control.' };
+    if (!umbral || umbral.valorMax === null) return { activo: false, texto: 'Sin configurar: define la temperatura máxima y guarda.' };
+    if (!umbral.activo) return { activo: false, texto: 'El umbral del control está desactivado (pestaña Umbrales).' };
+    if (!sensor.activo) return { activo: false, texto: `El sensor ${sensor.nombre} está desactivado.` };
+    if (!actuador.activo) return { activo: false, texto: `El actuador ${actuador.nombre} está desactivado.` };
+    if (actuador.modo !== 'Automatico') return { activo: false, texto: `${actuador.nombre} está en modo manual: el sistema no lo mueve hasta que vuelva a automático.` };
+    return {
+      activo: true,
+      texto: `Actuando solo: si ${sensor.variable} supera ${umbral.valorMax} ${sensor.unidad} se enciende ${actuador.nombre}, y se apaga al volver a ${umbral.valorMax} ${sensor.unidad} o menos.`
+    };
+  }
+
+  guardarControl(c: Cultivo): void {
+    const ctl = this.control[c.id];
+    const sensor = this.sensorControl(c);
+    const actuador = this.actuadorControl(c);
+    if (!ctl || !sensor || !actuador) {
+      this.mostrarError('Elige el sensor y el actuador del control');
+      return;
+    }
+    if (ctl.maximo === null || ctl.maximo === undefined || isNaN(Number(ctl.maximo))) {
+      this.mostrarError('Indica la temperatura máxima');
+      return;
+    }
+
+    const existente = this.umbralControl(c);
+    const payload: UmbralCultivoCreate = {
+      cultivoId: c.id,
+      sensorCultivoId: sensor.id,
+      etapaCultivoId: existente?.etapaCultivoId ?? null,
+      valorMin: null,
+      valorMax: Number(ctl.maximo),
+      nivelGravedad: existente?.nivelGravedad ?? 'Media',
+      actuadorCultivoId: actuador.id,
+      encenderActuador: true,
+      revertirAlNormalizar: true,
+      minutosEscalamientoSms: existente?.minutosEscalamientoSms ?? null,
+      descripcion: `Control automático: encender ${actuador.nombre} si ${sensor.variable} supera ${ctl.maximo} ${sensor.unidad}`
+    };
+
+    this.pedirTexto({
+      titulo: `${existente ? 'Actualizar' : 'Activar'} el control de ${c.nombre}`,
+      descripcion: `Si ${sensor.nombre} supera ${ctl.maximo} ${sensor.unidad} se enciende ${actuador.nombre}; al bajar se apaga.`,
+      etiqueta: '¿Por qué se configura así? (queda en la auditoría)',
+      exito: 'Control guardado',
+      ejecutar: motivo => existente
+        ? this._cultivoService.actualizarUmbral(existente.id, { ...payload, motivo })
+        : this._cultivoService.crearUmbral({ ...payload, motivo })
     }, () => this.cargarUmbrales());
   }
 

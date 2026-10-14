@@ -12,8 +12,10 @@ namespace RR_Nueva_Naturaleza.Service
         private readonly RR_Nueva_NaturalezaContext _context;
         private readonly IBitacoraCultivoService _bitacora;
         private readonly IHubContext<CultivoHub> _hub;
+        private readonly IHubContext<ActuatorHub> _actuatorHub;
 
-        public ActuadorCultivoService(RR_Nueva_NaturalezaContext context, IBitacoraCultivoService bitacora, IHubContext<CultivoHub> hub)
+        public ActuadorCultivoService(RR_Nueva_NaturalezaContext context, IBitacoraCultivoService bitacora, IHubContext<CultivoHub> hub,
+            IHubContext<ActuatorHub> actuatorHub)
         {
             _context = context;
             _bitacora = bitacora;
@@ -51,6 +53,7 @@ namespace RR_Nueva_Naturaleza.Service
                     CultivoId = actuador.CultivoId,
                     Nombre = actuador.Nombre.Trim(),
                     Clave = actuador.Clave.Trim(),
+                    DeviceId = actuador.DeviceId,
                     Tipo = actuador.Tipo.Trim(),
                     Marca = actuador.Marca,
                     Potencia = actuador.Potencia,
@@ -108,6 +111,7 @@ namespace RR_Nueva_Naturaleza.Service
 
                 existente.Nombre = actuador.Nombre.Trim();
                 existente.Clave = actuador.Clave.Trim();
+                existente.DeviceId = actuador.DeviceId;
                 existente.Tipo = actuador.Tipo.Trim();
                 existente.Marca = actuador.Marca;
                 existente.Potencia = actuador.Potencia;
@@ -357,9 +361,22 @@ namespace RR_Nueva_Naturaleza.Service
             return response;
         }
 
-        // El worker escucha este evento y lo publica en cultivo/{Numero}/actuadores/{Clave}/cmd
+        // El worker escucha este evento y lo publica en cultivo/{Numero}/actuadores/{Clave}/cmd.
+        // Si el actuador es de Nueva Naturaleza, se envía por el hub de acuaponía y Worker.cs lo escribe al puerto serial.
         private async Task EnviarComando(ActuadorCultivo actuador, string origen)
         {
+            if (actuador.DeviceId.HasValue)
+            {
+                var nombreDispositivo = await _context.Devices.Where(d => d.Id == actuador.DeviceId)
+                    .Select(d => d.Device_Name).FirstOrDefaultAsync();
+                if (nombreDispositivo != null)
+                {
+                    await _actuatorHub.Clients.All.SendAsync("ReceiveCommand", nombreDispositivo, actuador.Encendido ? "Activo" : "Inactivo");
+                }
+                await NotificarFrontend(actuador);
+                return;
+            }
+
             await _hub.Clients.All.SendAsync(CultivoHub.EventoComandoActuador, new
             {
                 actuadorId = actuador.Id,
@@ -400,6 +417,16 @@ namespace RR_Nueva_Naturaleza.Service
             var claveRepetida = await _context.Actuadores_Cultivo
                 .AnyAsync(a => a.CultivoId == cultivoId && a.Clave == actuador.Clave.Trim() && a.Id != idActual && !a.Eliminado);
             if (claveRepetida) return $"Ya existe un actuador con la clave '{actuador.Clave}' en este cultivo";
+
+            if (actuador.DeviceId.HasValue)
+            {
+                var esActuador = await _context.Devices.AnyAsync(d => d.Id == actuador.DeviceId && d.Device_Type!.Device_Type_Name == "Actuador");
+                if (!esActuador) return "El dispositivo de Nueva Naturaleza no existe o no es un actuador";
+
+                var yaVinculado = await _context.Actuadores_Cultivo
+                    .AnyAsync(a => a.CultivoId == cultivoId && a.DeviceId == actuador.DeviceId && a.Id != idActual && !a.Eliminado);
+                if (yaVinculado) return "Ese actuador de Nueva Naturaleza ya está vinculado a este cultivo";
+            }
 
             return null;
         }
