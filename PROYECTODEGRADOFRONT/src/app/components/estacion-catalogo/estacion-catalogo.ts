@@ -29,7 +29,7 @@ export class EstacionCatalogo implements OnInit {
   columnasSensores = ['nombre', 'tipo', 'variables', 'activo', 'acciones'];
 
   auditoria: AuditoriaMeteo[] = [];
-  columnasAuditoria = ['fecha', 'tipoEntidad', 'nombreEntidad', 'accion', 'motivo', 'usuarioNombre'];
+  columnasAuditoria = ['fecha', 'tipoEntidad', 'nombreEntidad', 'accion', 'detalle', 'motivo', 'usuarioNombre'];
 
   // Formulario de estación (null = creando una nueva)
   formEstacionVisible = false;
@@ -52,6 +52,11 @@ export class EstacionCatalogo implements OnInit {
 
   cambiarVista(vista: 'estaciones' | 'sensores' | 'auditoria'): void {
     this.vista = vista;
+  }
+
+  // Color de la acción en la auditoría: rojo/gris para lo que quita o apaga, verde para el resto
+  claseAccion(accion: string): string {
+    return ['Desactivada', 'Desactivado', 'Eliminado'].includes(accion) ? 'inactiva' : 'activa';
   }
 
   private cargarAuditoria(): void {

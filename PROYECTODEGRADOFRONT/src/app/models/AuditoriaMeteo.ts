@@ -4,6 +4,7 @@ export interface AuditoriaMeteo {
   entidadId: string;
   nombreEntidad: string;
   accion: string;
+  detalle: string | null;
   motivo: string;
   fecha: string;
   usuarioId: string;

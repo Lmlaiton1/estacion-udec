@@ -10,5 +10,7 @@ namespace RR_Nueva_Naturaleza.Models.Dto
         public string NivelGravedad { get; set; } = string.Empty;
         public bool Activo { get; set; } = true;
         public string? Descripcion { get; set; }
+        // Obligatorio: queda en la auditoría
+        public string Motivo { get; set; } = string.Empty;
     }
 }

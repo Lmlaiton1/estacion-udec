@@ -51,8 +51,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         [ProducesResponseType(typeof(ServiceResponse), 400)]
         public async Task<IActionResult> CreateUmbral(UmbralMeteoCreateDto umbral)
         {
-            var creadoPor = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var response = await _umbralMeteoService.AddUmbral(umbral, creadoPor);
+            var response = await _umbralMeteoService.AddUmbral(umbral, UsuarioActual());
             if (response.Result == ServiceResponseType.Failed)
             {
                 return BadRequest(response);
@@ -66,7 +65,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         [ProducesResponseType(typeof(ServiceResponse), 400)]
         public async Task<IActionResult> UpdateUmbral(Guid id, UmbralMeteoUpdateDto umbral)
         {
-            var response = await _umbralMeteoService.UpdateUmbral(id, umbral);
+            var response = await _umbralMeteoService.UpdateUmbral(id, umbral, UsuarioActual());
             if (response.Result == ServiceResponseType.Failed)
             {
                 return BadRequest(response);
@@ -78,14 +77,16 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         [HttpDelete("{id}")]
         [ProducesResponseType(typeof(ServiceResponse), 200)]
         [ProducesResponseType(typeof(ServiceResponse), 400)]
-        public async Task<IActionResult> DeleteUmbral(Guid id)
+        public async Task<IActionResult> DeleteUmbral(Guid id, [FromBody] MotivoDto motivo)
         {
-            var response = await _umbralMeteoService.DeleteUmbral(id);
+            var response = await _umbralMeteoService.DeleteUmbral(id, motivo.Motivo, UsuarioActual());
             if (response.Result == ServiceResponseType.Failed)
             {
                 return BadRequest(response);
             }
             return Ok(response);
         }
+
+        private Guid UsuarioActual() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
     }
 }

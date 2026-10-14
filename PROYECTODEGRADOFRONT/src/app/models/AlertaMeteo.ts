@@ -9,4 +9,8 @@ export interface AlertaMeteo {
   nivelGravedad: string;
   fechaHora: string;
   visto: boolean;
+  vistoPorId: string | null;
+  vistoPorNombre: string | null;
+  fechaVisto: string | null;
+  accionTomada: string | null;
 }

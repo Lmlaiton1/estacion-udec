@@ -12,5 +12,9 @@ namespace RR_Nueva_Naturaleza.Models.Dto
         public string NivelGravedad { get; set; } = string.Empty;
         public DateTime FechaHora { get; set; }
         public bool Visto { get; set; }
+        public Guid? VistoPorId { get; set; }
+        public string? VistoPorNombre { get; set; }
+        public DateTime? FechaVisto { get; set; }
+        public string? AccionTomada { get; set; }
     }
 }

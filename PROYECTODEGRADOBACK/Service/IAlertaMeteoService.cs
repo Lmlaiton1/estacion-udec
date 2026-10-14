@@ -6,6 +6,6 @@ namespace RR_Nueva_Naturaleza.Service
     {
         Task<IEnumerable<AlertaMeteo>> GetAlertas();
         Task<AlertaMeteo?> GetAlerta(Guid id);
-        Task<ServiceResponse> MarcarVista(Guid id);
+        Task<ServiceResponse> MarcarVista(Guid id, string accionTomada, Guid usuarioId);
     }
 }

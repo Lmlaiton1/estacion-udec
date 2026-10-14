@@ -8,6 +8,16 @@ import { UmbralMeteoCreate } from '../../models/UmbralMeteoCreate';
 import { UmbralMeteoUpdate } from '../../models/UmbralMeteoUpdate';
 import { AlertaMeteo } from '../../models/AlertaMeteo';
 
+// Ventana que pide un texto obligatorio antes de ejecutar (motivo o qué se hizo); queda en la auditoría
+interface AccionPendiente {
+  titulo: string;
+  descripcion: string;
+  etiqueta: string;
+  peligro: boolean;
+  texto: string;
+  ejecutar: (texto: string) => void;
+}
+
 @Component({
   selector: 'app-estacion-umbrales',
   standalone: true,
@@ -29,6 +39,9 @@ export class EstacionUmbrales implements OnInit {
   formUmbralVisible = false;
   umbralEnEdicion: UmbralMeteo | null = null;
   formUmbral = this.umbralVacio();
+
+  accion: AccionPendiente | null = null;
+  enviando = false;
 
   constructor(private _weatherService: WeatherService, private _snackBar: MatSnackBar) { }
 
@@ -67,7 +80,8 @@ export class EstacionUmbrales implements OnInit {
       valorMax: null,
       nivelGravedad: this.niveles[0],
       activo: true,
-      descripcion: ''
+      descripcion: '',
+      motivo: ''
     };
   }
 
@@ -86,7 +100,8 @@ export class EstacionUmbrales implements OnInit {
       valorMax: umbral.valorMax,
       nivelGravedad: umbral.nivelGravedad,
       activo: umbral.activo,
-      descripcion: umbral.descripcion ?? ''
+      descripcion: umbral.descripcion ?? '',
+      motivo: ''
     };
     this.formUmbralVisible = true;
   }
@@ -96,6 +111,12 @@ export class EstacionUmbrales implements OnInit {
   }
 
   guardarUmbral(): void {
+    if (!this.formUmbral.motivo.trim()) {
+      this.mostrarError('Indique el motivo: queda registrado en la auditoría');
+      return;
+    }
+    this.formUmbral.motivo = this.formUmbral.motivo.trim();
+
     if (this.umbralEnEdicion) {
       const payload: UmbralMeteoUpdate = { ...this.formUmbral };
       this._weatherService.actualizarUmbral(this.umbralEnEdicion.id, payload).subscribe({
@@ -119,24 +140,55 @@ export class EstacionUmbrales implements OnInit {
   }
 
   eliminarUmbral(umbral: UmbralMeteo): void {
-    if (!confirm(`¿Eliminar el umbral de "${umbral.variable}"?`)) return;
-
-    this._weatherService.eliminarUmbral(umbral.id).subscribe({
-      next: () => {
-        this._snackBar.open('Umbral eliminado', 'Cerrar', { duration: 3000 });
-        this.cargarUmbrales();
-      },
-      error: err => this.mostrarError(this.extraerError(err, 'No se pudo eliminar el umbral'))
+    this.pedirTexto({
+      titulo: `Eliminar el umbral de ${umbral.variable} (${this.nombreEstacion(umbral.estacionNumero)})`,
+      descripcion: 'Si el umbral ya generó alertas no se puede eliminar; en ese caso desactívelo.',
+      etiqueta: '¿Por qué se elimina? (queda en la auditoría)',
+      peligro: true,
+      ejecutar: motivo => this._weatherService.eliminarUmbral(umbral.id, motivo).subscribe({
+        next: () => this.terminarAccion('Umbral eliminado', () => this.cargarUmbrales()),
+        error: err => this.fallarAccion(this.extraerError(err, 'No se pudo eliminar el umbral'))
+      })
     });
   }
 
   marcarVista(alerta: AlertaMeteo): void {
-    this._weatherService.marcarVistaAlerta(alerta.id).subscribe({
-      next: () => {
-        alerta.visto = true;
-      },
-      error: err => this.mostrarError(this.extraerError(err, 'No se pudo marcar la alerta como vista'))
+    this.pedirTexto({
+      titulo: 'Marcar alerta como vista',
+      descripcion: alerta.mensaje,
+      etiqueta: '¿Qué se hizo? (ej.: se revisó la estación, se cubrió el cultivo)',
+      peligro: false,
+      ejecutar: texto => this._weatherService.marcarVistaAlerta(alerta.id, texto).subscribe({
+        next: () => this.terminarAccion('Alerta marcada como vista', () => this.cargarAlertas()),
+        error: err => this.fallarAccion(this.extraerError(err, 'No se pudo marcar la alerta como vista'))
+      })
     });
+  }
+
+  private pedirTexto(accion: Omit<AccionPendiente, 'texto'>): void {
+    this.accion = { ...accion, texto: '' };
+  }
+
+  confirmarAccion(): void {
+    if (!this.accion || !this.accion.texto.trim() || this.enviando) return;
+    this.enviando = true;
+    this.accion.ejecutar(this.accion.texto.trim());
+  }
+
+  cancelarAccion(): void {
+    if (!this.enviando) this.accion = null;
+  }
+
+  private terminarAccion(mensaje: string, recargar: () => void): void {
+    this.enviando = false;
+    this.accion = null;
+    this._snackBar.open(mensaje, 'Cerrar', { duration: 3000 });
+    recargar();
+  }
+
+  private fallarAccion(mensaje: string): void {
+    this.enviando = false;
+    this.mostrarError(mensaje);
   }
 
   nombreEstacion(numero: number | null): string {

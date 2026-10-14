@@ -212,10 +212,17 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccionTomada")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<int>("EstacionNumero")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("FechaHora")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaVisto")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("LecturaId")
@@ -245,11 +252,16 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Property<bool>("Visto")
                         .HasColumnType("bit");
 
+                    b.Property<Guid?>("VistoPorId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("LecturaId");
 
                     b.HasIndex("UmbralId");
+
+                    b.HasIndex("VistoPorId");
 
                     b.ToTable("Alertas_Meteo");
                 });
@@ -345,6 +357,10 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Detalle")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<Guid>("EntidadId")
                         .HasColumnType("uniqueidentifier");
@@ -1531,9 +1547,16 @@ namespace RR_Nueva_Naturaleza.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "VistoPor")
+                        .WithMany()
+                        .HasForeignKey("VistoPorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Lectura");
 
                     b.Navigation("Umbral");
+
+                    b.Navigation("VistoPor");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Audit", b =>

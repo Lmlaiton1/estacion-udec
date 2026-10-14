@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RR_Nueva_Naturaleza.Models;
 
 namespace RR_Nueva_Naturaleza.DAL
@@ -151,6 +151,13 @@ namespace RR_Nueva_Naturaleza.DAL
                 .HasOne(a => a.Umbral)
                 .WithMany()
                 .HasForeignKey(a => a.UmbralId);
+
+            // AlertaMeteo -> User (quién la marcó como vista). Restrict: conserva el rastro.
+            modelBuilder.Entity<AlertaMeteo>()
+                .HasOne(a => a.VistoPor)
+                .WithMany()
+                .HasForeignKey(a => a.VistoPorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // AuditoriaMeteo -> User (quién activó/desactivó). Restrict: conserva el rastro aunque el usuario se borre.
             modelBuilder.Entity<AuditoriaMeteo>()
