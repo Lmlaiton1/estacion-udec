@@ -83,7 +83,7 @@ const unsigned long intervaloLluvia    = 60000UL;
 const unsigned long intervaloRead      =  2500UL; // DHT22 necesita >= 2 s entre lecturas
 const unsigned long intervaloSerial    =  1000UL;
 const unsigned long intervaloReconnect =  5000UL;
-const float         mm_por_pulso       = 8.0;
+const float         mm_por_pulso       = 0.91; // 8 ml/vuelco ÷ 88.25 cm² (embudo Ø10.6 cm)
 
 // ── Anemómetro Hall — constantes físicas (Estaciones 1 y 2) ────
 // Diámetro y K equivalentes a la fórmula fija que se usaba antes

@@ -181,6 +181,12 @@ namespace ServicioSensorica.Worker
                             .WithAutomaticReconnect()
                             .Build();
 
+                        // Reinicio remoto pedido desde el dashboard: se reenvía a la placa por MQTT
+                        connection.On<ComandoReinicioDto>("ComandoReinicioEstacion", async comando =>
+                        {
+                            await PublicarReinicioAsync(comando.EstacionNumero);
+                        });
+
                         await connection.StartAsync(stoppingToken);
                         _hubConnection = connection;
                         _logger.LogInformation("Conectado al WeatherHub en {url}", _weatherHubUrl);
@@ -387,6 +393,33 @@ namespace ServicioSensorica.Worker
                     _logger.LogError(ex, "Error enviando la alarma a la estación {estacion}", grupo.Key);
                 }
             }
+        }
+
+        // El firmware escucha estacionN/comando y con "RESET" publica "reiniciando" y hace ESP.restart().
+        // Sin retained: si la placa está desconectada el comando se pierde y no la reinicia al volver.
+        private async Task PublicarReinicioAsync(int estacionNumero)
+        {
+            if (_mqttClient == null) return;
+
+            var mensaje = new MqttApplicationMessageBuilder()
+                .WithTopic($"estacion{estacionNumero}/comando")
+                .WithPayload("RESET")
+                .Build();
+
+            try
+            {
+                await _mqttClient.EnqueueAsync(mensaje);
+                _logger.LogWarning("Reinicio remoto enviado a la estación {estacion}", estacionNumero);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enviando el reinicio a la estación {estacion}", estacionNumero);
+            }
+        }
+
+        public class ComandoReinicioDto
+        {
+            public int EstacionNumero { get; set; }
         }
 
         private static int PesoGravedad(string? nivel) => nivel?.Trim().ToLowerInvariant() switch

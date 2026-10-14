@@ -43,6 +43,8 @@ export class WeatherService {
   private complement17 = 'Api/ApiAuditoriaMeteo';
   private complement18 = 'Api/ApiLecturaMeteo/Estadisticas';
   private complement19 = 'Api/ApiLecturaMeteo/UltimasLecturas';
+  private complement20 = 'Api/ApiEstacionMeteo/Reiniciar';
+  private complement21 = 'Api/ApiEstacionMeteo/ReiniciarTodas';
 
   constructor(private _http: HttpClient) { }
 
@@ -123,6 +125,15 @@ export class WeatherService {
 
   public cambiarEstadoEstacion(id: string, cambio: CambiarEstado): Observable<Responses> {
     return this._http.put<Responses>(`${this.apiUrl + this.complement15}/${id}`, cambio);
+  }
+
+  // Reinicio remoto: el worker publica RESET en estacionN/comando (solo llega si la placa está conectada)
+  public reiniciarEstacion(id: string, motivo: string): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement20}/${id}`, { motivo });
+  }
+
+  public reiniciarTodas(motivo: string): Observable<Responses> {
+    return this._http.put<Responses>(this.apiUrl + this.complement21, { motivo });
   }
 
   public cambiarEstadoSensor(id: string, cambio: CambiarEstado): Observable<Responses> {

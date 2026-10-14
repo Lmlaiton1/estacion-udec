@@ -19,7 +19,7 @@ namespace RR_Nueva_Naturaleza.Models
         public string NombreEntidad { get; set; } = string.Empty;
 
         [MaxLength(20)]
-        public string Accion { get; set; } = string.Empty; // "Activada" | "Desactivada" | "Creado" | "Modificado" | "Eliminado" | "Vista"
+        public string Accion { get; set; } = string.Empty; // "Activada" | "Desactivada" | "Creado" | "Modificado" | "Eliminado" | "Vista" | "Reiniciada"
 
         // Qué cambió (antes → después) o resumen de lo creado/eliminado. Null en activar/desactivar.
         [MaxLength(1000)]

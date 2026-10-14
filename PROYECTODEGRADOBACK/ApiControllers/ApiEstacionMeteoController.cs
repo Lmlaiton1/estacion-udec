@@ -97,5 +97,35 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             }
             return Ok(response);
         }
+
+        [HttpPut("Reiniciar/{id}")]
+        [Authorize(Roles = "Administrador")]
+        [ProducesResponseType(typeof(ServiceResponse), 200)]
+        [ProducesResponseType(typeof(ServiceResponse), 400)]
+        public async Task<IActionResult> Reiniciar(Guid id, MotivoDto motivo)
+        {
+            var usuarioId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var response = await _estacionMeteoService.Reiniciar(id, motivo.Motivo, usuarioId);
+            if (response.Result == ServiceResponseType.Failed)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpPut("ReiniciarTodas")]
+        [Authorize(Roles = "Administrador")]
+        [ProducesResponseType(typeof(ServiceResponse), 200)]
+        [ProducesResponseType(typeof(ServiceResponse), 400)]
+        public async Task<IActionResult> ReiniciarTodas(MotivoDto motivo)
+        {
+            var usuarioId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var response = await _estacionMeteoService.ReiniciarTodas(motivo.Motivo, usuarioId);
+            if (response.Result == ServiceResponseType.Failed)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
     }
 }

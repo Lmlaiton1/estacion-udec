@@ -1,11 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ApexAxisChartSeries, ApexChart, ApexTitleSubtitle, ApexXAxis, ApexYAxis } from 'ng-apexcharts';
 import { MATERIAL_MODULES } from '../../shared/material';
 import { WeatherService } from '../../service/weather/weather-service';
+import { Authservice } from '../../service/auth/authservice';
+import { Rolservice } from '../../service/rol/rolservice';
 import { LecturaMeteo } from '../../models/LecturaMeteo';
 import { EstacionMeteo } from '../../models/EstacionMeteo';
 
@@ -38,9 +41,11 @@ interface GraficaVariable {
 }
 
 interface EstadoEstacion {
+  id: string | null;        // null si la estación no está en el catálogo
   numero: number;
   nombre: string;
-  activa: boolean;
+  activa: boolean;          // transmitió en los últimos MINUTOS_ACTIVA
+  habilitada: boolean;      // activa en el catálogo (se puede reiniciar)
   ultimaFecha: Date | null;
 }
 
@@ -93,9 +98,23 @@ export class EstacionDashboard implements OnInit, OnDestroy {
 
   cargando = false;
 
+  // Reinicio remoto (solo Administrador)
+  esAdministrador = false;
+  reiniciando = false;
+
   private refreshInterval: any;
 
-  constructor(private _weatherService: WeatherService) { }
+  constructor(
+    private _weatherService: WeatherService,
+    private _authService: Authservice,
+    private _rolService: Rolservice,
+    private _snackBar: MatSnackBar
+  ) {
+    const user = this._authService.getTokenUserInfo();
+    if (user?.rolId) {
+      this._rolService.getRol(user.rolId).subscribe(rol => this.esAdministrador = rol.name === 'Administrador');
+    }
+  }
 
   ngOnInit(): void {
     this._weatherService.getEstaciones().pipe(
@@ -178,12 +197,75 @@ export class EstacionDashboard implements OnInit, OnDestroy {
         const deLaEstacion = lecturas.filter(l => l.estacionNumero === numero);
         const ultimaFecha = this.ultimaFechaDe(deLaEstacion);
         const activa = ultimaFecha !== null && (Date.now() - ultimaFecha.getTime()) < MINUTOS_ACTIVA * 60 * 1000;
+        const catalogo = this.estaciones.find(e => e.numero === numero);
 
-        return { numero, nombre: this.nombreEstacion(numero), activa, ultimaFecha };
+        return {
+          id: catalogo?.id ?? null,
+          numero,
+          nombre: this.nombreEstacion(numero),
+          activa,
+          habilitada: catalogo?.activa ?? false,
+          ultimaFecha
+        };
       });
 
       this.procesarTarjetas();
     });
+  }
+
+  hayEstacionesParaReiniciar(): boolean {
+    return this.estadoEstaciones.some(e => e.id && e.habilitada);
+  }
+
+  // Envía RESET por MQTT a la placa. Si no está conectada al broker, el comando no le llega.
+  reiniciarEstacion(estado: EstadoEstacion): void {
+    if (!estado.id) return;
+
+    const aviso = estado.activa ? '' : '\n\nOjo: la estación aparece "Sin señal"; si no está conectada, no recibirá el comando.';
+    const motivo = prompt(`¿Por qué querés reiniciar "${estado.nombre}"? (obligatorio)${aviso}`);
+    if (motivo === null) return;
+    if (!motivo.trim()) {
+      this.mostrarMensaje('El motivo es obligatorio');
+      return;
+    }
+
+    this.reiniciando = true;
+    this._weatherService.reiniciarEstacion(estado.id, motivo.trim()).subscribe({
+      next: () => {
+        this.reiniciando = false;
+        this.mostrarMensaje(`Reinicio enviado a ${estado.nombre}. Vuelve a transmitir en menos de un minuto`);
+      },
+      error: err => {
+        this.reiniciando = false;
+        this.mostrarMensaje(err?.error?.errorMessage || 'No se pudo enviar el reinicio');
+      }
+    });
+  }
+
+  reiniciarTodas(): void {
+    const motivo = prompt('¿Por qué querés reiniciar TODAS las estaciones activas? (obligatorio)');
+    if (motivo === null) return;
+    if (!motivo.trim()) {
+      this.mostrarMensaje('El motivo es obligatorio');
+      return;
+    }
+
+    this.reiniciando = true;
+    this._weatherService.reiniciarTodas(motivo.trim()).subscribe({
+      next: resp => {
+        this.reiniciando = false;
+        const numeros: number[] = resp?.data ?? [];
+        this.mostrarMensaje(`Reinicio enviado a ${numeros.length} estación(es): ${numeros.map(n => this.nombreEstacion(n)).join(', ')}`);
+      },
+      error: err => {
+        this.reiniciando = false;
+        this.mostrarMensaje(err?.error?.errorMessage || 'No se pudo enviar el reinicio');
+      }
+    });
+  }
+
+  private mostrarMensaje(mensaje: string): void {
+    this._snackBar.open(mensaje, 'Cerrar', { duration: 4000 });
   }
 
   private ultimaFechaDe(lecturas: LecturaMeteo[]): Date | null {

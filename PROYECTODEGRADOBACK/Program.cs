@@ -127,6 +127,7 @@ namespace RR_Nueva_Naturaleza
             app.MapHub<StateHub>("/Hubs/State").RequireCors(rrnn);
             app.MapHub<SdTransferHub>("/Hubs/SdTransfer").RequireCors(rrnn);
             app.MapHub<CultivoHub>("/Hubs/Cultivo").RequireCors(rrnn);
+            app.MapHub<WeatherHub>("/Hubs/Weather").RequireCors(rrnn);
 
             app.Run();
         }
