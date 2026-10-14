@@ -13,7 +13,7 @@
  *            Veleta 4 reed switches
  *  v5: Sirena de alarma en GPIO 15 — topic estacion1/alarma
  *      Comandos extra en estacion1/comando: ALARMA_ON | ALARMA_OFF
- *  v6: Pluviómetro calibrado (8 ml/vuelco, embudo Ø10.6 cm ≈ 0.91 mm/pulso)
+ *  v6: Pluviómetro calibrado (16 ml/ciclo = 1 pulso, embudo Ø10.6 cm ≈ 1.81 mm/pulso)
  * ================================================================
  */
 
@@ -147,13 +147,14 @@ unsigned long fallosHum  = 0;
 // CONSTANTES DE CALIBRACIÓN
 // Pluviómetro de balancín calibrado volumétricamente:
 //   diámetro embudo 10.6 cm → área = π·(5.3 cm)² ≈ 88.25 cm²
-//   8 ml por vuelco → 8 cm³ / 88.25 cm² ≈ 0.0906 cm ≈ 0.91 mm/pulso
+//   1 pulso por ciclo completo (2 vuelcos de 8 ml) = 16 ml
+//   16 cm³ / 88.25 cm² ≈ 0.1813 cm ≈ 1.81 mm/pulso
 // Los campos crudos (llup, vvp, vvi) permiten recalcular el histórico.
 // ================================================================
 const float DIAMETRO_EMBUDO_CM = 10.6;
-const float ML_POR_BALANCEO    = 8.0;
+const float ML_POR_PULSO       = 16.0; // 8 ml por vuelco × 2 vuelcos por ciclo
 const float AREA_CAPTACION_CM2 = PI * (DIAMETRO_EMBUDO_CM / 2.0) * (DIAMETRO_EMBUDO_CM / 2.0);
-const float mm_por_pulso       = (ML_POR_BALANCEO / AREA_CAPTACION_CM2) * 10.0; // ≈ 0.91 mm
+const float mm_por_pulso       = (ML_POR_PULSO / AREA_CAPTACION_CM2) * 10.0; // ≈ 1.81 mm
 
 // ================================================================
 // TIMERS
