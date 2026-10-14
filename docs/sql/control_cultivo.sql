@@ -10,6 +10,9 @@
           Auditoria_Cultivo + columna Eliminado en 6 tablas + índices únicos filtrados
      3. 20261013050841_CultivoVariasEstaciones
           Cultivo_Estaciones (un cultivo con una, varias o todas las estaciones)
+     4. 20261014160949_CultivoDispositivosNuevaNaturaleza
+          Columna DeviceId en Sensores_Cultivo y Actuadores_Cultivo: vincula sensores y
+          actuadores del cultivo con dispositivos de acuaponía (Devices)
 
    IDEMPOTENTE: revisa __EFMigrationsHistory y solo aplica lo que falte.
    Se puede ejecutar varias veces sin dañar nada.
@@ -612,3 +615,66 @@ END;
 COMMIT;
 GO
 
+/* ---------------------------------------------------------------------
+   4. 20261014160949_CultivoDispositivosNuevaNaturaleza
+   --------------------------------------------------------------------- */
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014160949_CultivoDispositivosNuevaNaturaleza'
+)
+BEGIN
+    ALTER TABLE [Sensores_Cultivo] ADD [DeviceId] uniqueidentifier NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014160949_CultivoDispositivosNuevaNaturaleza'
+)
+BEGIN
+    ALTER TABLE [Actuadores_Cultivo] ADD [DeviceId] uniqueidentifier NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014160949_CultivoDispositivosNuevaNaturaleza'
+)
+BEGIN
+    CREATE INDEX [IX_Sensores_Cultivo_DeviceId] ON [Sensores_Cultivo] ([DeviceId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014160949_CultivoDispositivosNuevaNaturaleza'
+)
+BEGIN
+    CREATE INDEX [IX_Actuadores_Cultivo_DeviceId] ON [Actuadores_Cultivo] ([DeviceId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014160949_CultivoDispositivosNuevaNaturaleza'
+)
+BEGIN
+    ALTER TABLE [Actuadores_Cultivo] ADD CONSTRAINT [FK_Actuadores_Cultivo_Devices_DeviceId] FOREIGN KEY ([DeviceId]) REFERENCES [Devices] ([Id]) ON DELETE NO ACTION;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014160949_CultivoDispositivosNuevaNaturaleza'
+)
+BEGIN
+    ALTER TABLE [Sensores_Cultivo] ADD CONSTRAINT [FK_Sensores_Cultivo_Devices_DeviceId] FOREIGN KEY ([DeviceId]) REFERENCES [Devices] ([Id]) ON DELETE NO ACTION;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014160949_CultivoDispositivosNuevaNaturaleza'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261014160949_CultivoDispositivosNuevaNaturaleza', N'9.0.7');
+END;
+
+COMMIT;
+GO
