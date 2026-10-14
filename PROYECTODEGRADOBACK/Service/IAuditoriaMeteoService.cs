@@ -6,5 +6,6 @@ namespace RR_Nueva_Naturaleza.Service
     {
         Task<IEnumerable<AuditoriaMeteo>> GetAuditoria();
         Task Registrar(string tipoEntidad, Guid entidadId, string nombreEntidad, bool nuevoEstado, string motivo, Guid usuarioId);
+        Task RegistrarAccion(string tipoEntidad, Guid entidadId, string nombreEntidad, string accion, string motivo, Guid usuarioId);
     }
 }

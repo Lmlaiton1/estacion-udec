@@ -18,7 +18,7 @@ namespace RR_Nueva_Naturaleza.Models
         public string NombreEntidad { get; set; } = string.Empty;
 
         [MaxLength(20)]
-        public string Accion { get; set; } = string.Empty; // "Activada" | "Desactivada"
+        public string Accion { get; set; } = string.Empty; // "Activada" | "Desactivada" | "Reiniciada"
 
         [MaxLength(500)]
         public string Motivo { get; set; } = string.Empty;

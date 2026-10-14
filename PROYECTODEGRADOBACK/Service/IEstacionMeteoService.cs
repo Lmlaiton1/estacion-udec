@@ -11,5 +11,7 @@ namespace RR_Nueva_Naturaleza.Service
         Task<ServiceResponse> UpdateEstacion(Guid id, EstacionMeteoUpdateDto estacion);
         Task<ServiceResponse> DeleteEstacion(Guid id);
         Task<ServiceResponse> CambiarEstado(Guid id, CambiarEstadoDto cambio, Guid usuarioId);
+        Task<ServiceResponse> Reiniciar(Guid id, string motivo, Guid usuarioId);
+        Task<ServiceResponse> ReiniciarTodas(string motivo, Guid usuarioId);
     }
 }

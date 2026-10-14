@@ -15,7 +15,21 @@
             }
           </span>
         </div>
+        @if (esAdministrador && estado.id && estado.habilitada) {
+          <button mat-icon-button class="btn-reiniciar" matTooltip="Reiniciar {{ estado.nombre }}"
+                  [disabled]="reiniciando" (click)="reiniciarEstacion(estado)">
+            <mat-icon>restart_alt</mat-icon>
+          </button>
+        }
       </mat-card>
+    }
+
+    @if (esAdministrador && hayEstacionesParaReiniciar()) {
+      <button mat-stroked-button color="warn" class="btn-reiniciar-todas"
+              [disabled]="reiniciando" (click)="reiniciarTodas()">
+        <mat-icon>restart_alt</mat-icon>
+        Reiniciar todas
+      </button>
     }
   </div>
 
