@@ -1,7 +1,7 @@
 ﻿/* =====================================================================
    ESTACIONES METEOROLÓGICAS — umbrales, alertas y auditoría (script de BD)
    Base de datos: BdNuevaNaturaleza (SQL Server)
-   Generado: 2026-10-14 desde las migraciones de EF Core:
+   Generado: 2026-10-14 desde las migraciones de EF Core (al día con origin/main):
      1. 20260914020520_DominioEstacionMeteorologica
           Estaciones_Meteo, Sensores_Meteo, Lecturas_Meteo, Lecturas_Crudas,
           Umbrales_Meteo, Alertas_Meteo, Predicciones_Meteo, Imagenes_Meteo
@@ -11,14 +11,17 @@
           Columna Activo en Users
      4. 20261002064903_AddActivoSensorYAuditoriaMeteo
           Columna Activo en Sensores_Meteo + tabla Auditoria_Meteo
+     5. 20261014141620_AuditoriaUmbralesYAlertasMeteo
+          Auditoria_Meteo.Detalle + Alertas_Meteo.AccionTomada, FechaVisto, VistoPorId
 
    Incluye todo el dominio meteorológico porque Umbrales_Meteo, Alertas_Meteo
    y Auditoria_Meteo dependen de Estaciones_Meteo, Lecturas_Meteo y Users.
 
    Valores que usa la aplicación (columnas de texto, sin CHECK en la BD):
    - Umbrales_Meteo.NivelGravedad / Alertas_Meteo.NivelGravedad: Alta | Media | Baja
-   - Auditoria_Meteo.TipoEntidad: Estacion | Sensor
-   - Auditoria_Meteo.Accion: Activada | Desactivada | Reiniciada
+   - Auditoria_Meteo.TipoEntidad: Estacion | Sensor | Umbral | Alerta
+   - Auditoria_Meteo.Accion: Activada | Desactivada | Creado | Modificado | Eliminado
+                             | Vista | Reiniciada
 
    IDEMPOTENTE: revisa __EFMigrationsHistory y solo aplica lo que falte.
    Se puede ejecutar varias veces sin dañar nada.
@@ -339,6 +342,68 @@ IF NOT EXISTS (
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
     VALUES (N'20261002064903_AddActivoSensorYAuditoriaMeteo', N'9.0.7');
+END;
+
+COMMIT;
+GO
+
+/* ---- 5. Auditoría de umbrales y alertas (migración del 2026-10-14) ---- */
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014141620_AuditoriaUmbralesYAlertasMeteo'
+)
+BEGIN
+    ALTER TABLE [Auditoria_Meteo] ADD [Detalle] nvarchar(1000) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014141620_AuditoriaUmbralesYAlertasMeteo'
+)
+BEGIN
+    ALTER TABLE [Alertas_Meteo] ADD [AccionTomada] nvarchar(500) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014141620_AuditoriaUmbralesYAlertasMeteo'
+)
+BEGIN
+    ALTER TABLE [Alertas_Meteo] ADD [FechaVisto] datetime2 NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014141620_AuditoriaUmbralesYAlertasMeteo'
+)
+BEGIN
+    ALTER TABLE [Alertas_Meteo] ADD [VistoPorId] uniqueidentifier NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014141620_AuditoriaUmbralesYAlertasMeteo'
+)
+BEGIN
+    CREATE INDEX [IX_Alertas_Meteo_VistoPorId] ON [Alertas_Meteo] ([VistoPorId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014141620_AuditoriaUmbralesYAlertasMeteo'
+)
+BEGIN
+    ALTER TABLE [Alertas_Meteo] ADD CONSTRAINT [FK_Alertas_Meteo_Users_VistoPorId] FOREIGN KEY ([VistoPorId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014141620_AuditoriaUmbralesYAlertasMeteo'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261014141620_AuditoriaUmbralesYAlertasMeteo', N'9.0.7');
 END;
 
 COMMIT;
