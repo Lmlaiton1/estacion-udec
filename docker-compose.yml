@@ -1,0 +1,49 @@
+# Despliegue local: SQL Server + Mosquitto + API + Frontend.
+# El Worker (ServicioSensorica) sigue como servicio Windows porque usa COM3/COM5.
+# ¡OJO! "docker compose down -v" BORRA los volúmenes (la base de datos). Usar solo "down".
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD}
+      MSSQL_PID: Express
+      TZ: ${TZ}
+    ports:
+      - "14330:1433"   # 14330 en el host para no chocar con SQLEXPRESS
+    volumes:
+      - sqldata:/var/opt/mssql
+    restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mqttdata:/mosquitto/data
+    restart: unless-stopped
+
+  api:
+    build: ./PROYECTODEGRADOBACK
+    depends_on:
+      - sqlserver
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BdNuevaNaturaleza;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
+      AppSettings__Secret: ${JWT_SECRET}
+      TZ: ${TZ}
+    ports:
+      - "5005:5005"
+    restart: unless-stopped
+
+  front:
+    build: ./PROYECTODEGRADOFRONT
+    depends_on:
+      - api
+    ports:
+      - "4200:4200"
+    restart: unless-stopped
+
+volumes:
+  sqldata:
+  mqttdata:
