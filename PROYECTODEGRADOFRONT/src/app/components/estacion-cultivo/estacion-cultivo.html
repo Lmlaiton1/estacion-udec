@@ -889,8 +889,9 @@
             <mat-card class="control-card" appearance="outlined">
               <mat-card-title>{{ c.numero }} · {{ c.nombre }}</mat-card-title>
               <mat-card-content>
-                @let sensor = sensorControl(c);
                 @let actuador = actuadorControl(c);
+                @let actuadorNN = actuadorPendienteNN(c);
+                @let lectura = lecturaControl(c);
                 @let estado = estadoControl(c);
 
                 <div class="control-estado" [ngClass]="estado.activo ? 'control-ok' : 'control-pendiente'">
@@ -900,16 +901,16 @@
 
                 <div class="control-lecturas">
                   <div class="control-valor">
-                    <span class="control-etiqueta">{{ sensor?.nombre || 'Sensor' }}</span>
-                    <span class="control-numero">{{ sensor?.ultimoValor ?? '—' }} {{ sensor?.unidad }}</span>
-                    @if (sensor?.fechaUltimoValor) {
-                      <small>{{ sensor?.fechaUltimoValor | date:'dd/MM/yyyy HH:mm:ss' }}</small>
+                    <span class="control-etiqueta">{{ lectura?.nombre || 'Sensor' }}</span>
+                    <span class="control-numero">{{ lectura?.valor ?? '—' }} {{ lectura?.unidad }}</span>
+                    @if (lectura?.fecha) {
+                      <small>{{ lectura?.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</small>
                     }
                   </div>
                   <div class="control-valor">
-                    <span class="control-etiqueta">{{ actuador?.nombre || 'Actuador' }}</span>
+                    <span class="control-etiqueta">{{ actuador?.nombre || actuadorNN?.nombre || 'Actuador' }}</span>
                     <span class="control-numero" [ngClass]="actuador?.encendido ? 'encendido' : 'apagado'">
-                      {{ actuador ? (actuador.encendido ? 'Encendido' : 'Apagado') : '—' }}
+                      {{ actuador ? (actuador.encendido ? 'Encendido' : 'Apagado') : (actuadorNN ? 'Sin vincular' : '—') }}
                     </span>
                     @if (actuador) {
                       <small>Modo {{ actuador.modo === 'Automatico' ? 'automático' : 'manual' }}</small>
@@ -917,10 +918,10 @@
                   </div>
                 </div>
 
-                @if (dispositivoNN(actuador?.deviceId)?.modoAutomaticoAcuaponia) {
+                @if ((dispositivoNN(actuador?.deviceId) ?? actuadorNN)?.modoAutomaticoAcuaponia) {
                   <div class="control-estado control-alerta">
                     <mat-icon>warning</mat-icon>
-                    <span>{{ actuador?.nombre }} también está en modo automático en acuaponía: los dos sistemas podrían contradecirse.
+                    <span>{{ actuador?.nombre || actuadorNN?.nombre }} también está en modo automático en acuaponía: los dos sistemas podrían contradecirse.
                       Pásalo a manual en Nueva Naturaleza para que lo controle solo este cultivo.</span>
                   </div>
                 }
@@ -933,6 +934,13 @@
                         @for (s of sensoresDe(c.id); track s.id) {
                           <mat-option [value]="s.id">{{ s.nombre }}{{ s.deviceId ? ' (Nueva Naturaleza)' : '' }}</mat-option>
                         }
+                        @if (sensoresNNParaControl(c).length) {
+                          <mat-optgroup label="Traer de Nueva Naturaleza">
+                            @for (d of sensoresNNParaControl(c); track d.id) {
+                              <mat-option [value]="prefijoNN + d.id">{{ d.nombre }} · {{ d.sistema }}</mat-option>
+                            }
+                          </mat-optgroup>
+                        }
                       </mat-select>
                     </mat-form-field>
                     <mat-form-field appearance="outline">
@@ -941,16 +949,20 @@
                         @for (a of actuadoresDe(c.id); track a.id) {
                           <mat-option [value]="a.id">{{ a.nombre }}{{ a.deviceId ? ' (Nueva Naturaleza)' : '' }}</mat-option>
                         }
+                        @if (actuadoresNNParaControl(c).length) {
+                          <mat-optgroup label="Traer de Nueva Naturaleza">
+                            @for (d of actuadoresNNParaControl(c); track d.id) {
+                              <mat-option [value]="prefijoNN + d.id">{{ d.nombre }} · {{ d.sistema }}</mat-option>
+                            }
+                          </mat-optgroup>
+                        }
                       </mat-select>
                     </mat-form-field>
                     <mat-form-field appearance="outline">
-                      <mat-label>Encender si supera ({{ sensor?.unidad || '°C' }})</mat-label>
+                      <mat-label>Encender si supera ({{ lectura?.unidad || '°C' }})</mat-label>
                       <input matInput type="number" [(ngModel)]="ctl.maximo" placeholder="28">
                     </mat-form-field>
                   </div>
-                  @if (sensoresDe(c.id).length === 0 || actuadoresDe(c.id).length === 0) {
-                    <p class="no-data">Primero agrega el sensor y el actuador en sus pestañas (puedes traerlos de Nueva Naturaleza).</p>
-                  }
                 }
               </mat-card-content>
               <mat-card-actions align="end">

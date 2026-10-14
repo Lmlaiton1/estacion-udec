@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, map, of, switchMap, tap } from 'rxjs';
 import { MATERIAL_MODULES } from '../../shared/material';
 import { CultivoService } from '../../service/cultivo/cultivo-service';
 import { AlarmaAviso } from '../../service/cultivo/alarma-aviso';
@@ -17,7 +17,9 @@ import {
   DispositivoNuevaNaturaleza
 } from '../../models/Cultivo';
 
-// Pestaña Control: qué sensor vigila, qué actuador enciende y a partir de qué valor
+// Pestaña Control: qué sensor vigila, qué actuador enciende y a partir de qué valor.
+// sensorId/actuadorId es el Id del registro del cultivo, o "nn:{DeviceId}" si es un dispositivo de
+// Nueva Naturaleza que todavía no está vinculado (se vincula al guardar el control)
 interface ControlCultivo {
   sensorId: string;
   actuadorId: string;
@@ -26,6 +28,7 @@ interface ControlCultivo {
 
 // Pestaña Control (índice de la pestaña en el mat-tab-group)
 const TAB_CONTROL = 6;
+const PREFIJO_NN = 'nn:';
 
 // Ventana para pedir el "por qué" / "cómo" antes de ejecutar una acción auditada
 interface AccionPendiente {
@@ -130,6 +133,9 @@ export class EstacionCultivo implements OnInit, OnDestroy {
   // Pestaña Control: configuración en edición por cultivo e historial de encendidos/apagados
   control: Record<string, ControlCultivo> = {};
   eventosControl: EventoDispositivoCultivo[] = [];
+  readonly prefijoNN = PREFIJO_NN;
+  // La propuesta del control se arma cuando ya llegó todo (los datos llegan en distinto orden)
+  private cargado = { sensores: false, actuadores: false, umbrales: false, dispositivosNN: false };
 
   private subs: Subscription[] = [];
   private alTerminarAccion: () => void = () => { };
@@ -214,7 +220,11 @@ export class EstacionCultivo implements OnInit, OnDestroy {
 
   private cargarDispositivosNN(): void {
     this._cultivoService.getDispositivosNuevaNaturaleza().subscribe({
-      next: data => this.dispositivosNN = data,
+      next: data => {
+        this.dispositivosNN = data;
+        this.cargado.dispositivosNN = true;
+        this.prepararControl();
+      },
       error: () => this.mostrarError('No se pudieron cargar los dispositivos de Nueva Naturaleza')
     });
   }
@@ -240,6 +250,7 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     this._cultivoService.getSensores(this.cultivoFiltro).subscribe({
       next: data => {
         this.sensores = data;
+        this.cargado.sensores = true;
         this.prepararControl();
       },
       error: () => this.mostrarError('No se pudieron cargar los sensores')
@@ -250,6 +261,7 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     this._cultivoService.getActuadores(this.cultivoFiltro).subscribe({
       next: data => {
         this.actuadores = data;
+        this.cargado.actuadores = true;
         this.prepararControl();
       },
       error: () => this.mostrarError('No se pudieron cargar los actuadores')
@@ -260,6 +272,7 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     this._cultivoService.getUmbrales(this.cultivoFiltro).subscribe({
       next: data => {
         this.umbrales = data;
+        this.cargado.umbrales = true;
         this.prepararControl();
       },
       error: () => this.mostrarError('No se pudieron cargar los umbrales')
@@ -459,17 +472,31 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     if (!this.formSensor) return;
     const d = this.dispositivoNN(this.formSensor.deviceId);
     if (!d) return;
+    const datos = this.datosSensorNN(d);
+    Object.assign(this.formSensor, { ...datos, unidad: datos.unidad || this.formSensor.unidad });
+  }
+
+  private datosSensorNN(d: DispositivoNuevaNaturaleza) {
     const nombre = d.nombre.toLowerCase();
     const esTemperatura = nombre.includes('temp');
     const esHumedad = nombre.includes('humedad');
-    Object.assign(this.formSensor, {
+    return {
       nombre: d.nombre,
       clave: this.claveDesde(d.nombre),
       tipo: 'Nueva Naturaleza',
       variable: esTemperatura ? 'temperatura' : esHumedad ? 'humedad' : this.claveDesde(d.nombre),
-      unidad: esTemperatura ? '°C' : esHumedad ? '%' : this.formSensor.unidad,
+      unidad: esTemperatura ? '°C' : esHumedad ? '%' : '',
       especificaciones: `Sensor de Nueva Naturaleza (${d.sistema}), lectura por el puerto serial de acuaponía`
-    });
+    };
+  }
+
+  private datosActuadorNN(d: DispositivoNuevaNaturaleza) {
+    return {
+      nombre: d.nombre,
+      clave: this.claveDesde(d.nombre),
+      tipo: this.tiposActuador.find(t => d.nombre.toLowerCase().includes(t.toLowerCase())) ?? 'Otro',
+      especificaciones: `Actuador de Nueva Naturaleza (${d.sistema}), se acciona por el puerto serial de acuaponía`
+    };
   }
 
   // "Temperatura Aire" -> "temperaturaaire": sin tildes, espacios ni símbolos
@@ -558,13 +585,7 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     if (!this.formActuador) return;
     const d = this.dispositivoNN(this.formActuador.deviceId);
     if (!d) return;
-    const tipo = this.tiposActuador.find(t => d.nombre.toLowerCase().includes(t.toLowerCase())) ?? 'Otro';
-    Object.assign(this.formActuador, {
-      nombre: d.nombre,
-      clave: this.claveDesde(d.nombre),
-      tipo,
-      especificaciones: `Actuador de Nueva Naturaleza (${d.sistema}), se acciona por el puerto serial de acuaponía`
-    });
+    Object.assign(this.formActuador, this.datosActuadorNN(d));
   }
 
   editarActuador(a: ActuadorCultivo): void {
@@ -719,25 +740,87 @@ export class EstacionCultivo implements OnInit, OnDestroy {
 
   // ---------- Control automático ----------
   // Arma la configuración de cada cultivo a partir del umbral que ya acciona un actuador, o propone
-  // el sensor de temperatura y el ventilador (prefiriendo los de Nueva Naturaleza)
+  // la temperatura del aire y el ventilador (prefiriendo los de Nueva Naturaleza, aunque aún no estén vinculados)
   prepararControl(): void {
+    if (!Object.values(this.cargado).every(Boolean)) return;
+
     for (const c of this.cultivosVisibles) {
-      // Se respeta lo que el usuario ya eligió; solo se completa lo que falta (los datos llegan en distinto orden)
-      const actual = this.control[c.id];
-      if (actual?.sensorId && actual?.actuadorId) continue;
       const sensores = this.sensoresDe(c.id);
       const actuadores = this.actuadoresDe(c.id);
+
+      // Se respeta lo que el usuario ya eligió; si eligió uno de Nueva Naturaleza y ya quedó vinculado, se usa el registro del cultivo
+      const actual = this.control[c.id];
+      if (actual) {
+        actual.sensorId = this.resolverVinculo(actual.sensorId, sensores);
+        actual.actuadorId = this.resolverVinculo(actual.actuadorId, actuadores);
+        if (actual.sensorId && actual.actuadorId) continue;
+      }
+
       const existente = this.umbrales.find(u => u.cultivoId === c.id && u.actuadorCultivoId);
       if (existente) {
         this.control[c.id] = { sensorId: existente.sensorCultivoId, actuadorId: existente.actuadorCultivoId!, maximo: existente.valorMax };
         continue;
       }
-      const sensor = sensores.find(s => s.deviceId && s.variable.toLowerCase().includes('temp'))
-        ?? sensores.find(s => s.variable.toLowerCase().includes('temp')) ?? sensores[0];
-      const actuador = actuadores.find(a => a.deviceId && a.tipo === 'Ventilador')
-        ?? actuadores.find(a => a.tipo === 'Ventilador') ?? actuadores[0];
-      this.control[c.id] = { sensorId: sensor?.id ?? '', actuadorId: actuador?.id ?? '', maximo: null };
+
+      const esTemp = (texto: string) => texto.toLowerCase().includes('temp');
+      const sensorNN = this.sensoresNNParaControl(c);
+      const sensorId = sensores.find(s => s.deviceId && esTemp(s.variable))?.id
+        ?? sensores.find(s => esTemp(s.variable))?.id
+        ?? this.idNN(sensorNN.find(d => esTemp(d.nombre) && d.nombre.toLowerCase().includes('aire')))
+        ?? this.idNN(sensorNN.find(d => esTemp(d.nombre)))
+        ?? sensores[0]?.id ?? '';
+
+      const actuadorId = actuadores.find(a => a.deviceId && a.tipo === 'Ventilador')?.id
+        ?? actuadores.find(a => a.tipo === 'Ventilador')?.id
+        ?? this.idNN(this.actuadoresNNParaControl(c).find(d => d.nombre.toLowerCase().includes('ventilador')))
+        ?? actuadores[0]?.id ?? '';
+
+      this.control[c.id] = {
+        sensorId: actual?.sensorId || sensorId,
+        actuadorId: actual?.actuadorId || actuadorId,
+        maximo: actual?.maximo ?? null
+      };
     }
+  }
+
+  private idNN(d: DispositivoNuevaNaturaleza | undefined): string | undefined {
+    return d ? PREFIJO_NN + d.id : undefined;
+  }
+
+  private resolverVinculo(id: string, registros: { id: string; deviceId: string | null }[]): string {
+    if (!id.startsWith(PREFIJO_NN)) return id;
+    const deviceId = id.substring(PREFIJO_NN.length);
+    return registros.find(r => r.deviceId === deviceId)?.id ?? id;
+  }
+
+  // Dispositivos de Nueva Naturaleza que aún no están vinculados al cultivo: se pueden elegir en el control
+  sensoresNNParaControl(c: Cultivo): DispositivoNuevaNaturaleza[] {
+    const vinculados = this.sensoresDe(c.id).map(s => s.deviceId);
+    return this.sensoresNN.filter(d => !vinculados.includes(d.id));
+  }
+
+  actuadoresNNParaControl(c: Cultivo): DispositivoNuevaNaturaleza[] {
+    const vinculados = this.actuadoresDe(c.id).map(a => a.deviceId);
+    return this.actuadoresNN.filter(d => !vinculados.includes(d.id));
+  }
+
+  sensorPendienteNN(c: Cultivo): DispositivoNuevaNaturaleza | undefined {
+    const id = this.control[c.id]?.sensorId;
+    return id?.startsWith(PREFIJO_NN) ? this.dispositivoNN(id.substring(PREFIJO_NN.length)) : undefined;
+  }
+
+  actuadorPendienteNN(c: Cultivo): DispositivoNuevaNaturaleza | undefined {
+    const id = this.control[c.id]?.actuadorId;
+    return id?.startsWith(PREFIJO_NN) ? this.dispositivoNN(id.substring(PREFIJO_NN.length)) : undefined;
+  }
+
+  // Lo que se muestra del sensor del control, esté ya vinculado o pendiente de vincular
+  lecturaControl(c: Cultivo): { nombre: string; valor: number | null; unidad: string; fecha: string | null } | undefined {
+    const sensor = this.sensorControl(c);
+    if (sensor) return { nombre: sensor.nombre, valor: sensor.ultimoValor, unidad: sensor.unidad, fecha: sensor.fechaUltimoValor };
+    const d = this.sensorPendienteNN(c);
+    if (d) return { nombre: d.nombre, valor: d.ultimoValor, unidad: this.datosSensorNN(d).unidad, fecha: d.fechaUltimoValor };
+    return undefined;
   }
 
   private cargarEventosControl(): void {
@@ -770,6 +853,10 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     const sensor = this.sensorControl(c);
     const actuador = this.actuadorControl(c);
     const umbral = this.umbralControl(c);
+    const pendientes = [this.sensorPendienteNN(c), this.actuadorPendienteNN(c)].filter(d => !!d).map(d => d!.nombre);
+    if (pendientes.length && (sensor || this.sensorPendienteNN(c)) && (actuador || this.actuadorPendienteNN(c))) {
+      return { activo: false, texto: `Al guardar se traerá ${pendientes.join(' y ')} de Nueva Naturaleza a este cultivo y quedará activo el control.` };
+    }
     if (!sensor || !actuador) return { activo: false, texto: 'Elige el sensor y el actuador del control.' };
     if (!umbral || umbral.valorMax === null) return { activo: false, texto: 'Sin configurar: define la temperatura máxima y guarda.' };
     if (!umbral.activo) return { activo: false, texto: 'El umbral del control está desactivado (pestaña Umbrales).' };
@@ -782,11 +869,15 @@ export class EstacionCultivo implements OnInit, OnDestroy {
     };
   }
 
+  // Si el sensor o el actuador elegidos son de Nueva Naturaleza y aún no están en el cultivo, primero se
+  // vinculan (quedan en la auditoría con el mismo motivo) y luego se crea o actualiza el umbral del control
   guardarControl(c: Cultivo): void {
     const ctl = this.control[c.id];
     const sensor = this.sensorControl(c);
     const actuador = this.actuadorControl(c);
-    if (!ctl || !sensor || !actuador) {
+    const sensorNN = sensor ? undefined : this.sensorPendienteNN(c);
+    const actuadorNN = actuador ? undefined : this.actuadorPendienteNN(c);
+    if (!ctl || !(sensor || sensorNN) || !(actuador || actuadorNN)) {
       this.mostrarError('Elige el sensor y el actuador del control');
       return;
     }
@@ -795,30 +886,64 @@ export class EstacionCultivo implements OnInit, OnDestroy {
       return;
     }
 
+    const datosSensor = sensor ?? this.datosSensorNN(sensorNN!);
+    const nombreActuador = actuador?.nombre ?? actuadorNN!.nombre;
+    const maximo = Number(ctl.maximo);
     const existente = this.umbralControl(c);
-    const payload: UmbralCultivoCreate = {
-      cultivoId: c.id,
-      sensorCultivoId: sensor.id,
-      etapaCultivoId: existente?.etapaCultivoId ?? null,
-      valorMin: null,
-      valorMax: Number(ctl.maximo),
-      nivelGravedad: existente?.nivelGravedad ?? 'Media',
-      actuadorCultivoId: actuador.id,
-      encenderActuador: true,
-      revertirAlNormalizar: true,
-      minutosEscalamientoSms: existente?.minutosEscalamientoSms ?? null,
-      descripcion: `Control automático: encender ${actuador.nombre} si ${sensor.variable} supera ${ctl.maximo} ${sensor.unidad}`
+    const vincular = [sensorNN, actuadorNN].filter(d => !!d).map(d => d!.nombre);
+
+    const crearSensor = (motivo: string): Observable<string> => sensor ? of(sensor.id) :
+      this._cultivoService.crearSensor({
+        cultivoId: c.id, ...this.datosSensorNN(sensorNN!), rangoMin: null, rangoMax: null, precision: null,
+        marca: null, fechaInstalacion: null, deviceId: sensorNN!.id, motivo
+      }).pipe(map(r => r.data as string));
+
+    const crearActuador = (motivo: string): Observable<string> => actuador ? of(actuador.id) :
+      this._cultivoService.crearActuador({
+        cultivoId: c.id, ...this.datosActuadorNN(actuadorNN!), marca: null, potencia: null, deviceId: actuadorNN!.id, motivo
+      }).pipe(map(r => r.data as string));
+
+    const guardarUmbral = (sensorId: string, actuadorId: string, motivo: string): Observable<Responses> => {
+      const payload: UmbralCultivoCreate = {
+        cultivoId: c.id,
+        sensorCultivoId: sensorId,
+        etapaCultivoId: existente?.etapaCultivoId ?? null,
+        valorMin: null,
+        valorMax: maximo,
+        nivelGravedad: existente?.nivelGravedad ?? 'Media',
+        actuadorCultivoId: actuadorId,
+        encenderActuador: true,
+        revertirAlNormalizar: true,
+        minutosEscalamientoSms: existente?.minutosEscalamientoSms ?? null,
+        descripcion: `Control automático: encender ${nombreActuador} si ${datosSensor.variable} supera ${maximo} ${datosSensor.unidad}`,
+        motivo
+      };
+      return existente
+        ? this._cultivoService.actualizarUmbral(existente.id, payload)
+        : this._cultivoService.crearUmbral(payload);
     };
 
     this.pedirTexto({
       titulo: `${existente ? 'Actualizar' : 'Activar'} el control de ${c.nombre}`,
-      descripcion: `Si ${sensor.nombre} supera ${ctl.maximo} ${sensor.unidad} se enciende ${actuador.nombre}; al bajar se apaga.`,
+      descripcion: (vincular.length ? `Se traerá ${vincular.join(' y ')} de Nueva Naturaleza a este cultivo. ` : '') +
+        `Si ${datosSensor.nombre} supera ${maximo} ${datosSensor.unidad} se enciende ${nombreActuador}; al bajar se apaga.`,
       etiqueta: '¿Por qué se configura así? (queda en la auditoría)',
       exito: 'Control guardado',
-      ejecutar: motivo => existente
-        ? this._cultivoService.actualizarUmbral(existente.id, { ...payload, motivo })
-        : this._cultivoService.crearUmbral({ ...payload, motivo })
-    }, () => this.cargarUmbrales());
+      ejecutar: motivo => crearSensor(motivo).pipe(
+        switchMap(sensorId => crearActuador(motivo).pipe(
+          switchMap(actuadorId => guardarUmbral(sensorId, actuadorId, motivo))
+        )),
+        // Si algo falla a mitad de camino, se recarga para no intentar vincular dos veces lo que sí quedó
+        tap({ error: () => this.recargarControl() })
+      )
+    }, () => this.recargarControl());
+  }
+
+  private recargarControl(): void {
+    this.cargarSensores();
+    this.cargarActuadores();
+    this.cargarUmbrales();
+    this.cargarEventosControl();
   }
 
   rango(min: number | null, max: number | null, unidad = ''): string {

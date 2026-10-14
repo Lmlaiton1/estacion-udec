@@ -20,6 +20,7 @@ namespace RR_Nueva_Naturaleza.Service
             _context = context;
             _bitacora = bitacora;
             _hub = hub;
+            _actuatorHub = actuatorHub;
         }
 
         public async Task<IEnumerable<ActuadorCultivo>> GetActuadores(Guid? cultivoId)
