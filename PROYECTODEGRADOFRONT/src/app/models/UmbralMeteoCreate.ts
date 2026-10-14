@@ -6,4 +6,5 @@ export interface UmbralMeteoCreate {
   nivelGravedad: string;
   activo: boolean;
   descripcion?: string | null;
+  motivo: string; // obligatorio, queda en la auditoría
 }

@@ -227,12 +227,17 @@
       <ng-container matColumnDef="accion">
         <th mat-header-cell *matHeaderCellDef>Acción</th>
         <td mat-cell *matCellDef="let a">
-          <span class="estado" [ngClass]="a.accion === 'Activada' ? 'activa' : 'inactiva'">{{ a.accion }}</span>
+          <span class="estado" [ngClass]="claseAccion(a.accion)">{{ a.accion }}</span>
         </td>
       </ng-container>
 
+      <ng-container matColumnDef="detalle">
+        <th mat-header-cell *matHeaderCellDef>Detalle</th>
+        <td mat-cell *matCellDef="let a" class="detalle">{{ a.detalle || '—' }}</td>
+      </ng-container>
+
       <ng-container matColumnDef="motivo">
-        <th mat-header-cell *matHeaderCellDef>Motivo</th>
+        <th mat-header-cell *matHeaderCellDef>Motivo / qué se hizo</th>
         <td mat-cell *matCellDef="let a">{{ a.motivo }}</td>
       </ng-container>
 
@@ -246,7 +251,7 @@
     </table>
 
     @if (auditoria.length === 0) {
-      <p class="no-data">Todavía no hay cambios de estado registrados</p>
+      <p class="no-data">Todavía no hay cambios registrados</p>
     }
   }
 </div>

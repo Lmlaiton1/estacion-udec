@@ -224,7 +224,7 @@ namespace RR_Nueva_Naturaleza.Service
                             row.ConstantItem(80).Image(imagePath).FitWidth();
                             row.RelativeItem().AlignMiddle().PaddingLeft(50)
                                 .Text("ESTACIÓN METEOROLÓGICA")
-                                .SemiBold().FontSize(22).FontColor(Colors.Blue.Darken3);
+                                .SemiBold().FontSize(22).FontColor(Colors.Green.Darken2);
                         });
                     });
 
@@ -245,7 +245,7 @@ namespace RR_Nueva_Naturaleza.Service
 
                         column.Item().Table(table =>
                         {
-                            var headerColor = "#1565C0";
+                            var headerColor = "#2FA449";  // Verde institucional
                             var zebra1 = "#FFFFFF";
                             var zebra2 = "#F4F6F5";
 

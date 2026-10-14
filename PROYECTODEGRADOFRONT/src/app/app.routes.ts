@@ -112,6 +112,12 @@ export const routes: Routes = [
         data: { requiredRole: 'Administrador' }
       },
       {
+        path: 'Auditoria',
+        loadComponent: () => import('./components/estacion-auditoria/estacion-auditoria').then(m => m.EstacionAuditoria),
+        canActivate: [AuthGuard, RoleGuard],
+        data: { requiredRole: 'Administrador' }
+      },
+      {
         path: 'registerUser',
         loadComponent: () => import('./components/user-form/user-form').then(m => m.UserForm),
         canActivate: [AuthGuard, RoleGuard],

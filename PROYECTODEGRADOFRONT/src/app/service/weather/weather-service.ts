@@ -104,16 +104,16 @@ export class WeatherService {
     return this._http.put<Responses>(`${this.apiUrl + this.complement11}/${id}`, umbral);
   }
 
-  public eliminarUmbral(id: string): Observable<Responses> {
-    return this._http.delete<Responses>(`${this.apiUrl + this.complement9}/${id}`);
+  public eliminarUmbral(id: string, motivo: string): Observable<Responses> {
+    return this._http.delete<Responses>(`${this.apiUrl + this.complement9}/${id}`, { body: { motivo } });
   }
 
   public getAlertas(): Observable<AlertaMeteo[]> {
     return this._http.get<AlertaMeteo[]>(this.apiUrl + this.complement12);
   }
 
-  public marcarVistaAlerta(id: string): Observable<Responses> {
-    return this._http.put<Responses>(`${this.apiUrl + this.complement13}/${id}`, {});
+  public marcarVistaAlerta(id: string, accionTomada: string): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement13}/${id}`, { accionTomada });
   }
 
   public getLecturasParaReportePdf(filtro: LecturaMeteoPdfRequest) {

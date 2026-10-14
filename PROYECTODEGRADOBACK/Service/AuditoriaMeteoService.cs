@@ -21,13 +21,7 @@ namespace RR_Nueva_Naturaleza.Service
                 .ToListAsync();
         }
 
-        public Task Registrar(string tipoEntidad, Guid entidadId, string nombreEntidad, bool nuevoEstado, string motivo, Guid usuarioId)
-        {
-            return RegistrarAccion(tipoEntidad, entidadId, nombreEntidad, nuevoEstado ? "Activada" : "Desactivada", motivo, usuarioId);
-        }
-
-        // Acciones que no son activar/desactivar (ej. "Reiniciada")
-        public async Task RegistrarAccion(string tipoEntidad, Guid entidadId, string nombreEntidad, string accion, string motivo, Guid usuarioId)
+        public void Agregar(string tipoEntidad, Guid entidadId, string nombreEntidad, string accion, string? detalle, string motivo, Guid usuarioId)
         {
             _context.Auditoria_Meteo.Add(new AuditoriaMeteo
             {
@@ -36,6 +30,22 @@ namespace RR_Nueva_Naturaleza.Service
                 EntidadId = entidadId,
                 NombreEntidad = nombreEntidad,
                 Accion = accion,
+                Detalle = detalle,
+                Motivo = motivo,
+                Fecha = DateTime.Now,
+                UsuarioId = usuarioId
+            });
+        }
+
+        public async Task Registrar(string tipoEntidad, Guid entidadId, string nombreEntidad, bool nuevoEstado, string motivo, Guid usuarioId)
+        {
+            _context.Auditoria_Meteo.Add(new AuditoriaMeteo
+            {
+                Id = Guid.NewGuid(),
+                TipoEntidad = tipoEntidad,
+                EntidadId = entidadId,
+                NombreEntidad = nombreEntidad,
+                Accion = nuevoEstado ? "Activada" : "Desactivada",
                 Motivo = motivo,
                 Fecha = DateTime.Now,
                 UsuarioId = usuarioId

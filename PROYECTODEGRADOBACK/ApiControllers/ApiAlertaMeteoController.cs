@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using RR_Nueva_Naturaleza.Models;
 using RR_Nueva_Naturaleza.Models.Dto;
 using RR_Nueva_Naturaleza.Service;
+using System.Security.Claims;
 
 namespace RR_Nueva_Naturaleza.ApiControllers
 {
@@ -48,9 +49,10 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         [HttpPut("MarcarVista/{id}")]
         [ProducesResponseType(typeof(ServiceResponse), 200)]
         [ProducesResponseType(typeof(ServiceResponse), 400)]
-        public async Task<IActionResult> MarcarVista(Guid id)
+        public async Task<IActionResult> MarcarVista(Guid id, MarcarVistaAlertaDto marcar)
         {
-            var response = await _alertaMeteoService.MarcarVista(id);
+            var usuarioId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var response = await _alertaMeteoService.MarcarVista(id, marcar.AccionTomada, usuarioId);
             if (response.Result == ServiceResponseType.Failed)
             {
                 return BadRequest(response);

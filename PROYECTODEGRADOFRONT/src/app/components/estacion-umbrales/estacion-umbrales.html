@@ -57,11 +57,16 @@
             </mat-form-field>
 
             <mat-slide-toggle [(ngModel)]="formUmbral.activo">Activo</mat-slide-toggle>
+
+            <mat-form-field appearance="outline" class="descripcion-field">
+              <mat-label>{{ umbralEnEdicion ? '¿Por qué se modifica?' : '¿Por qué se crea?' }} (queda en la auditoría)</mat-label>
+              <textarea matInput rows="2" required [(ngModel)]="formUmbral.motivo"></textarea>
+            </mat-form-field>
           </div>
         </mat-card-content>
         <mat-card-actions align="end">
           <button mat-button (click)="cancelarUmbral()">Cancelar</button>
-          <button mat-raised-button color="primary" (click)="guardarUmbral()">Guardar</button>
+          <button mat-raised-button color="primary" [disabled]="!formUmbral.motivo.trim()" (click)="guardarUmbral()">Guardar</button>
         </mat-card-actions>
       </mat-card>
     }
@@ -160,7 +165,15 @@
           @if (!a.visto) {
             <button mat-stroked-button color="primary" (click)="marcarVista(a)">Marcar vista</button>
           } @else {
-            <span class="vista-ok">✓ Vista</span>
+            <div class="vista-info">
+              <span class="vista-ok">✓ Vista por {{ a.vistoPorNombre || 'usuario no registrado' }}</span>
+              @if (a.fechaVisto) {
+                <span class="vista-fecha">{{ a.fechaVisto | date:'short' }}</span>
+              }
+              @if (a.accionTomada) {
+                <span class="vista-accion">{{ a.accionTomada }}</span>
+              }
+            </div>
           }
         </td>
       </ng-container>
@@ -176,3 +189,23 @@
     }
   </section>
 </div>
+
+<!-- Ventana para pedir el motivo o qué se hizo (todo queda en la auditoría) -->
+@if (accion) {
+  <div class="overlay" (click)="cancelarAccion()">
+    <mat-card class="dialogo" (click)="$event.stopPropagation()">
+      <mat-card-title>{{ accion.titulo }}</mat-card-title>
+      <mat-card-content>
+        <p class="dialogo-desc">{{ accion.descripcion }}</p>
+        <mat-form-field appearance="outline" class="campo-completo">
+          <mat-label>{{ accion.etiqueta }}</mat-label>
+          <textarea matInput rows="3" [(ngModel)]="accion.texto" cdkFocusInitial></textarea>
+        </mat-form-field>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-button [disabled]="enviando" (click)="cancelarAccion()">Cancelar</button>
+        <button mat-raised-button [color]="accion.peligro ? 'warn' : 'primary'" [disabled]="!accion.texto.trim() || enviando" (click)="confirmarAccion()">Confirmar</button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+}

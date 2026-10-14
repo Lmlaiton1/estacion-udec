@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Razor.Language.CodeGeneration;
 using RR_Nueva_Naturaleza.Models;
 using RR_Nueva_Naturaleza.Models.Dto;
@@ -27,7 +27,8 @@ namespace RR_Nueva_Naturaleza.Utilities
             // Dominio Estación Meteorológica
             CreateMap<LecturaMeteo, LecturaMeteoDto>();
             CreateMap<UmbralMeteo, UmbralMeteoDto>();
-            CreateMap<AlertaMeteo, AlertaMeteoDto>();
+            CreateMap<AlertaMeteo, AlertaMeteoDto>()
+                .ForMember(d => d.VistoPorNombre, opt => opt.MapFrom(o => o.VistoPor != null ? (o.VistoPor.Name + " " + o.VistoPor.Last_Name) : null));
             CreateMap<AuditoriaMeteo, AuditoriaMeteoDto>()
                 .ForMember(d => d.UsuarioNombre, opt => opt.MapFrom(o => o.Usuario != null ? (o.Usuario.Name + " " + o.Usuario.Last_Name) : string.Empty));
 

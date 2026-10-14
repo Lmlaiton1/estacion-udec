@@ -252,8 +252,9 @@ namespace RR_Nueva_Naturaleza.Service
             foreach (var estacion in estaciones)
             {
                 await _hub.Clients.All.SendAsync(WeatherHub.EventoComandoReinicio, new { estacionNumero = estacion.Numero });
-                await _auditoriaMeteoService.RegistrarAccion("Estacion", estacion.Id, estacion.Nombre, "Reiniciada", motivo, usuarioId);
+                _auditoriaMeteoService.Agregar("Estacion", estacion.Id, estacion.Nombre, "Reiniciada", null, motivo, usuarioId);
             }
+            await _context.SaveChangesAsync();
         }
     }
 }

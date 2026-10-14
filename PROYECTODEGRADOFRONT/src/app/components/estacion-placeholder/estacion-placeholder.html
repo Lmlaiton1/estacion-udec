@@ -95,6 +95,15 @@
       }
 
       @if (esAdministrador()) {
+      <mat-list-item role="listitem" routerLink="Auditoria" routerLinkActive="active" class="menu-item">
+        <div class="icon-container">
+          <mat-icon class="icon-station" fontIcon="history"></mat-icon>
+          Auditoría
+        </div>
+      </mat-list-item>
+      }
+
+      @if (esAdministrador()) {
       <mat-list-item role="listitem" routerLink="registerUser" routerLinkActive="active" class="menu-item">
         <div class="icon-container">
           <mat-icon class="icon-station" fontIcon="person_add"></mat-icon>

@@ -93,3 +93,49 @@
   color: #1d4d35;
   font-weight: 600;
 }
+
+.vista-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+}
+
+.vista-fecha {
+  font-size: 0.8rem;
+  color: #757575;
+}
+
+.vista-accion {
+  font-size: 0.85rem;
+  color: #424242;
+  max-width: 280px;
+}
+
+// Ventana para pedir motivo
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.dialogo {
+  width: 100%;
+  max-width: 520px;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.dialogo-desc {
+  color: #616161;
+  margin: 8px 0 16px;
+}
+
+.campo-completo {
+  width: 100%;
+}

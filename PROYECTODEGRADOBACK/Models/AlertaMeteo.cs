@@ -32,5 +32,14 @@ namespace RR_Nueva_Naturaleza.Models
         public DateTime FechaHora { get; set; }
 
         public bool Visto { get; set; } = false;
+
+        // Quién marcó la alerta como vista, cuándo y qué se hizo al respecto
+        public Guid? VistoPorId { get; set; }
+        public virtual User? VistoPor { get; set; }
+
+        public DateTime? FechaVisto { get; set; }
+
+        [MaxLength(500)]
+        public string? AccionTomada { get; set; }
     }
 }
