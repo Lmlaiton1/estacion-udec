@@ -2,7 +2,6 @@
   <div class="encabezado">
     <div>
       <h2 class="title">Pronóstico IA del microclima</h2>
-      <p class="subtitulo">LSTM entrenada con las estaciones de la UPA FungíReal · estación 3 de referencia</p>
     </div>
     @if (puedeGenerar) {
       <button mat-raised-button color="primary" [disabled]="generando" (click)="generar()">
@@ -69,12 +68,6 @@
         }
       </div>
 
-      <p class="nota">
-        La condición del cielo es orientativa: se decide con reglas sobre la lluvia y la luz previstas
-        (lluvia ≥ {{ pronostico.umbralLluvia }} mm/h; sol si la luz llega al {{ pronostico.factorSol * 100 | number: '1.0-0' }} %
-        de la luz habitual de esa hora) y esos umbrales se ajustan con sus calificaciones.
-        La lluvia es una estimación regional (ERA5) aprendida desde los sensores.
-      </p>
     </section>
 
     <!-- Gráfica 48 h -->
