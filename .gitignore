@@ -39,3 +39,6 @@ docker/backup/*.bak
 
 # Pronóstico IA: estado operativo regenerado en cada "Pronóstico del día"
 ia/pronostico_ia/operacion/
+
+# Configuración de producción del Worker (lleva la contraseña de sa)
+**/appsettings.Production.json
