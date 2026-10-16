@@ -79,6 +79,7 @@ namespace RR_Nueva_Naturaleza
             builder.Services.AddScoped<IUmbralMeteoService, UmbralMeteoService>();
             builder.Services.AddScoped<IAlertaMeteoService, AlertaMeteoService>();
             builder.Services.AddScoped<IAuditoriaMeteoService, AuditoriaMeteoService>();
+            builder.Services.AddScoped<IPronosticoMeteoService, PronosticoMeteoService>();
 
             // Control de umbrales y alarmas de cultivo
             builder.Services.AddScoped<IBitacoraCultivoService, BitacoraCultivoService>();

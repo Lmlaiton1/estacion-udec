@@ -32,8 +32,13 @@ services:
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=BdNuevaNaturaleza;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;"
       AppSettings__Secret: ${JWT_SECRET}
       TZ: ${TZ}
+      Pronostico__PythonPath: /opt/pronostico/bin/python
+      Pronostico__CarpetaScript: /ia
     ports:
       - "5005:5005"
+    volumes:
+      # Modelo de pronóstico; el reentrenamiento escribe en ia/pronostico_ia/operacion
+      - ./ia/pronostico_ia:/ia
     restart: unless-stopped
 
   front:

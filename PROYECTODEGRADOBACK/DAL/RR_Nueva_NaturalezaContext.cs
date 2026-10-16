@@ -37,6 +37,9 @@ namespace RR_Nueva_Naturaleza.DAL
         public DbSet<PrediccionMeteo> Predicciones_Meteo { get; set; }
         public DbSet<ImagenMeteo> Imagenes_Meteo { get; set; }
         public DbSet<AuditoriaMeteo> Auditoria_Meteo { get; set; }
+        public DbSet<PronosticoMeteo> Pronosticos_Meteo { get; set; }
+        public DbSet<PronosticoFranjaMeteo> Pronosticos_Franja_Meteo { get; set; }
+        public DbSet<RetroalimentacionMeteo> Retroalimentacion_Meteo { get; set; }
 
         // Control de umbrales y alarmas de cultivo
         public DbSet<Cultivo> Cultivos { get; set; }
@@ -164,6 +167,39 @@ namespace RR_Nueva_Naturaleza.DAL
                 .HasOne(a => a.Usuario)
                 .WithMany()
                 .HasForeignKey(a => a.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Pronóstico IA: quién lo generó. Restrict: conserva el rastro aunque el usuario se borre.
+            modelBuilder.Entity<PronosticoMeteo>()
+                .HasOne(p => p.GeneradoPor)
+                .WithMany()
+                .HasForeignKey(p => p.GeneradoPorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PronosticoMeteo>()
+                .HasIndex(p => p.DiaPronosticado);
+
+            modelBuilder.Entity<PronosticoFranjaMeteo>()
+                .HasOne(f => f.Pronostico)
+                .WithMany(p => p.Franjas)
+                .HasForeignKey(f => f.PronosticoId);
+
+            // PrediccionMeteo (48 h × variable) -> PronosticoMeteo
+            modelBuilder.Entity<PrediccionMeteo>()
+                .HasOne(p => p.Pronostico)
+                .WithMany()
+                .HasForeignKey(p => p.PronosticoId);
+
+            // Una sola retroalimentación por franja
+            modelBuilder.Entity<RetroalimentacionMeteo>()
+                .HasOne(r => r.Franja)
+                .WithOne(f => f.Retroalimentacion)
+                .HasForeignKey<RetroalimentacionMeteo>(r => r.FranjaId);
+
+            modelBuilder.Entity<RetroalimentacionMeteo>()
+                .HasOne(r => r.Usuario)
+                .WithMany()
+                .HasForeignKey(r => r.UsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Sensores y actuadores de cultivo vinculados a dispositivos de Nueva Naturaleza (acuaponía)

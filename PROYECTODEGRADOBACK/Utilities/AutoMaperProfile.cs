@@ -31,6 +31,14 @@ namespace RR_Nueva_Naturaleza.Utilities
                 .ForMember(d => d.VistoPorNombre, opt => opt.MapFrom(o => o.VistoPor != null ? (o.VistoPor.Name + " " + o.VistoPor.Last_Name) : null));
             CreateMap<AuditoriaMeteo, AuditoriaMeteoDto>()
                 .ForMember(d => d.UsuarioNombre, opt => opt.MapFrom(o => o.Usuario != null ? (o.Usuario.Name + " " + o.Usuario.Last_Name) : string.Empty));
+            // Pronóstico IA: Franjas, Horario y la calificación se completan en PronosticoMeteoService
+            CreateMap<PronosticoFranjaMeteo, PronosticoFranjaMeteoDto>()
+                .ForMember(d => d.DiaPronosticado, opt => opt.Ignore())
+                .ForMember(d => d.CondicionReal, opt => opt.Ignore())
+                .ForMember(d => d.Acerto, opt => opt.Ignore());
+            CreateMap<PronosticoMeteo, PronosticoMeteoDto>()
+                .ForMember(d => d.Franjas, opt => opt.Ignore())
+                .ForMember(d => d.Horario, opt => opt.Ignore());
 
             // Control de cultivo
             CreateMap<EtapaCultivo, EtapaCultivoDto>();

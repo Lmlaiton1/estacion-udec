@@ -1096,6 +1096,12 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Property<int>("HorizonteHoras")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("LimiteInferior")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<decimal?>("LimiteSuperior")
+                        .HasColumnType("decimal(10,4)");
+
                     b.Property<string>("ModeloVersion")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1103,6 +1109,9 @@ namespace RR_Nueva_Naturaleza.Migrations
 
                     b.Property<decimal>("NivelConfianza")
                         .HasColumnType("decimal(5,2)");
+
+                    b.Property<Guid?>("PronosticoId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("ValorPredicho")
                         .HasColumnType("decimal(10,4)");
@@ -1114,7 +1123,137 @@ namespace RR_Nueva_Naturaleza.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PronosticoId");
+
                     b.ToTable("Predicciones_Meteo");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.PronosticoFranjaMeteo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CondicionPrevista")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Franja")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("HumedadMedia")
+                        .HasColumnType("decimal(8,3)");
+
+                    b.Property<decimal>("LluviaMm")
+                        .HasColumnType("decimal(8,3)");
+
+                    b.Property<decimal>("LuzMediaLux")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("PronosticoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TemperaturaMax")
+                        .HasColumnType("decimal(8,3)");
+
+                    b.Property<decimal>("TemperaturaMedia")
+                        .HasColumnType("decimal(8,3)");
+
+                    b.Property<decimal>("TemperaturaMin")
+                        .HasColumnType("decimal(8,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PronosticoId");
+
+                    b.ToTable("Pronosticos_Franja_Meteo");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.PronosticoMeteo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Advertencia")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime>("DiaPronosticado")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("FactorSol")
+                        .HasColumnType("decimal(6,3)");
+
+                    b.Property<DateTime>("FechaGeneracion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GeneradoPorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ModeloVersion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("OrigenDatos")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("SegundosEjecucion")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal>("UmbralLluvia")
+                        .HasColumnType("decimal(6,3)");
+
+                    b.Property<int>("VentanasEntrenamiento")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiaPronosticado");
+
+                    b.HasIndex("GeneradoPorId");
+
+                    b.ToTable("Pronosticos_Meteo");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.RetroalimentacionMeteo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Acerto")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CondicionReal")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("FranjaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FranjaId")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Retroalimentacion_Meteo");
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Rol", b =>
@@ -1854,6 +1993,56 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Unit_Measurement");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.PrediccionMeteo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.PronosticoMeteo", "Pronostico")
+                        .WithMany()
+                        .HasForeignKey("PronosticoId");
+
+                    b.Navigation("Pronostico");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.PronosticoFranjaMeteo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.PronosticoMeteo", "Pronostico")
+                        .WithMany("Franjas")
+                        .HasForeignKey("PronosticoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pronostico");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.PronosticoMeteo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "GeneradoPor")
+                        .WithMany()
+                        .HasForeignKey("GeneradoPorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GeneradoPor");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.RetroalimentacionMeteo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.PronosticoFranjaMeteo", "Franja")
+                        .WithOne("Retroalimentacion")
+                        .HasForeignKey("RR_Nueva_Naturaleza.Models.RetroalimentacionMeteo", "FranjaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.User", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Franja");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.Schedule", b =>
                 {
                     b.HasOne("RR_Nueva_Naturaleza.Models.Device", "Device")
@@ -1966,6 +2155,16 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Estaciones");
 
                     b.Navigation("Etapas");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.PronosticoFranjaMeteo", b =>
+                {
+                    b.Navigation("Retroalimentacion");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.PronosticoMeteo", b =>
+                {
+                    b.Navigation("Franjas");
                 });
 #pragma warning restore 612, 618
         }
