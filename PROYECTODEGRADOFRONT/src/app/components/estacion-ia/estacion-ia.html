@@ -1,0 +1,167 @@
+<div class="container">
+  <div class="encabezado">
+    <div>
+      <h2 class="title">Pronóstico IA del microclima</h2>
+      <p class="subtitulo">LSTM entrenada con las estaciones de la UPA FungíReal · estación 3 de referencia</p>
+    </div>
+    @if (puedeGenerar) {
+      <button mat-raised-button color="primary" [disabled]="generando" (click)="generar()">
+        <mat-icon>auto_awesome</mat-icon>
+        {{ generando ? 'Entrenando…' : 'Pronóstico del día' }}
+      </button>
+    }
+  </div>
+
+  @if (generando) {
+    <mat-card class="aviso" appearance="outlined">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <p>Reentrenando con las últimas lecturas de las estaciones y calculando el pronóstico de mañana. Puede tardar hasta un minuto.</p>
+    </mat-card>
+  }
+
+  @if (cargando) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  } @else if (!pronostico) {
+    <mat-card class="vacio" appearance="outlined">
+      <mat-icon>insights</mat-icon>
+      <p>Todavía no se ha generado ningún pronóstico.
+        @if (puedeGenerar) { Pulse <strong>Pronóstico del día</strong> para crear el primero. }
+      </p>
+    </mat-card>
+  } @else {
+    <!-- Pronóstico vigente -->
+    <section class="seccion">
+      <div class="seccion-header">
+        <h3>{{ pronostico.diaPronosticado | date: 'EEEE d \'de\' MMMM' : '' : 'es' }}</h3>
+        <span class="meta">
+          Datos hasta {{ pronostico.origenDatos | date: 'dd/MM HH:mm' }} ·
+          generado {{ pronostico.fechaGeneracion | date: 'dd/MM HH:mm' }} ·
+          {{ pronostico.ventanasEntrenamiento }} ventanas · modelo {{ pronostico.modeloVersion }}
+        </span>
+      </div>
+
+      @if (pronostico.advertencia) {
+        <div class="advertencia">
+          <mat-icon>warning_amber</mat-icon>
+          <span>{{ pronostico.advertencia }}</span>
+        </div>
+      }
+
+      <div class="franjas">
+        @for (f of pronostico.franjas; track f.id) {
+          <mat-card class="franja" [ngClass]="condicion(f.condicionPrevista).clase" appearance="outlined">
+            <div class="franja-titulo">
+              <span>{{ f.franja }}</span>
+              <small>{{ horario(f.orden) }}</small>
+            </div>
+            <div class="franja-condicion">
+              <mat-icon>{{ condicion(f.condicionPrevista).icono }}</mat-icon>
+              <span>{{ condicion(f.condicionPrevista).texto }}</span>
+            </div>
+            <div class="franja-temp">{{ f.temperaturaMedia | number: '1.1-1' }} °C</div>
+            <div class="franja-rango">{{ f.temperaturaMin | number: '1.0-0' }}° / {{ f.temperaturaMax | number: '1.0-0' }}°</div>
+            <ul class="franja-datos">
+              <li><mat-icon>opacity</mat-icon>{{ f.humedadMedia | number: '1.0-0' }} %</li>
+              <li><mat-icon>light_mode</mat-icon>{{ f.luzMediaLux | number: '1.0-0' }} lux</li>
+              <li><mat-icon>grain</mat-icon>{{ f.lluviaMm | number: '1.1-2' }} mm</li>
+            </ul>
+          </mat-card>
+        }
+      </div>
+
+      <p class="nota">
+        La condición del cielo es orientativa: se decide con reglas sobre la lluvia y la luz previstas
+        (lluvia ≥ {{ pronostico.umbralLluvia }} mm/h; sol si la luz llega al {{ pronostico.factorSol * 100 | number: '1.0-0' }} %
+        de la luz habitual de esa hora) y esos umbrales se ajustan con sus calificaciones.
+        La lluvia es una estimación regional (ERA5) aprendida desde los sensores.
+      </p>
+    </section>
+
+    <!-- Gráfica 48 h -->
+    <section class="seccion">
+      <div class="seccion-header">
+        <h3>Próximas 48 horas</h3>
+        <div class="selector">
+          @for (v of variables; track v.clave) {
+            <button mat-stroked-button [class.activo]="v.clave === variableSeleccionada.clave" (click)="seleccionarVariable(v)">
+              {{ v.etiqueta }}
+            </button>
+          }
+        </div>
+      </div>
+      @if (grafica) {
+        <mat-card appearance="outlined" class="grafica">
+          <apx-chart
+            [series]="grafica.series"
+            [chart]="grafica.chart"
+            [xaxis]="grafica.xaxis"
+            [yaxis]="grafica.yaxis"
+            [stroke]="grafica.stroke"
+            [fill]="grafica.fill"
+            [colors]="grafica.colors"
+            [dataLabels]="grafica.dataLabels"
+            [tooltip]="grafica.tooltip">
+          </apx-chart>
+        </mat-card>
+      }
+    </section>
+  }
+
+  <!-- Retroalimentación -->
+  <section class="seccion">
+    <div class="seccion-header">
+      <h3>¿Cómo estuvo el pronóstico?</h3>
+      @if (estadisticas) {
+        <span class="meta">
+          @if (estadisticas.calificadas > 0) {
+            Acierto {{ estadisticas.porcentajeAcierto | number: '1.0-1' }} % ({{ estadisticas.aciertos }} de {{ estadisticas.calificadas }}) ·
+          }
+          @if (estadisticas.calibrado) {
+            umbrales ajustados con sus calificaciones
+          } @else {
+            faltan {{ faltanParaCalibrar }} calificaciones para empezar a ajustar
+          }
+        </span>
+      }
+    </div>
+    <p class="nota">Indique qué pasó realmente en cada franja. Con cada calificación el siguiente pronóstico se corrige.</p>
+
+    @if (franjasRecientes.length === 0) {
+      <p class="no-data">No hay franjas terminadas de pronósticos recientes para calificar.</p>
+    } @else {
+      <div class="calificaciones">
+        @for (f of franjasRecientes; track f.id) {
+          <div class="calificacion" [class.pendiente]="!f.condicionReal">
+            <div class="cal-dia">
+              <strong>{{ f.diaPronosticado | date: 'EEE dd/MM' : '' : 'es' }}</strong>
+              <span>{{ f.franja }}</span>
+            </div>
+            <div class="cal-prevista">
+              <mat-icon>{{ condicion(f.condicionPrevista).icono }}</mat-icon>
+              {{ condicion(f.condicionPrevista).texto }}
+            </div>
+            <div class="cal-opciones">
+              @for (o of opcionesReales; track o.valor) {
+                <button mat-stroked-button
+                        [class.elegida]="f.condicionReal === o.valor"
+                        [disabled]="calificando === f.id"
+                        (click)="calificar(f, o.valor)">
+                  <mat-icon>{{ o.icono }}</mat-icon>{{ o.valor }}
+                </button>
+              }
+            </div>
+            <div class="cal-resultado">
+              @if (f.acerto === true) {
+                <span class="estado acierto">Acertó</span>
+              } @else if (f.acerto === false) {
+                <span class="estado fallo">No acertó</span>
+              } @else {
+                <span class="estado sin">Sin calificar</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>
