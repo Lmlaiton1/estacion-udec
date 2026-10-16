@@ -1,0 +1,36 @@
+{
+  "lstm_local": {
+    "carpeta": "final_lstm_local",
+    "entradas": 4,
+    "ventanas": {
+      "ventanas": 672,
+      "por_fuente": {
+        "estacion_2": 244,
+        "estacion_3": 244,
+        "estacion_1": 184
+      },
+      "horas_entrada_unicas_calendario": 474,
+      "horas_objetivo_unicas_calendario": 450,
+      "celdas_objetivo_con_repeticiones": 71955,
+      "inicio_origen": "2026-09-16 08:00:00",
+      "fin_origen": "2026-10-14 11:00:00"
+    }
+  },
+  "lstm_historicos": {
+    "carpeta": "final_lstm_historicos",
+    "entradas": 4,
+    "ventanas": {
+      "ventanas": 672,
+      "por_fuente": {
+        "estacion_2": 244,
+        "estacion_3": 244,
+        "estacion_1": 184
+      },
+      "horas_entrada_unicas_calendario": 474,
+      "horas_objetivo_unicas_calendario": 450,
+      "celdas_objetivo_con_repeticiones": 71955,
+      "inicio_origen": "2026-09-16 08:00:00",
+      "fin_origen": "2026-10-14 11:00:00"
+    }
+  }
+}

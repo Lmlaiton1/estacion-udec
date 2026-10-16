@@ -1,0 +1,16 @@
+{
+  "resultado": "correcto",
+  "cantidad": 9,
+  "verificaciones": [
+    "Sin duplicación estación/hora en la fuente local",
+    "Objetivos train/validación respetan cortes temporales",
+    "Datos futuros no cambian las estadísticas de entrenamiento",
+    "Política seleccionada únicamente con MAE de validación",
+    "MAE/RMSE y tamaños recalculados para todos los modelos",
+    "Modelos bayesianos guardados cargan y producen 48 horas finitas",
+    "Lluvia idéntica a la inferencia del modelo mixto congelado",
+    "48 horas continuas y cuatro franjas agregadas correctamente",
+    "Unidades lux explícitas y porcentajes de cielo no inventados"
+  ],
+  "sha256_lluvia_preservada": "00cc7cf3588628493a01495cbba9393d568171e335eb971b29938dbeda3109e2"
+}

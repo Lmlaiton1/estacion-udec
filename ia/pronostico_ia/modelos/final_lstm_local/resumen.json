@@ -1,0 +1,40 @@
+{
+  "fingerprint": {
+    "version": 3,
+    "objetivo": "THL",
+    "batch": 64,
+    "name": "final_lstm_local",
+    "n_features": 4,
+    "n": 672,
+    "epochs": 7,
+    "fixed": true,
+    "pretrain": true,
+    "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+    "sha_hist": "0dee725aabf66800ffb11cd8961bc9616f2e64fe3d45408b25de9685bbddb973",
+    "encoder": null
+  },
+  "datos": {
+    "ventanas": 672,
+    "por_fuente": {
+      "estacion_2": 244,
+      "estacion_3": 244,
+      "estacion_1": 184
+    },
+    "horas_entrada_unicas_calendario": 474,
+    "horas_objetivo_unicas_calendario": 450,
+    "celdas_objetivo_con_repeticiones": 71955,
+    "inicio_origen": "2026-09-16 08:00:00",
+    "fin_origen": "2026-10-14 11:00:00"
+  },
+  "validacion": null,
+  "epocas": 7,
+  "epoca_restaurada": 7,
+  "parametros": 1546,
+  "positive_weight": 1.0,
+  "n_features": 4,
+  "preentrenamiento": true,
+  "inicializacion_encoder": null,
+  "score_validacion": null,
+  "segundos": 6.61,
+  "es_modelo_final_sin_prueba_independiente": true
+}

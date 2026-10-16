@@ -1,0 +1,37 @@
+{
+  "fingerprint": {
+    "version": 1,
+    "name": "preentrenamiento_final",
+    "n_features": 4,
+    "n": 18750,
+    "epochs": 12,
+    "fixed": true,
+    "pretrain": true,
+    "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+    "sha_hist": "0dee725aabf66800ffb11cd8961bc9616f2e64fe3d45408b25de9685bbddb973",
+    "encoder": null
+  },
+  "datos": {
+    "ventanas": 18750,
+    "por_fuente": {
+      "openmeteo": 9408,
+      "nasa_power": 9342
+    },
+    "horas_entrada_unicas_calendario": 225792,
+    "horas_objetivo_unicas_calendario": 225792,
+    "celdas_objetivo_con_repeticiones": 3599832,
+    "inicio_origen": "2001-01-01 23:00:00",
+    "fin_origen": "2026-10-04 23:00:00"
+  },
+  "validacion": null,
+  "epocas": 12,
+  "epoca_restaurada": 12,
+  "parametros": 1546,
+  "positive_weight": 1.0,
+  "n_features": 4,
+  "preentrenamiento": true,
+  "inicializacion_encoder": null,
+  "score_validacion": null,
+  "segundos": 57.14,
+  "es_modelo_final_sin_prueba_independiente": true
+}

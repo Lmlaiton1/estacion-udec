@@ -1,0 +1,37 @@
+{
+  "fingerprint": {
+    "version": 1,
+    "name": "adaptacion_era5_operacion",
+    "n_features": 4,
+    "n": 97,
+    "epochs": 10,
+    "fixed": true,
+    "pretrain": true,
+    "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+    "sha_hist": "415cc69b76cf47321193f5c6955a1200e9a732412f90cae721cd5b171175b315",
+    "encoder": "73ca469a9e0e0238e60586636c29c37aac848222b3d09177d1f5b6749868195e",
+    "full_transfer": true
+  },
+  "datos": {
+    "ventanas": 97,
+    "por_fuente": {
+      "era5_land_gee": 97
+    },
+    "horas_entrada_unicas_calendario": 2328,
+    "horas_objetivo_unicas_calendario": 2678,
+    "celdas_objetivo_con_repeticiones": 18522,
+    "inicio_origen": "2026-06-15 23:00:00",
+    "fin_origen": "2026-10-06 23:00:00"
+  },
+  "validacion": null,
+  "epocas": 10,
+  "epoca_restaurada": 10,
+  "parametros": 1546,
+  "positive_weight": 1.0,
+  "n_features": 4,
+  "preentrenamiento": true,
+  "inicializacion_encoder": "C:\\Users\\USER\\Documents\\New project\\ia_clima_v12\\resultados\\preentrenamiento_final\\modelo.keras",
+  "score_validacion": null,
+  "segundos": 5.69,
+  "es_modelo_final_sin_prueba_independiente": true
+}

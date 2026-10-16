@@ -1,0 +1,19 @@
+{
+  "origen_intervalo_entrada": "2026-10-15 13:00:00",
+  "fin_exclusivo_entrada": "2026-10-15 14:00:00",
+  "dia_pronosticado": "2026-10-16",
+  "primer_objetivo": "2026-10-15 14:00:00",
+  "ultimo_objetivo": "2026-10-17 13:00:00",
+  "temperatura_humedad_luz": "estaciones locales; estación 3 de referencia",
+  "lluvia": "LSTM mixta v16; entrada sensores, objetivo regional ERA5",
+  "politica_thl": {
+    "tem": "lstm_historicos_mezcla50",
+    "hum": "persistencia_24h",
+    "rad": "mediana_horaria"
+  },
+  "luz_unidad": "lux",
+  "condicion": "regla descriptiva sobre lluvia y luz previstas; no clasificador validado de tres clases",
+  "rangos_error": "percentil 90 de residuos absolutos en validación; cobertura de prueba en CSV, sin garantía de 90%",
+  "confianza_clase_calibrada": false,
+  "actualizado_con_datos_hasta": "2026-10-15 13:00:00"
+}

@@ -1,0 +1,73 @@
+{
+  "ajuste_hasta_exclusivo": "2026-10-15 15:00:00",
+  "estaciones": {
+    "estacion_1": {
+      "tem": {
+        "tipo": "desplazamiento",
+        "valor": 0.01649504622144793,
+        "n_pares": 472
+      },
+      "hum": {
+        "tipo": "desplazamiento",
+        "valor": 15.749523809523811,
+        "n_pares": 472
+      },
+      "rad": {
+        "tipo": "razon_lux",
+        "valor": 1.4968293441094187,
+        "n_pares": 175
+      },
+      "lluv": {
+        "tipo": "identidad",
+        "valor": 0.0,
+        "n_pares": 0
+      }
+    },
+    "estacion_2": {
+      "tem": {
+        "tipo": "desplazamiento",
+        "valor": -0.6150000000000038,
+        "n_pares": 483
+      },
+      "hum": {
+        "tipo": "desplazamiento",
+        "valor": 6.772222222222226,
+        "n_pares": 483
+      },
+      "rad": {
+        "tipo": "razon_lux",
+        "valor": 1.9648965517241377,
+        "n_pares": 97
+      },
+      "lluv": {
+        "tipo": "identidad",
+        "valor": 0.0,
+        "n_pares": 0
+      }
+    },
+    "estacion_3": {
+      "tem": {
+        "tipo": "identidad",
+        "valor": 0.0,
+        "n_pares": 0
+      },
+      "hum": {
+        "tipo": "identidad",
+        "valor": 0.0,
+        "n_pares": 0
+      },
+      "rad": {
+        "tipo": "identidad",
+        "valor": 0.0,
+        "n_pares": 0
+      },
+      "lluv": {
+        "tipo": "identidad",
+        "valor": 0.0,
+        "n_pares": 0
+      }
+    }
+  },
+  "rad_local": "lux",
+  "lluv_local": "mm publicados parciales; no lluvia total real"
+}

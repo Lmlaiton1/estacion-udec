@@ -36,3 +36,6 @@ PROYECTODEGRADOWORKER/appsettings.Development.json
 backup/
 
 docker/backup/*.bak
+
+# Pronóstico IA: estado operativo regenerado en cada "Pronóstico del día"
+ia/pronostico_ia/operacion/
