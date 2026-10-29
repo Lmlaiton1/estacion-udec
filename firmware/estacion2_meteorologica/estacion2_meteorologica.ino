@@ -10,6 +10,7 @@
  * ================================================================
  */
 
+#include "secrets.h"   // credenciales (copiar secrets.example.h)
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
@@ -20,8 +21,8 @@
 #include <ArduinoJson.h>
 
 // ── WiFi / NTP ────────────────────────────────────────────────
-const char* ssid               = "JEAR_LESTOMA";
-const char* password           = "L3stom4U";
+const char* ssid               = WIFI_SSID;
+const char* password           = WIFI_PASSWORD;
 const char* ntpServer          = "pool.ntp.org";
 const long  gmtOffset_sec      = -5 * 3600;
 const int   daylightOffset_sec = 0;

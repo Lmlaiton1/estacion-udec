@@ -21,6 +21,7 @@
  * ================================================================
  */
 
+#include "secrets.h"   // credenciales (copiar secrets.example.h)
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WiFiClientSecure.h>
@@ -38,8 +39,8 @@
 // ================================================================
 // WIFI / NTP
 // ================================================================
-const char* ssid               = "JEAR_LESTOMA";
-const char* password           = "L3stom4U";
+const char* ssid               = WIFI_SSID;
+const char* password           = WIFI_PASSWORD;
 const char* ntpServer          = "pool.ntp.org";
 const long  gmtOffset_sec      = -5 * 3600;
 const int   daylightOffset_sec = 0;
@@ -56,10 +57,10 @@ const char* clientId_local     = "ESP32_E3_Local";
 // ================================================================
 // BROKER REMOTO — HiveMQ Cloud
 // ================================================================
-const char* mqtt_broker_remoto = "d9e45a5646094cd5b00b50268cbff192.s1.eu.hivemq.cloud";
+const char* mqtt_broker_remoto = HIVEMQ_HOST;
 const int   mqtt_port_remoto   = 8883;
-const char* mqtt_user_remoto   = "Estacion3";
-const char* mqtt_pass_remoto   = "Estacion3123@";
+const char* mqtt_user_remoto   = HIVEMQ_USER;
+const char* mqtt_pass_remoto   = HIVEMQ_PASS;
 const char* clientId_remoto    = "ESP32_Estacion_Remota3";
 
 // ================================================================
