@@ -170,6 +170,7 @@ const unsigned long intervaloLluvia      = 60000UL;
 const unsigned long intervaloRead        =  2500UL;
 const unsigned long intervaloSerial      =  1000UL;
 const unsigned long intervaloReconnect   =  5000UL;
+const unsigned long intervaloReconnectRemoto = 30000UL; // TLS bloquea varios segundos
 const unsigned long intervaloPublicacion = 120000UL; // 2 min → 300000 para 5 min
 
 // ================================================================
@@ -301,6 +302,7 @@ void vaciarBuffer() {
       break;
     }
     delay(50);
+    esp_task_wdt_reset();
   }
   if (bufferVacio()) Serial.println("[BUFFER] Vaciado correctamente");
 }
@@ -522,8 +524,12 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 // CONEXIÓN LOCAL
 // ================================================================
 void conectarLocal() {
+  if (WiFi.status() != WL_CONNECTED) return;
+  esp_task_wdt_reset();
   Serial.printf("[LOCAL] Conectando como '%s'...\n", clientId_local);
-  if (mqttLocal.connect(clientId_local)) {
+  bool ok = mqttLocal.connect(clientId_local);
+  esp_task_wdt_reset();
+  if (ok) {
     Serial.println("[LOCAL] Conectado");
     mqttLocal.subscribe(topic_sub);
     mqttLocal.subscribe(topic_comando);
@@ -538,15 +544,53 @@ void conectarLocal() {
 // ================================================================
 // CONEXIÓN REMOTA
 // ================================================================
+// Diagnóstico cuando falla HiveMQ: dice si el problema es DNS, puerto o TLS
+unsigned long msUltimoIntentoRemoto = 0;
+
+void diagnosticarRemoto() {
+  Serial.printf("[DIAG] Heap libre: %u bytes\n", ESP.getFreeHeap());
+  Serial.printf("[DIAG] El intento tardo %lu ms (cerca de 20000 = timeout del TLS)\n", msUltimoIntentoRemoto);
+
+  // 1) Error TLS de la última conexión
+  char errTls[100];
+  int codTls = espClientRemoto.lastError(errTls, sizeof(errTls));
+  Serial.printf("[DIAG] TLS error %d: %s\n", codTls, errTls);
+
+  // 2) DNS
+  IPAddress ipRemoto;
+  esp_task_wdt_reset();
+  if (!WiFi.hostByName(mqtt_broker_remoto, ipRemoto)) {
+    Serial.println("[DIAG] DNS FALLO -> la red no resuelve nombres (sin internet o DNS bloqueado)");
+    return;
+  }
+  Serial.printf("[DIAG] DNS OK -> %s\n", ipRemoto.toString().c_str());
+
+  // 3) Puerto 8883 sin TLS
+  WiFiClient prueba;
+  esp_task_wdt_reset();
+  bool tcpOk = prueba.connect(ipRemoto, mqtt_port_remoto, 5000);
+  prueba.stop();
+  esp_task_wdt_reset();
+  if (tcpOk) Serial.println("[DIAG] Puerto 8883 ABIERTO -> el problema es el TLS");
+  else       Serial.println("[DIAG] Puerto 8883 BLOQUEADO -> la red no deja salir al 8883");
+}
+
 void conectarRemoto() {
+  if (WiFi.status() != WL_CONNECTED) return;
+  esp_task_wdt_reset();
   Serial.printf("[REMOTO] Conectando como '%s'...\n", clientId_remoto);
-  if (mqttRemoto.connect(clientId_remoto, mqtt_user_remoto, mqtt_pass_remoto)) {
+  unsigned long tIntento = millis();
+  bool ok = mqttRemoto.connect(clientId_remoto, mqtt_user_remoto, mqtt_pass_remoto);
+  msUltimoIntentoRemoto = millis() - tIntento;
+  esp_task_wdt_reset();
+  if (ok) {
     Serial.println("[REMOTO] Conectado");
     mqttRemoto.subscribe(topic_sub);
     mqttRemoto.subscribe(topic_comando);
     mqttRemoto.publish(topic_estado, "en_linea", false);
   } else {
     Serial.printf("[REMOTO] Fallo rc=%d\n", mqttRemoto.state());
+    diagnosticarRemoto();
   }
 }
 
@@ -585,16 +629,18 @@ void setup() {
 
   Serial.begin(115200);
   delay(500);
-  Serial.println("\n=== ESTACION 1 — MODO DUAL ===");
+  Serial.println("\n=== ESTACION 1 — v6.1 — MODO DUAL ===");
 
-  // Watchdog 30 segundos
-  // Watchdog — compatible con ESP32 core 3.x
+  // Watchdog 30 segundos — el core 3.x ya inicia el TWDT con 5 s, así que
+  // esp_task_wdt_init() falla y hay que reconfigurarlo
   esp_task_wdt_config_t wdt_config = {
     .timeout_ms    = 30000,
     .idle_core_mask = 0,
     .trigger_panic  = true
   };
-  esp_task_wdt_init(&wdt_config);
+  esp_err_t wdtErr = esp_task_wdt_reconfigure(&wdt_config);
+  if (wdtErr != ESP_OK) wdtErr = esp_task_wdt_init(&wdt_config);
+  Serial.printf("[WDT] 30 s: %s\n", esp_err_to_name(wdtErr));
   esp_task_wdt_add(NULL);
 
   // Interrupciones
@@ -651,9 +697,12 @@ void setup() {
 
   // MQTT remoto con TLS
   espClientRemoto.setInsecure();
+  espClientRemoto.setHandshakeTimeout(20); // por defecto 120 s; con 10 s fallaba en JEAR_LESTOMA
   mqttRemoto.setServer(mqtt_broker_remoto, mqtt_port_remoto);
   mqttRemoto.setCallback(mqttCallback);
   mqttRemoto.setBufferSize(1024);
+  mqttRemoto.setSocketTimeout(10);
+  mqttLocal.setSocketTimeout(5);
 
   // Lectura inicial
   actualizarSensores();
@@ -690,7 +739,7 @@ void loop() {
 
   // Mantener conexión remota — independiente
   if (!mqttRemoto.connected()) {
-    if (ahora - lastReconnectRemoto >= intervaloReconnect) {
+    if (ahora - lastReconnectRemoto >= intervaloReconnectRemoto) {
       lastReconnectRemoto = ahora;
       conectarRemoto();
     }
