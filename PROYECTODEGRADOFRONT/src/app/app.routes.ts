@@ -131,7 +131,7 @@ export const routes: Routes = [
       },
       {
         path: 'Ia',
-        loadComponent: () => import('./components/ia/ia').then(m => m.Ia),
+        loadComponent: () => import('./components/estacion-ia/estacion-ia').then(m => m.EstacionIa),
         canActivate: [AuthGuard]
       },
       {

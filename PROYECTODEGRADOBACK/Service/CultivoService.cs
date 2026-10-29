@@ -468,5 +468,35 @@ namespace RR_Nueva_Naturaleza.Service
             response.ErrorMessage = mensaje;
             return response;
         }
+    
+        public async Task<IEnumerable<DispositivoNuevaNaturalezaDto>> GetDispositivosNuevaNaturaleza()
+        {
+            var dispositivos = await _context.Devices
+                .Where(d => d.Device_Type!.Device_Type_Name == "Sensor" || d.Device_Type!.Device_Type_Name == "Actuador")
+                .Select(d => new DispositivoNuevaNaturalezaDto
+                {
+                    Id = d.Id,
+                    Nombre = d.Device_Name,
+                    Tipo = d.Device_Type!.Device_Type_Name,
+                    Sistema = d.System_Type != null ? d.System_Type.System_Type_Name : string.Empty,
+                    Estado = d.Device_Status != null ? d.Device_Status.State_Name : string.Empty,
+                    ModoAutomaticoAcuaponia = _context.ActuatorModes.Any(m => m.DeviceId == d.Id && m.IsAutoMode)
+                })
+                .OrderBy(d => d.Tipo).ThenBy(d => d.Nombre)
+                .ToListAsync();
+
+            // Última medición de cada sensor (consulta aparte por sensor: Measurements es grande y está indexada por DeviceId)
+            foreach (var sensor in dispositivos.Where(d => d.Tipo == "Sensor"))
+            {
+                var ultima = await _context.Measurements.Where(m => m.DeviceId == sensor.Id)
+                    .OrderByDescending(m => m.Date)
+                    .Select(m => new { m.Value, m.Date })
+                    .FirstOrDefaultAsync();
+                sensor.UltimoValor = ultima?.Value;
+                sensor.FechaUltimoValor = ultima?.Date;
+            }
+
+            return dispositivos;
+        }
     }
 }

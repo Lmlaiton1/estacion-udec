@@ -18,5 +18,8 @@ namespace RR_Nueva_Naturaleza.Service
         Task<ServiceResponse> DeleteEtapa(Guid id, string motivo, Guid usuarioId);
         Task<ServiceResponse> ActivarEtapa(Guid id, string motivo, Guid usuarioId);
         Task<ServiceResponse> QuitarEtapaActual(Guid id, string motivo, Guid usuarioId);
+    
+        // Sensores y actuadores de acuaponía que se pueden vincular a un cultivo
+        Task<IEnumerable<DispositivoNuevaNaturalezaDto>> GetDispositivosNuevaNaturaleza();
     }
 }

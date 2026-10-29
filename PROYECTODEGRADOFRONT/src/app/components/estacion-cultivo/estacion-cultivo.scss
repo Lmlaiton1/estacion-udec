@@ -491,3 +491,105 @@ mat-panel-description {
   max-width: 380px;
   font-size: 0.85rem;
 }
+
+// Vínculo con Nueva Naturaleza en los formularios
+.nn-vinculo {
+  margin: 8px 0 4px;
+}
+
+// Pestaña Control
+.control-card {
+  border-radius: 12px;
+  margin-bottom: 20px;
+  padding: 8px;
+}
+
+.control-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin: 12px 0;
+  font-size: 0.95rem;
+}
+
+.control-ok {
+  background: rgba(46, 125, 79, 0.12);
+  color: #1d4d35;
+}
+
+.control-pendiente {
+  background: rgba(158, 158, 158, 0.15);
+  color: #424242;
+}
+
+.control-alerta {
+  background: rgba(255, 152, 0, 0.15);
+  color: #8a4b00;
+}
+
+.control-lecturas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.control-valor {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #f4f6f5;
+
+  small {
+    color: #757575;
+  }
+}
+
+.control-etiqueta {
+  color: #616161;
+  font-size: 0.85rem;
+}
+
+.control-numero {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #1d4d35;
+
+  &.encendido {
+    color: #2e7d32;
+  }
+
+  &.apagado {
+    color: #757575;
+  }
+}
+
+.control-historial {
+  padding: 8px 16px 12px;
+
+  h4 {
+    margin: 8px 0;
+    color: #1d4d35;
+  }
+}
+
+.control-evento {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eeeeee;
+  font-size: 0.9rem;
+}
+
+.control-motivo {
+  color: #616161;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

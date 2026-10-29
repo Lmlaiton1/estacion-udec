@@ -1,0 +1,285 @@
+{
+  "arquitectura": "LSTM variacional 8 unidades, decodificador bayesiano 16 unidades, horizonte 48h",
+  "historicos": [
+    "NASA POWER",
+    "Open-Meteo",
+    "ERA5-Land"
+  ],
+  "adaptacion_historica": "pesos históricos incluidos, luego ajuste local; radiación normalizada en dominios separados",
+  "corridas": {
+    "lstm_local": {
+      "fingerprint": {
+        "version": 3,
+        "objetivo": "THL",
+        "batch": 64,
+        "name": "lstm_local",
+        "n_features": 4,
+        "n": 389,
+        "epochs": 160,
+        "fixed": false,
+        "pretrain": true,
+        "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+        "sha_hist": "0dee725aabf66800ffb11cd8961bc9616f2e64fe3d45408b25de9685bbddb973",
+        "encoder": null
+      },
+      "datos": {
+        "ventanas": 389,
+        "por_fuente": {
+          "estacion_2": 147,
+          "estacion_3": 128,
+          "estacion_1": 114
+        },
+        "horas_entrada_unicas_calendario": 259,
+        "horas_objetivo_unicas_calendario": 234,
+        "celdas_objetivo_con_repeticiones": 42238,
+        "inicio_origen": "2026-09-16 08:00:00",
+        "fin_origen": "2026-09-29 11:00:00"
+      },
+      "validacion": {
+        "ventanas": 6,
+        "por_fuente": {
+          "estacion_3": 6
+        },
+        "horas_entrada_unicas_calendario": 72,
+        "horas_objetivo_unicas_calendario": 70,
+        "celdas_objetivo_con_repeticiones": 762,
+        "inicio_origen": "2026-10-01 11:00:00",
+        "fin_origen": "2026-10-03 17:00:00"
+      },
+      "epocas": 19,
+      "epoca_restaurada": 7,
+      "parametros": 1546,
+      "positive_weight": 1.0,
+      "n_features": 4,
+      "preentrenamiento": true,
+      "inicializacion_encoder": null,
+      "score_validacion": 0.2609957539924055,
+      "segundos": 11.56,
+      "es_modelo_final_sin_prueba_independiente": false
+    },
+    "lstm_historicos": {
+      "fingerprint": {
+        "version": 3,
+        "objetivo": "THL",
+        "batch": 64,
+        "name": "lstm_historicos",
+        "n_features": 4,
+        "n": 389,
+        "epochs": 160,
+        "fixed": false,
+        "pretrain": true,
+        "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+        "sha_hist": "0dee725aabf66800ffb11cd8961bc9616f2e64fe3d45408b25de9685bbddb973",
+        "encoder": "02513dafa37bf142d86371ed01dcd03288a6876915584e18b68b05e137d50890",
+        "full_transfer": true
+      },
+      "datos": {
+        "ventanas": 389,
+        "por_fuente": {
+          "estacion_2": 147,
+          "estacion_3": 128,
+          "estacion_1": 114
+        },
+        "horas_entrada_unicas_calendario": 259,
+        "horas_objetivo_unicas_calendario": 234,
+        "celdas_objetivo_con_repeticiones": 42238,
+        "inicio_origen": "2026-09-16 08:00:00",
+        "fin_origen": "2026-09-29 11:00:00"
+      },
+      "validacion": {
+        "ventanas": 6,
+        "por_fuente": {
+          "estacion_3": 6
+        },
+        "horas_entrada_unicas_calendario": 72,
+        "horas_objetivo_unicas_calendario": 70,
+        "celdas_objetivo_con_repeticiones": 762,
+        "inicio_origen": "2026-10-01 11:00:00",
+        "fin_origen": "2026-10-03 17:00:00"
+      },
+      "epocas": 19,
+      "epoca_restaurada": 7,
+      "parametros": 1546,
+      "positive_weight": 1.0,
+      "n_features": 4,
+      "preentrenamiento": true,
+      "inicializacion_encoder": "C:\\Users\\USER\\Documents\\New project\\pronostico ia\\preentrenado\\historicos_evaluacion.keras",
+      "score_validacion": 0.27176681729051894,
+      "segundos": 11.78,
+      "es_modelo_final_sin_prueba_independiente": false
+    },
+    "lstm_auxiliar": {
+      "fingerprint": {
+        "version": 3,
+        "objetivo": "THL",
+        "batch": 64,
+        "name": "lstm_auxiliar",
+        "n_features": 3,
+        "n": 664,
+        "epochs": 160,
+        "fixed": false,
+        "pretrain": true,
+        "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+        "sha_hist": "0dee725aabf66800ffb11cd8961bc9616f2e64fe3d45408b25de9685bbddb973",
+        "encoder": "02513dafa37bf142d86371ed01dcd03288a6876915584e18b68b05e137d50890",
+        "full_transfer": true
+      },
+      "datos": {
+        "ventanas": 664,
+        "por_fuente": {
+          "estacion_2": 278,
+          "estacion_1": 255,
+          "estacion_3": 131
+        },
+        "horas_entrada_unicas_calendario": 467,
+        "horas_objetivo_unicas_calendario": 430,
+        "celdas_objetivo_con_repeticiones": 73724,
+        "inicio_origen": "2026-08-29 10:00:00",
+        "fin_origen": "2026-09-29 11:00:00"
+      },
+      "validacion": {
+        "ventanas": 10,
+        "por_fuente": {
+          "estacion_3": 10
+        },
+        "horas_entrada_unicas_calendario": 78,
+        "horas_objetivo_unicas_calendario": 70,
+        "celdas_objetivo_con_repeticiones": 1134,
+        "inicio_origen": "2026-10-01 11:00:00",
+        "fin_origen": "2026-10-03 17:00:00"
+      },
+      "epocas": 22,
+      "epoca_restaurada": 10,
+      "parametros": 1382,
+      "positive_weight": 1.0,
+      "n_features": 3,
+      "preentrenamiento": true,
+      "inicializacion_encoder": "C:\\Users\\USER\\Documents\\New project\\pronostico ia\\preentrenado\\historicos_evaluacion.keras",
+      "score_validacion": 0.2890369690810193,
+      "segundos": 11.67,
+      "es_modelo_final_sin_prueba_independiente": false
+    }
+  },
+  "politica": {
+    "tem": "lstm_historicos_mezcla50",
+    "hum": "persistencia_24h",
+    "rad": "mediana_horaria"
+  },
+  "modelos_finales": {
+    "lstm_local": {
+      "carpeta": "final_lstm_local",
+      "entradas": 4,
+      "ventanas": {
+        "ventanas": 672,
+        "por_fuente": {
+          "estacion_2": 244,
+          "estacion_3": 244,
+          "estacion_1": 184
+        },
+        "horas_entrada_unicas_calendario": 474,
+        "horas_objetivo_unicas_calendario": 450,
+        "celdas_objetivo_con_repeticiones": 71955,
+        "inicio_origen": "2026-09-16 08:00:00",
+        "fin_origen": "2026-10-14 11:00:00"
+      }
+    },
+    "lstm_historicos": {
+      "carpeta": "final_lstm_historicos",
+      "entradas": 4,
+      "ventanas": {
+        "ventanas": 672,
+        "por_fuente": {
+          "estacion_2": 244,
+          "estacion_3": 244,
+          "estacion_1": 184
+        },
+        "horas_entrada_unicas_calendario": 474,
+        "horas_objetivo_unicas_calendario": 450,
+        "celdas_objetivo_con_repeticiones": 71955,
+        "inicio_origen": "2026-09-16 08:00:00",
+        "fin_origen": "2026-10-14 11:00:00"
+      }
+    }
+  },
+  "lluvia": "pesos mixtos v16 preservados",
+  "rad_unidad_local": "lux",
+  "clases_cielo_validadas": false,
+  "particiones": {
+    "3": {
+      "train": {
+        "ventanas": 664,
+        "por_fuente": {
+          "estacion_2": 278,
+          "estacion_1": 255,
+          "estacion_3": 131
+        },
+        "horas_entrada_unicas_calendario": 467,
+        "horas_objetivo_unicas_calendario": 430,
+        "celdas_objetivo_con_repeticiones": 73724,
+        "inicio_origen": "2026-08-29 10:00:00",
+        "fin_origen": "2026-09-29 11:00:00"
+      },
+      "val": {
+        "ventanas": 10,
+        "por_fuente": {
+          "estacion_3": 10
+        },
+        "horas_entrada_unicas_calendario": 78,
+        "horas_objetivo_unicas_calendario": 70,
+        "celdas_objetivo_con_repeticiones": 1134,
+        "inicio_origen": "2026-10-01 11:00:00",
+        "fin_origen": "2026-10-03 17:00:00"
+      },
+      "test": {
+        "ventanas": 10,
+        "por_fuente": {
+          "estacion_3": 10
+        },
+        "horas_entrada_unicas_calendario": 96,
+        "horas_objetivo_unicas_calendario": 88,
+        "celdas_objetivo_con_repeticiones": 1043,
+        "inicio_origen": "2026-10-06 11:00:00",
+        "fin_origen": "2026-10-14 11:00:00"
+      }
+    },
+    "4": {
+      "train": {
+        "ventanas": 389,
+        "por_fuente": {
+          "estacion_2": 147,
+          "estacion_3": 128,
+          "estacion_1": 114
+        },
+        "horas_entrada_unicas_calendario": 259,
+        "horas_objetivo_unicas_calendario": 234,
+        "celdas_objetivo_con_repeticiones": 42238,
+        "inicio_origen": "2026-09-16 08:00:00",
+        "fin_origen": "2026-09-29 11:00:00"
+      },
+      "val": {
+        "ventanas": 6,
+        "por_fuente": {
+          "estacion_3": 6
+        },
+        "horas_entrada_unicas_calendario": 72,
+        "horas_objetivo_unicas_calendario": 70,
+        "celdas_objetivo_con_repeticiones": 762,
+        "inicio_origen": "2026-10-01 11:00:00",
+        "fin_origen": "2026-10-03 17:00:00"
+      },
+      "test": {
+        "ventanas": 10,
+        "por_fuente": {
+          "estacion_3": 10
+        },
+        "horas_entrada_unicas_calendario": 96,
+        "horas_objetivo_unicas_calendario": 88,
+        "celdas_objetivo_con_repeticiones": 1043,
+        "inicio_origen": "2026-10-06 11:00:00",
+        "fin_origen": "2026-10-14 11:00:00"
+      }
+    }
+  },
+  "prueba_temporal": "objetivos 05/10–15/10 donde existen mediciones; nunca se usan para selección",
+  "modelo_final_tiene_evaluacion_con_dias_nuevos": false
+}

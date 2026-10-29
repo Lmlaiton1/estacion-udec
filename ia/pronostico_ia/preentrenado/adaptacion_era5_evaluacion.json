@@ -1,0 +1,47 @@
+{
+  "fingerprint": {
+    "version": 1,
+    "name": "adaptacion_era5_evaluacion",
+    "n_features": 4,
+    "n": 77,
+    "epochs": 12,
+    "fixed": false,
+    "pretrain": true,
+    "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+    "sha_hist": "415cc69b76cf47321193f5c6955a1200e9a732412f90cae721cd5b171175b315",
+    "encoder": "0f431d5dd496b1d29438b936a5035cef7e7c923a539c32c9212e7f679553bbd1",
+    "full_transfer": true
+  },
+  "datos": {
+    "ventanas": 77,
+    "por_fuente": {
+      "era5_land_gee": 77
+    },
+    "horas_entrada_unicas_calendario": 1848,
+    "horas_objetivo_unicas_calendario": 2136,
+    "celdas_objetivo_con_repeticiones": 14659,
+    "inicio_origen": "2026-06-15 23:00:00",
+    "fin_origen": "2026-09-13 23:00:00"
+  },
+  "validacion": {
+    "ventanas": 13,
+    "por_fuente": {
+      "era5_land_gee": 13
+    },
+    "horas_entrada_unicas_calendario": 312,
+    "horas_objetivo_unicas_calendario": 336,
+    "celdas_objetivo_con_repeticiones": 2397,
+    "inicio_origen": "2026-09-14 23:00:00",
+    "fin_origen": "2026-09-28 23:00:00"
+  },
+  "epocas": 12,
+  "epoca_restaurada": 10,
+  "parametros": 1546,
+  "positive_weight": 1.0,
+  "n_features": 4,
+  "preentrenamiento": true,
+  "inicializacion_encoder": "C:\\Users\\USER\\Documents\\New project\\ia_clima_v12\\resultados\\preentrenamiento_evaluacion\\modelo.keras",
+  "score_validacion": 0.48331376999799613,
+  "segundos": 8.27,
+  "es_modelo_final_sin_prueba_independiente": false
+}

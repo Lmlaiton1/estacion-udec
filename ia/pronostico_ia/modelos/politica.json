@@ -1,0 +1,5 @@
+{
+  "tem": "lstm_historicos_mezcla50",
+  "hum": "persistencia_24h",
+  "rad": "mediana_horaria"
+}

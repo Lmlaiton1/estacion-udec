@@ -30,6 +30,14 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             return _mapper.Map<List<Cultivo>, List<CultivoDto>>(cultivos.ToList());
         }
 
+        // Sensores y actuadores de acuaponía (Nueva Naturaleza) que se pueden vincular a un cultivo
+        [HttpGet("DispositivosNuevaNaturaleza")]
+        [ProducesResponseType(typeof(IEnumerable<DispositivoNuevaNaturalezaDto>), 200)]
+        public async Task<IEnumerable<DispositivoNuevaNaturalezaDto>> GetDispositivosNuevaNaturaleza()
+        {
+            return await _cultivoService.GetDispositivosNuevaNaturaleza();
+        }
+
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(CultivoDto), 200)]
         [ProducesResponseType(typeof(string), 404)]

@@ -1,0 +1,50 @@
+{
+  "fingerprint": {
+    "version": 3,
+    "objetivo": "THL",
+    "batch": 64,
+    "name": "lstm_local",
+    "n_features": 4,
+    "n": 389,
+    "epochs": 160,
+    "fixed": false,
+    "pretrain": true,
+    "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+    "sha_hist": "0dee725aabf66800ffb11cd8961bc9616f2e64fe3d45408b25de9685bbddb973",
+    "encoder": null
+  },
+  "datos": {
+    "ventanas": 389,
+    "por_fuente": {
+      "estacion_2": 147,
+      "estacion_3": 128,
+      "estacion_1": 114
+    },
+    "horas_entrada_unicas_calendario": 259,
+    "horas_objetivo_unicas_calendario": 234,
+    "celdas_objetivo_con_repeticiones": 42238,
+    "inicio_origen": "2026-09-16 08:00:00",
+    "fin_origen": "2026-09-29 11:00:00"
+  },
+  "validacion": {
+    "ventanas": 6,
+    "por_fuente": {
+      "estacion_3": 6
+    },
+    "horas_entrada_unicas_calendario": 72,
+    "horas_objetivo_unicas_calendario": 70,
+    "celdas_objetivo_con_repeticiones": 762,
+    "inicio_origen": "2026-10-01 11:00:00",
+    "fin_origen": "2026-10-03 17:00:00"
+  },
+  "epocas": 19,
+  "epoca_restaurada": 7,
+  "parametros": 1546,
+  "positive_weight": 1.0,
+  "n_features": 4,
+  "preentrenamiento": true,
+  "inicializacion_encoder": null,
+  "score_validacion": 0.2609957539924055,
+  "segundos": 11.56,
+  "es_modelo_final_sin_prueba_independiente": false
+}

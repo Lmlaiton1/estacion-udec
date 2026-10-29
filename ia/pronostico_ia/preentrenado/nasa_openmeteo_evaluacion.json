@@ -1,0 +1,48 @@
+{
+  "fingerprint": {
+    "version": 1,
+    "name": "preentrenamiento_evaluacion",
+    "n_features": 4,
+    "n": 18436,
+    "epochs": 12,
+    "fixed": false,
+    "pretrain": true,
+    "sha_local": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+    "sha_hist": "0dee725aabf66800ffb11cd8961bc9616f2e64fe3d45408b25de9685bbddb973",
+    "encoder": null
+  },
+  "datos": {
+    "ventanas": 18436,
+    "por_fuente": {
+      "nasa_power": 9218,
+      "openmeteo": 9218
+    },
+    "horas_entrada_unicas_calendario": 221232,
+    "horas_objetivo_unicas_calendario": 221232,
+    "celdas_objetivo_con_repeticiones": 3539520,
+    "inicio_origen": "2001-01-01 23:00:00",
+    "fin_origen": "2026-03-28 23:00:00"
+  },
+  "validacion": {
+    "ventanas": 308,
+    "por_fuente": {
+      "openmeteo": 184,
+      "nasa_power": 124
+    },
+    "horas_entrada_unicas_calendario": 4416,
+    "horas_objetivo_unicas_calendario": 4416,
+    "celdas_objetivo_con_repeticiones": 58968,
+    "inicio_origen": "2026-03-29 23:00:00",
+    "fin_origen": "2026-09-28 23:00:00"
+  },
+  "epocas": 12,
+  "epoca_restaurada": 12,
+  "parametros": 1546,
+  "positive_weight": 1.0,
+  "n_features": 4,
+  "preentrenamiento": true,
+  "inicializacion_encoder": null,
+  "score_validacion": 0.25380135242137314,
+  "segundos": 46.08,
+  "es_modelo_final_sin_prueba_independiente": false
+}

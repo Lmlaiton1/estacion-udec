@@ -79,6 +79,7 @@ namespace RR_Nueva_Naturaleza
             builder.Services.AddScoped<IUmbralMeteoService, UmbralMeteoService>();
             builder.Services.AddScoped<IAlertaMeteoService, AlertaMeteoService>();
             builder.Services.AddScoped<IAuditoriaMeteoService, AuditoriaMeteoService>();
+            builder.Services.AddScoped<IPronosticoMeteoService, PronosticoMeteoService>();
 
             // Control de umbrales y alarmas de cultivo
             builder.Services.AddScoped<IBitacoraCultivoService, BitacoraCultivoService>();
@@ -97,7 +98,7 @@ namespace RR_Nueva_Naturaleza
             {
                 options.AddPolicy(name: rrnn, builder =>
                 {
-                    builder.WithOrigins("http://localhost:4200", "http://192.168.0.179:4200")
+                    builder.WithOrigins("http://localhost:4200", "http://192.168.0.179:4200", "http://192.168.20.10:4200")
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials();

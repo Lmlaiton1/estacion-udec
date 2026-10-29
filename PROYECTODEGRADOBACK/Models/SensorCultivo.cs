@@ -52,5 +52,10 @@ namespace RR_Nueva_Naturaleza.Models
         public bool Eliminado { get; set; } = false;
 
         public DateTime FechaInstalacion { get; set; }
+
+        // Sensor de Nueva Naturaleza (acuaponía) vinculado. Si tiene valor, las lecturas se toman de
+        // Measurements de ese dispositivo (puerto serial) en vez del MQTT del ESP.
+        public Guid? DeviceId { get; set; }
+        public virtual Device? Device { get; set; }
     }
 }

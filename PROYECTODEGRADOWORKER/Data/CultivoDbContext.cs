@@ -17,6 +17,10 @@ namespace ServicioSensorica.Data
         public DbSet<SensorCultivoW> Sensores { get; set; }
         public DbSet<UmbralCultivoW> Umbrales { get; set; }
 
+        // Solo lectura: dispositivos y mediciones de Nueva Naturaleza (acuaponía) vinculados a cultivos
+        public DbSet<MedicionNuevaNaturalezaW> MedicionesNuevaNaturaleza { get; set; }
+        public DbSet<DispositivoNuevaNaturalezaW> DispositivosNuevaNaturaleza { get; set; }
+
         // El worker cambia el estado de los actuadores en modo automático
         public DbSet<ActuadorCultivoW> Actuadores { get; set; }
 

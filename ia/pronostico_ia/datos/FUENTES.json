@@ -1,0 +1,120 @@
+{
+  "dataset_local_mejorado.csv": {
+    "filas": 2172,
+    "inicio": "2026-08-21 00:00:00",
+    "fin": "2026-10-15 14:00:00",
+    "sha256": "ddb142a07597e88c1589232ed9d8c65c55739223e9c66da26d2b830c29d75102",
+    "columnas": [
+      "estacion",
+      "fecha_hora",
+      "tem",
+      "hum",
+      "rad",
+      "temperatura_min_c",
+      "temperatura_max_c",
+      "radiacion_min_lux",
+      "radiacion_max_lux",
+      "n_mediciones",
+      "primera_medicion",
+      "ultima_medicion",
+      "n_tem_validas",
+      "n_hum_validas",
+      "n_rad_validas",
+      "origenes",
+      "lluv",
+      "minutos_con_pulsos_publicados",
+      "minutos_con_repeticiones",
+      "fuente",
+      "unidad_rad",
+      "unidad_lluv",
+      "lluvia_real_completa",
+      "cero_lluvia_confirma_seco",
+      "soporte_temporal_minutos",
+      "hora_parcial",
+      "radiacion_constante",
+      "apto_4_variables",
+      "clima_original",
+      "clima",
+      "origen_etiqueta",
+      "resolucion_etiqueta",
+      "etiqueta_aproximada",
+      "anotacion_usuario",
+      "clima_sugerido",
+      "origen_sugerencia",
+      "umbral_lux_sugerencia",
+      "apto_entrenamiento_clima",
+      "apto_evaluacion_clima"
+    ],
+    "por_fuente": {
+      "estacion_2": 828,
+      "estacion_1": 801,
+      "estacion_3": 543
+    }
+  },
+  "historicos_externos_Wm2.csv": {
+    "filas": 451704,
+    "inicio": "2001-01-01 00:00:00",
+    "fin": "2026-10-08 23:00:00",
+    "sha256": "0dee725aabf66800ffb11cd8961bc9616f2e64fe3d45408b25de9685bbddb973",
+    "columnas": [
+      "fecha_hora",
+      "fuente",
+      "temperatura_c",
+      "humedad_pct",
+      "precipitacion_mm",
+      "radiacion_wm2",
+      "clima"
+    ],
+    "por_fuente": {
+      "nasa_power": 225888,
+      "openmeteo": 225816
+    }
+  },
+  "era5_gee_Wm2.csv": {
+    "filas": 2784,
+    "inicio": "2026-06-14 18:00:00",
+    "fin": "2026-10-09 15:00:00",
+    "sha256": "9e8902f73c615a7bef5f7d55d5c34ad6c3810e2400ed40e56659e0b8a8bdc159",
+    "columnas": [
+      "fecha_hora",
+      "fuente",
+      "temperatura_c",
+      "humedad_pct",
+      "radiacion_wm2",
+      "precipitacion_mm",
+      "clima"
+    ],
+    "por_fuente": {
+      "era5_land_gee": 2784
+    }
+  },
+  "era5_original.csv": {
+    "filas": 2779,
+    "inicio": "2026-06-15 00:00:00",
+    "fin": "2026-10-09 20:00:00",
+    "sha256": "f7952dae7049e972add5a7c94651c15451f76d205565af42f4c9783ad6f2deab",
+    "columnas": [
+      "system:index",
+      "fecha_utc",
+      "humedad_relativa_pct",
+      "precipitacion_mm",
+      "punto_rocio_C",
+      "radiacion_solar_Wm2",
+      "temperatura_C",
+      ".geo"
+    ]
+  },
+  "politica": {
+    "radiacion_local": "lux",
+    "radiacion_externa": "W/m²",
+    "lluvia_local": "mm publicados parciales; se usa como entrada, no como objetivo de lluvia",
+    "lluvia_objetivo": "ERA5-Land regional; modelo mixto v16 preservado",
+    "preentrenamiento": "pesos históricos incluidos, no se repite entrenamiento histórico desde cero en esta carpeta",
+    "etiquetas_clima_originales_usadas_para_entrenar": "no",
+    "coordenadas_era5_aproximadas": [
+      -74.354,
+      4.813
+    ],
+    "ultima_ubicacion_exacta_campus_verificada": false
+  }
+}

@@ -28,6 +28,11 @@ namespace ServicioSensorica.Worker
     //          (las llaves son la "Clave" de cada sensor registrado en el cultivo)
     //   PC  -> cultivo/{N}/actuadores/{clave}/cmd    {"accion":"ON"|"OFF","origen":"Automatico"|"Manual"}  (retained)
     //   PC  -> cultivo/{N}/alarma                    {"accion":"ON","nivel":"Alta","duracionSeg":10}
+    //
+    // Sensores y actuadores de Nueva Naturaleza (acuaponía) vinculados a un cultivo (DeviceId):
+    //   - Las lecturas se copian de Measurements cada 10 s (las guarda Worker.cs desde el puerto serial).
+    //   - Los comandos se piden al backend (CultivoHub.EnviarComandoNuevaNaturaleza) y Worker.cs los
+    //     escribe al puerto serial, igual que cuando se acciona desde acuaponía.
     public class CultivoMqttWorker : BackgroundService
     {
         private static readonly Regex TopicDatos = new(@"^cultivo/(\d+)/datos$", RegexOptions.Compiled);
@@ -44,6 +49,7 @@ namespace ServicioSensorica.Worker
         private readonly int _mqttPort;
         private readonly string _cultivoHubUrl;
         private readonly int _sirenaDuracionSeg;
+        private DateTime _ultimoEscalamientoSms = DateTime.MinValue;
 
         public CultivoMqttWorker(ILogger<CultivoMqttWorker> logger, IServiceScopeFactory scopeFactory, IConfiguration configuration)
         {
@@ -75,14 +81,20 @@ namespace ServicioSensorica.Worker
                         IniciarConexionHubSiNecesario(stoppingToken);
                     }
 
-                    await EscalarAlarmasASmsAsync(stoppingToken);
+                    await SincronizarNuevaNaturalezaAsync(stoppingToken);
+
+                    if (DateTime.Now - _ultimoEscalamientoSms >= TimeSpan.FromSeconds(30))
+                    {
+                        _ultimoEscalamientoSms = DateTime.Now;
+                        await EscalarAlarmasASmsAsync(stoppingToken);
+                    }
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     _logger.LogError(ex, "Error en el ciclo de supervisión del control de cultivo");
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
             }
         }
 
@@ -228,7 +240,7 @@ namespace ServicioSensorica.Worker
                 return;
             }
 
-            var sensores = await db.Sensores.Where(s => s.CultivoId == cultivo.Id && s.Activo).ToListAsync(stoppingToken);
+            var sensores = await db.Sensores.Where(s => s.CultivoId == cultivo.Id && s.Activo && s.DeviceId == null).ToListAsync(stoppingToken);
 
             var lecturas = new List<(SensorCultivoW Sensor, LecturaCultivoW Lectura)>();
             foreach (var sensor in sensores)
@@ -253,6 +265,15 @@ namespace ServicioSensorica.Worker
                 return;
             }
 
+            await RegistrarLecturasAsync(db, cultivo, lecturas, lecturas, ahora, stoppingToken);
+        }
+
+        // Guarda las lecturas, avisa al frontend y evalúa los umbrales con las lecturas indicadas
+        private async Task RegistrarLecturasAsync(CultivoDbContext db, CultivoW cultivo,
+            List<(SensorCultivoW Sensor, LecturaCultivoW Lectura)> lecturas,
+            List<(SensorCultivoW Sensor, LecturaCultivoW Lectura)> aEvaluar,
+            DateTime fechaHora, CancellationToken stoppingToken)
+        {
             db.Lecturas.AddRange(lecturas.Select(l => l.Lectura));
             await db.SaveChangesAsync(stoppingToken);
 
@@ -260,17 +281,73 @@ namespace ServicioSensorica.Worker
             {
                 cultivoId = cultivo.Id,
                 cultivoNumero = cultivo.Numero,
-                fechaHora = ahora,
-                lecturas = lecturas.Select(l => new { sensorId = l.Sensor.Id, variable = l.Sensor.Variable, valor = l.Lectura.Valor, unidad = l.Sensor.Unidad })
+                fechaHora,
+                lecturas = aEvaluar.Select(l => new { sensorId = l.Sensor.Id, variable = l.Sensor.Variable, valor = l.Lectura.Valor, unidad = l.Sensor.Unidad })
             });
 
             try
             {
-                await EvaluarUmbralesAsync(db, cultivo, lecturas, stoppingToken);
+                await EvaluarUmbralesAsync(db, cultivo, aEvaluar, stoppingToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error evaluando umbrales del cultivo {numero}", cultivo.Numero);
+            }
+        }
+
+        // Copia como lecturas del cultivo las mediciones nuevas de los sensores de Nueva Naturaleza vinculados.
+        // La marca de avance es la última lectura guardada de cada sensor, así no se pierde nada si el worker se reinicia.
+        private async Task SincronizarNuevaNaturalezaAsync(CancellationToken stoppingToken)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<CultivoDbContext>();
+
+            var sensores = await db.Sensores.Where(s => s.Activo && !s.Eliminado && s.DeviceId != null).ToListAsync(stoppingToken);
+            if (sensores.Count == 0) return;
+
+            foreach (var grupo in sensores.GroupBy(s => s.CultivoId))
+            {
+                var cultivo = await db.Cultivos.FirstOrDefaultAsync(c => c.Id == grupo.Key && c.Activo, stoppingToken);
+                if (cultivo == null) continue;
+
+                var lecturas = new List<(SensorCultivoW Sensor, LecturaCultivoW Lectura)>();
+                var aEvaluar = new List<(SensorCultivoW Sensor, LecturaCultivoW Lectura)>();
+
+                foreach (var sensor in grupo)
+                {
+                    // Primera vez: solo las mediciones de los últimos 10 minutos, no todo el histórico
+                    var desde = await db.Lecturas.Where(l => l.SensorCultivoId == sensor.Id)
+                        .MaxAsync(l => (DateTime?)l.FechaHora, stoppingToken) ?? DateTime.Now.AddMinutes(-10);
+
+                    var mediciones = await db.MedicionesNuevaNaturaleza
+                        .Where(m => m.DeviceId == sensor.DeviceId && m.Date > desde)
+                        .OrderBy(m => m.Date)
+                        .Take(100)
+                        .ToListAsync(stoppingToken);
+                    if (mediciones.Count == 0) continue;
+
+                    foreach (var medicion in mediciones)
+                    {
+                        lecturas.Add((sensor, new LecturaCultivoW
+                        {
+                            Id = Guid.NewGuid(),
+                            CultivoId = cultivo.Id,
+                            SensorCultivoId = sensor.Id,
+                            Variable = sensor.Variable,
+                            Valor = medicion.Value,
+                            Unidad = sensor.Unidad,
+                            FechaHora = medicion.Date
+                        }));
+                    }
+
+                    // Los umbrales se evalúan solo con la medición más reciente de cada sensor
+                    aEvaluar.Add(lecturas[^1]);
+                }
+
+                if (lecturas.Count == 0) continue;
+
+                _logger.LogInformation("Cultivo {numero}: {count} mediciones nuevas de Nueva Naturaleza", cultivo.Numero, lecturas.Count);
+                await RegistrarLecturasAsync(db, cultivo, lecturas, aEvaluar, aEvaluar.Max(l => l.Lectura.FechaHora), stoppingToken);
             }
         }
 
@@ -346,7 +423,10 @@ namespace ServicioSensorica.Worker
 
             foreach (var (actuador, _) in comandos)
             {
-                await PublicarComandoActuadorAsync(cultivo.Numero, actuador.Clave, actuador.Encendido, "Automatico");
+                if (actuador.DeviceId.HasValue)
+                    await EnviarComandoNuevaNaturalezaAsync(db, actuador, ct);
+                else
+                    await PublicarComandoActuadorAsync(cultivo.Numero, actuador.Clave, actuador.Encendido, "Automatico");
                 await InvocarHubAsync("NotificarActuadorCultivo", new
                 {
                     actuadorId = actuador.Id,
@@ -522,6 +602,35 @@ namespace ServicioSensorica.Worker
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error publicando en {topic}", topic);
+            }
+        }
+
+        // El backend reenvía el comando al hub de acuaponía y Worker.cs lo escribe al puerto serial
+        private async Task EnviarComandoNuevaNaturalezaAsync(CultivoDbContext db, ActuadorCultivoW actuador, CancellationToken ct)
+        {
+            var nombre = await db.DispositivosNuevaNaturaleza.Where(d => d.Id == actuador.DeviceId)
+                .Select(d => d.Device_Name).FirstOrDefaultAsync(ct);
+            if (nombre == null)
+            {
+                _logger.LogWarning("El actuador {actuador} está vinculado a un dispositivo de Nueva Naturaleza que no existe", actuador.Nombre);
+                return;
+            }
+
+            var estado = actuador.Encendido ? "Activo" : "Inactivo";
+            if (_hubConnection == null || _hubConnection.State != HubConnectionState.Connected)
+            {
+                _logger.LogWarning("Sin conexión al CultivoHub: no se pudo enviar {nombre} -> {estado}", nombre, estado);
+                return;
+            }
+
+            try
+            {
+                await _hubConnection.InvokeAsync("EnviarComandoNuevaNaturaleza", nombre, estado, ct);
+                _logger.LogInformation("Comando automático a Nueva Naturaleza: {nombre} -> {estado}", nombre, estado);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enviando {nombre} -> {estado} a Nueva Naturaleza", nombre, estado);
             }
         }
 

@@ -44,6 +44,9 @@ namespace ServicioSensorica.Models
         [MaxLength(20)]
         public string Unidad { get; set; } = string.Empty;
         public bool Activo { get; set; }
+        public bool Eliminado { get; set; }
+        // Sensor de Nueva Naturaleza (acuaponía) vinculado: sus lecturas salen de Measurements
+        public Guid? DeviceId { get; set; }
     }
 
     [Table("Actuadores_Cultivo")]
@@ -61,6 +64,30 @@ namespace ServicioSensorica.Models
         public bool Encendido { get; set; }
         public bool Activo { get; set; }
         public DateTime? FechaUltimoCambio { get; set; }
+        // Actuador de Nueva Naturaleza (acuaponía) vinculado: se acciona por el puerto serial de Worker.cs
+        public Guid? DeviceId { get; set; }
+    }
+
+    // Solo lectura: mediciones de acuaponía que guarda Worker.cs desde el puerto serial.
+    // Clase aparte porque Models/Measurement.cs mapea Date como string (solo sirve para insertar).
+    [Table("Measurements")]
+    public class MedicionNuevaNaturalezaW
+    {
+        [Key]
+        public Guid Id { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Value { get; set; }
+        public DateTime Date { get; set; }
+        public Guid DeviceId { get; set; }
+    }
+
+    // Solo lectura: nombre del dispositivo de acuaponía, que es el que entiende el puerto serial
+    [Table("Devices")]
+    public class DispositivoNuevaNaturalezaW
+    {
+        [Key]
+        public Guid Id { get; set; }
+        public string Device_Name { get; set; } = string.Empty;
     }
 
     [Table("Umbrales_Cultivo")]

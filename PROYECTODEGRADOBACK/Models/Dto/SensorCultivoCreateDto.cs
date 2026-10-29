@@ -16,6 +16,8 @@ namespace RR_Nueva_Naturaleza.Models.Dto
         public string? Especificaciones { get; set; }
         public DateTime? FechaInstalacion { get; set; }
 
+        // Dispositivo de Nueva Naturaleza (acuaponía) vinculado. Null = dispositivo propio por MQTT
+        public Guid? DeviceId { get; set; }
         // Motivo del cambio al modificar (opcional, queda en la auditoría)
         public string? Motivo { get; set; }
     }

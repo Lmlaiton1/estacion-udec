@@ -30,6 +30,10 @@
               }
             ],
             "styles": [
+              "@fontsource/roboto/300.css",
+              "@fontsource/roboto/400.css",
+              "@fontsource/roboto/500.css",
+              "material-icons/iconfont/material-icons.css",
               "src/styles.scss"
             ]
             
@@ -95,6 +99,10 @@
               }
             ],
             "styles": [
+              "@fontsource/roboto/300.css",
+              "@fontsource/roboto/400.css",
+              "@fontsource/roboto/500.css",
+              "material-icons/iconfont/material-icons.css",
               "src/styles.scss"
             ]
           }
