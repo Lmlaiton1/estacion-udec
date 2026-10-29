@@ -141,6 +141,12 @@ export const routes: Routes = [
         data: { requiredRole: 'Administrador' }
       },
       {
+        path: 'HistoricoSD',
+        loadComponent: () => import('./components/estacion-historico-sd/estacion-historico-sd').then(m => m.EstacionHistoricoSd),
+        canActivate: [AuthGuard, RoleGuard],
+        data: { requiredRole: 'Administrador' }
+      },
+      {
         path: 'Estadistica',
         loadComponent: () => import('./components/estacion-estadistica/estacion-estadistica').then(m => m.EstacionEstadistica),
         canActivate: [AuthGuard, RoleGuard],

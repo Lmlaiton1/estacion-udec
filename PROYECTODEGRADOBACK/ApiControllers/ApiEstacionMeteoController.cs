@@ -127,5 +127,35 @@ namespace RR_Nueva_Naturaleza.ApiControllers
             }
             return Ok(response);
         }
+
+        // La respuesta de cada placa llega por SignalR (evento SdMeteo del WeatherHub)
+        [HttpPut("SdEstado")]
+        [Authorize(Roles = "Administrador")]
+        [ProducesResponseType(typeof(ServiceResponse), 200)]
+        [ProducesResponseType(typeof(ServiceResponse), 400)]
+        public async Task<IActionResult> SdEstado()
+        {
+            var response = await _estacionMeteoService.SolicitarEstadoSd();
+            if (response.Result == ServiceResponseType.Failed)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
+
+        [HttpPut("SdRecuperar/{id}")]
+        [Authorize(Roles = "Administrador")]
+        [ProducesResponseType(typeof(ServiceResponse), 200)]
+        [ProducesResponseType(typeof(ServiceResponse), 400)]
+        public async Task<IActionResult> SdRecuperar(Guid id, SdRecuperarDto datos)
+        {
+            var usuarioId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var response = await _estacionMeteoService.RecuperarDiaSd(id, datos.Fecha, usuarioId);
+            if (response.Result == ServiceResponseType.Failed)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response);
+        }
     }
 }

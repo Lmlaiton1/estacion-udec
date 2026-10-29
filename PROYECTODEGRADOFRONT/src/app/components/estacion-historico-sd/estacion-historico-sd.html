@@ -1,0 +1,136 @@
+<div class="container">
+  <div class="encabezado">
+    <h2 class="title">Histórico SD</h2>
+    <button mat-stroked-button color="primary" [disabled]="cargando" (click)="actualizar()">
+      <mat-icon>refresh</mat-icon> Actualizar estado
+    </button>
+  </div>
+  <p class="subtitulo">
+    Cada estación guarda todas sus lecturas en la tarjeta SD, con la hora del RTC, aunque no haya red.
+    Desde aquí puedes cargar un día completo a la base de datos: solo se agregan las lecturas que faltan,
+    y después aparecen en el reporte y en las estadísticas.
+  </p>
+
+  @if (cargando) {
+    <p class="aviso">Cargando estaciones…</p>
+  } @else if (tarjetas.length === 0) {
+    <p class="aviso">No hay estaciones activas en el catálogo.</p>
+  }
+
+  <div class="tarjetas">
+    @for (t of tarjetas; track t.estacion.id) {
+      <mat-card class="tarjeta">
+        <mat-card-header>
+          <mat-card-title>{{ t.estacion.nombre }}</mat-card-title>
+          <mat-card-subtitle>Estación {{ t.estacion.numero }} · {{ t.estacion.ubicacion }}</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          @if (t.esperando && !t.estado) {
+            <p class="aviso">Consultando la estación…</p>
+          }
+          @if (t.sinRespuesta) {
+            <p class="aviso error">
+              <mat-icon inline>wifi_off</mat-icon>
+              Sin respuesta. La placa está apagada, sin conexión al broker local o tiene un firmware anterior a v7.
+            </p>
+          }
+
+          @if (t.estado; as e) {
+            <div class="chips">
+              <span class="chip" [class.ok]="e.sd" [class.mal]="!e.sd">
+                <mat-icon inline>sd_card</mat-icon> SD {{ e.sd ? 'OK' : 'no disponible' }}
+              </span>
+              <span class="chip" [class.ok]="e.rtc && e.rtcOk" [class.alerta]="e.rtc && !e.rtcOk" [class.mal]="!e.rtc"
+                    matTooltip="Si el RTC perdió la hora, se corrige solo cuando la placa sincroniza con NTP">
+                <mat-icon inline>schedule</mat-icon>
+                RTC {{ !e.rtc ? 'no detectado' : (e.rtcOk ? 'OK' : 'sin hora') }}
+              </span>
+              <span class="chip" [class.ok]="e.fuenteHora !== 'sin_hora'" [class.mal]="e.fuenteHora === 'sin_hora'">
+                Hora: {{ e.fuenteHora === 'sin_hora' ? 'sin hora' : e.fuenteHora }}
+              </span>
+            </div>
+
+            <div class="datos">
+              <div><span class="etiqueta">Hora de la placa</span> {{ e.hora }}</div>
+              <div matTooltip="Lecturas que no llegaron al broker local; la placa las reenvía sola al reconectar">
+                <span class="etiqueta">Pendientes por reenviar</span>
+                {{ e.pendientes }}@if (e.bufferRam > 0) { + {{ e.bufferRam }} en RAM }
+              </div>
+              @if (e.sd && e.totalMB) {
+                <div>
+                  <span class="etiqueta">Uso de la SD</span>
+                  {{ e.usadoMB }} de {{ e.totalMB }} MB ({{ porcentajeUso(e) }} %)
+                  <div class="barra"><div class="relleno" [style.width.%]="porcentajeUso(e)"></div></div>
+                </div>
+              }
+            </div>
+
+            @if (t.recuperando) {
+              <p class="aviso progreso">
+                <mat-icon inline>sync</mat-icon> Cargando el día {{ t.recuperando }} desde la SD…
+              </p>
+            }
+            @if (t.resultado; as r) {
+              <p class="resultado" [class.error]="r.error">
+                @if (r.error) {
+                  {{ r.dia }}: {{ textoError(r.error) }}
+                } @else {
+                  {{ r.dia }}: {{ r.lineas }} lecturas leídas de la SD ·
+                  <strong>{{ r.nuevas ?? 0 }} nuevas</strong> en la base de datos ·
+                  {{ r.duplicadas ?? 0 }} ya estaban
+                  @if (r.descartadas) { · {{ r.descartadas }} descartadas }
+                }
+              </p>
+            }
+
+            @if (e.sd) {
+              <h4 class="subtitulo-dias">
+                Días guardados
+                @if (e.totalDias && e.dias && e.totalDias > e.dias.length) {
+                  <span class="nota">(se muestran los {{ e.dias.length }} más recientes de {{ e.totalDias }})</span>
+                }
+              </h4>
+
+              @if (e.dias?.length) {
+                <div class="tabla-dias">
+                  <table>
+                    <thead>
+                      <tr><th>Día</th><th>Tamaño</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                      @for (d of e.dias; track d.d) {
+                        <tr>
+                          <td class="nowrap">{{ d.d }}</td>
+                          <td class="nowrap">{{ tamano(d.b) }}</td>
+                          <td class="accion">
+                            <button mat-button color="primary" [disabled]="!!t.recuperando" (click)="recuperar(t, d.d)">
+                              <mat-icon>cloud_upload</mat-icon> Cargar a la BD
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <p class="aviso">La SD todavía no tiene días guardados.</p>
+              }
+
+              <div class="manual">
+                <mat-form-field appearance="outline">
+                  <mat-label>Otro día</mat-label>
+                  <input matInput type="date" [(ngModel)]="t.fechaManual">
+                </mat-form-field>
+                <button mat-stroked-button color="primary" [disabled]="!t.fechaManual || !!t.recuperando"
+                        (click)="recuperar(t, t.fechaManual)">
+                  Cargar día
+                </button>
+              </div>
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+</div>

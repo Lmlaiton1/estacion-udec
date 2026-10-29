@@ -1,0 +1,182 @@
+.container {
+  padding: 16px;
+}
+
+.encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1d4d35;
+}
+
+.subtitulo {
+  color: #616161;
+  margin: 8px 0 20px;
+  max-width: 900px;
+}
+
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.tarjeta {
+  border-radius: 12px;
+
+  mat-card-title {
+    color: #1d4d35;
+    font-weight: 600;
+  }
+}
+
+.aviso {
+  color: #616161;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &.error {
+    color: #b71c1c;
+  }
+
+  &.progreso {
+    color: #1d4d35;
+    font-weight: 500;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #eeeeee;
+  color: #424242;
+
+  &.ok {
+    background: #e3f1e8;
+    color: #1d4d35;
+  }
+
+  &.alerta {
+    background: #fff4e0;
+    color: #8a5300;
+  }
+
+  &.mal {
+    background: #fdecea;
+    color: #b71c1c;
+  }
+}
+
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.etiqueta {
+  color: #757575;
+  margin-right: 6px;
+}
+
+.barra {
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: #e0e0e0;
+  overflow: hidden;
+
+  .relleno {
+    height: 100%;
+    background: #2e7d4f;
+  }
+}
+
+.resultado {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #e3f1e8;
+  color: #1d4d35;
+
+  &.error {
+    background: #fdecea;
+    color: #b71c1c;
+  }
+}
+
+.subtitulo-dias {
+  margin: 16px 0 8px;
+  color: #1d4d35;
+
+  .nota {
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: #757575;
+  }
+}
+
+.tabla-dias {
+  max-height: 280px;
+  overflow-y: auto;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 500;
+    color: #757575;
+    padding: 4px 8px;
+    position: sticky;
+    top: 0;
+    background: #fff;
+  }
+
+  td {
+    padding: 2px 8px;
+    border-top: 1px solid #eeeeee;
+  }
+
+  .accion {
+    text-align: right;
+  }
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.manual {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+
+  mat-form-field {
+    width: 180px;
+  }
+}

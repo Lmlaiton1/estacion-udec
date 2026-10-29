@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../environments/environment';
+import { MensajeSd } from '../../models/SdMeteo';
 import { LecturaMeteo } from '../../models/LecturaMeteo';
 import { EstacionMeteo } from '../../models/EstacionMeteo';
 import { SensorMeteo } from '../../models/SensorMeteo';
@@ -45,8 +47,49 @@ export class WeatherService {
   private complement19 = 'Api/ApiLecturaMeteo/UltimasLecturas';
   private complement20 = 'Api/ApiEstacionMeteo/Reiniciar';
   private complement21 = 'Api/ApiEstacionMeteo/ReiniciarTodas';
+  private complement22 = 'Api/ApiEstacionMeteo/SdEstado';
+  private complement23 = 'Api/ApiEstacionMeteo/SdRecuperar';
+
+  // Tiempo real (red local): respuestas de la SD de cada estación
+  private hubConnection?: signalR.HubConnection;
+  readonly sd$ = new Subject<MensajeSd>();
 
   constructor(private _http: HttpClient) { }
+
+  // Una sola conexión al WeatherHub; se puede llamar varias veces sin abrir otra
+  public iniciarConexionWeather(): Promise<void> {
+    if (this.hubConnection) {
+      return this.hubConnection.state === signalR.HubConnectionState.Connected
+        ? Promise.resolve()
+        : this.hubConnection.start().catch(() => undefined);
+    }
+
+    this.hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl(`${this.apiUrl}Hubs/Weather`, { withCredentials: true })
+      .withAutomaticReconnect()
+      .build();
+
+    // El worker manda el JSON como texto, tal cual lo publicó la placa (más los conteos de la BD)
+    this.hubConnection.on('SdMeteo', (json: string) => {
+      try {
+        this.sd$.next(JSON.parse(json) as MensajeSd);
+      } catch {
+        console.error('Mensaje SD inválido: ', json);
+      }
+    });
+
+    return this.hubConnection.start().catch(err => console.error('Error al conectar con WeatherHub: ', err));
+  }
+
+  // Pide el estado de la SD a todas las estaciones activas; las respuestas llegan por sd$
+  public solicitarEstadoSd(): Observable<Responses> {
+    return this._http.put<Responses>(this.apiUrl + this.complement22, {});
+  }
+
+  // Pide a la placa que reenvíe un día de su SD (AAAA-MM-DD); el resultado llega por sd$ (fin_envio)
+  public recuperarDiaSd(id: string, fecha: string): Observable<Responses> {
+    return this._http.put<Responses>(`${this.apiUrl + this.complement23}/${id}`, { fecha });
+  }
 
   // fechaInicio/fechaFin quedan listos para cuando el backend soporte filtrado por rango;
   // por ahora el backend los ignora y el filtro se aplica en el cliente.

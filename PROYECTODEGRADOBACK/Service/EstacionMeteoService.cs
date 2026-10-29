@@ -256,5 +256,72 @@ namespace RR_Nueva_Naturaleza.Service
             }
             await _context.SaveChangesAsync();
         }
+
+        // Pide a todas las estaciones activas el estado de su SD y RTC. La respuesta llega por SignalR (SdMeteo).
+        public async Task<ServiceResponse> SolicitarEstadoSd()
+        {
+            ServiceResponse response = new ServiceResponse();
+            try
+            {
+                var numeros = await _context.Estaciones_Meteo.Where(e => e.Activa).OrderBy(e => e.Numero).Select(e => e.Numero).ToListAsync();
+                foreach (var numero in numeros)
+                {
+                    await _hub.Clients.All.SendAsync(WeatherHub.EventoComandoSd, new { estacionNumero = numero, comando = "SD_ESTADO" });
+                }
+                response.Result = ServiceResponseType.Succeded;
+                response.Data = numeros;
+            }
+            catch (Exception ex)
+            {
+                response.Result = ServiceResponseType.Failed;
+                response.ErrorMessage = ex.Message;
+            }
+            return response;
+        }
+
+        // Pide a la placa que reenvíe un día completo de su SD; el worker lo guarda sin duplicar.
+        public async Task<ServiceResponse> RecuperarDiaSd(Guid id, string fecha, Guid usuarioId)
+        {
+            ServiceResponse response = new ServiceResponse();
+            try
+            {
+                if (!DateTime.TryParseExact(fecha, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                                            System.Globalization.DateTimeStyles.None, out var dia))
+                {
+                    response.Result = ServiceResponseType.Failed;
+                    response.ErrorMessage = "La fecha debe tener el formato AAAA-MM-DD";
+                    return response;
+                }
+
+                var estacion = await _context.Estaciones_Meteo.FindAsync(id);
+                if (estacion == null)
+                {
+                    response.Result = ServiceResponseType.Failed;
+                    response.ErrorMessage = "La estación no existe";
+                    return response;
+                }
+                if (!estacion.Activa)
+                {
+                    response.Result = ServiceResponseType.Failed;
+                    response.ErrorMessage = "La estación está desactivada";
+                    return response;
+                }
+
+                var diaTexto = dia.ToString("yyyy-MM-dd");
+                await _hub.Clients.All.SendAsync(WeatherHub.EventoComandoSd, new { estacionNumero = estacion.Numero, comando = $"SD_ENVIAR:{diaTexto}" });
+                _auditoriaMeteoService.Agregar("Estacion", estacion.Id, estacion.Nombre, "Recuperación SD", $"Día {diaTexto}",
+                                               "Recuperar lecturas guardadas en la SD", usuarioId);
+                await _context.SaveChangesAsync();
+
+                response.Result = ServiceResponseType.Succeded;
+                response.Data = estacion.Numero;
+            }
+            catch (Exception ex)
+            {
+                response.Result = ServiceResponseType.Failed;
+                response.ErrorMessage = ex.Message;
+            }
+            return response;
+        }
     }
 }

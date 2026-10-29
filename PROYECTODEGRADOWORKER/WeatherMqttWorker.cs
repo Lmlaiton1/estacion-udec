@@ -12,9 +12,11 @@ using ServicioSensorica.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -145,11 +147,18 @@ namespace ServicioSensorica.Worker
                 .WithClientOptions(clientOptions)
                 .Build();
 
+            // datos = lectura en vivo | historico = lecturas atrasadas desde la SD | sd = estado y fin de envío de la SD
             await client.SubscribeAsync(new[]
             {
                 new MqttTopicFilterBuilder().WithTopic("estacion1/datos").Build(),
                 new MqttTopicFilterBuilder().WithTopic("estacion2/datos").Build(),
                 new MqttTopicFilterBuilder().WithTopic("estacion3/datos").Build(),
+                new MqttTopicFilterBuilder().WithTopic("estacion1/historico").Build(),
+                new MqttTopicFilterBuilder().WithTopic("estacion2/historico").Build(),
+                new MqttTopicFilterBuilder().WithTopic("estacion3/historico").Build(),
+                new MqttTopicFilterBuilder().WithTopic("estacion1/sd").Build(),
+                new MqttTopicFilterBuilder().WithTopic("estacion2/sd").Build(),
+                new MqttTopicFilterBuilder().WithTopic("estacion3/sd").Build(),
             });
 
             await client.StartAsync(managedOptions);
@@ -187,6 +196,12 @@ namespace ServicioSensorica.Worker
                             await PublicarReinicioAsync(comando.EstacionNumero);
                         });
 
+                        // Comandos de la SD pedidos desde la página Histórico SD (SD_ESTADO | SD_ENVIAR:AAAA-MM-DD)
+                        connection.On<ComandoSdDto>("ComandoSdEstacion", async comando =>
+                        {
+                            await PublicarComandoSdAsync(comando.EstacionNumero, comando.Comando);
+                        });
+
                         await connection.StartAsync(stoppingToken);
                         _hubConnection = connection;
                         _logger.LogInformation("Conectado al WeatherHub en {url}", _weatherHubUrl);
@@ -211,6 +226,17 @@ namespace ServicioSensorica.Worker
 
         private async Task ProcesarMensajeAsync(string topic, string payload, CancellationToken stoppingToken)
         {
+            if (topic.EndsWith("/historico"))
+            {
+                await ProcesarHistoricoAsync(topic, payload, stoppingToken);
+                return;
+            }
+            if (topic.EndsWith("/sd"))
+            {
+                await ProcesarSdAsync(topic, payload);
+                return;
+            }
+
             var fechaRecepcion = DateTime.Now;
             _logger.LogInformation("MQTT recibido en {topic}: {payload}", topic, payload);
 
@@ -420,6 +446,184 @@ namespace ServicioSensorica.Worker
         public class ComandoReinicioDto
         {
             public int EstacionNumero { get; set; }
+        }
+
+        public class ComandoSdDto
+        {
+            public int EstacionNumero { get; set; }
+            public string Comando { get; set; } = string.Empty;
+        }
+
+        // ================================================================
+        // HISTÓRICO DESDE LA SD
+        // ================================================================
+
+        // Conteo de la recuperación en curso por estación; se reinicia al pedir un día y se reporta en el fin_envio
+        private readonly ConcurrentDictionary<int, ConteoRecuperacion> _recuperacionPorEstacion = new();
+
+        private sealed class ConteoRecuperacion
+        {
+            public int Nuevas;
+            public int Duplicadas;
+            public int Descartadas;
+        }
+
+        // Lecturas atrasadas (pendientes de la SD o un día pedido desde la web). Se guardan con la hora
+        // original de la placa, sin duplicar lo que ya está en la BD, sin sirenas ni aviso "en vivo" al dashboard.
+        private async Task ProcesarHistoricoAsync(string topic, string payload, CancellationToken stoppingToken)
+        {
+            var fechaRecepcion = DateTime.Now;
+
+            EstacionDatosDto? datos;
+            try
+            {
+                datos = JsonSerializer.Deserialize<EstacionDatosDto>(payload);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deserializando histórico de {topic}: {payload}", topic, payload);
+                return;
+            }
+            if (datos == null) return;
+
+            var conteo = _recuperacionPorEstacion.GetOrAdd(datos.Estacion, _ => new ConteoRecuperacion());
+
+            // Sin hora válida no se puede ubicar en el tiempo: usar la hora de recepción falsearía el histórico
+            if (!DateTime.TryParseExact(datos.Timestamp, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fechaHora))
+            {
+                Interlocked.Increment(ref conteo.Descartadas);
+                _logger.LogWarning("Histórico sin hora válida en {topic}: '{t}', se descarta", topic, datos.Timestamp);
+                return;
+            }
+
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<WeatherDbContext>();
+
+            var estacionActiva = await db.EstacionesMeteo.AnyAsync(e => e.Numero == datos.Estacion && e.Activa, stoppingToken);
+            if (!estacionActiva)
+            {
+                Interlocked.Increment(ref conteo.Descartadas);
+                return;
+            }
+
+            // Variables escritas como constantes para que SQL Server use el índice (EstacionNumero, Variable, FechaHora)
+            var yaExiste = await db.LecturasMeteo.AnyAsync(l =>
+                l.EstacionNumero == datos.Estacion &&
+                (l.Variable == "temperatura" || l.Variable == "humedad" || l.Variable == "radiacion" ||
+                 l.Variable == "velocidadViento" || l.Variable == "direccion" || l.Variable == "lluvia") &&
+                l.FechaHora == fechaHora, stoppingToken);
+            if (yaExiste)
+            {
+                Interlocked.Increment(ref conteo.Duplicadas);
+                return;
+            }
+
+            var sensoresRegistrados = (await db.SensoresMeteo.Where(s => s.Activo).Select(s => s.Id).ToListAsync(stoppingToken)).ToHashSet();
+            var lecturas = ConstruirLecturas(datos, fechaHora, fechaRecepcion)
+                .Where(l => sensoresRegistrados.Contains(l.SensorId))
+                .ToList();
+            if (lecturas.Count == 0)
+            {
+                Interlocked.Increment(ref conteo.Descartadas);
+                return;
+            }
+
+            db.LecturasCrudas.Add(new LecturaCruda
+            {
+                Id = Guid.NewGuid(),
+                EstacionNumero = datos.Estacion,
+                Topic = topic,
+                Payload = payload,
+                FechaRecepcion = fechaRecepcion,
+                Procesado = true
+            });
+            db.LecturasMeteo.AddRange(lecturas);
+
+            try
+            {
+                await db.SaveChangesAsync(stoppingToken);
+                Interlocked.Increment(ref conteo.Nuevas);
+                _logger.LogInformation("Histórico guardado: estación {estacion} {fecha}", datos.Estacion, fechaHora);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error guardando histórico de la estación {estacion}", datos.Estacion);
+            }
+        }
+
+        // estacionN/sd: "estado" (SD, RTC, días guardados) o "fin_envio" (terminó de mandar un día).
+        // Se reenvía tal cual a la web por el WeatherHub; al fin_envio se le suman los conteos de la BD.
+        private async Task ProcesarSdAsync(string topic, string payload)
+        {
+            JsonObject? mensaje;
+            try
+            {
+                mensaje = JsonNode.Parse(payload) as JsonObject;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "JSON inválido en {topic}: {payload}", topic, payload);
+                return;
+            }
+            if (mensaje == null) return;
+
+            var tipo = mensaje["tipo"]?.GetValue<string>();
+            var estacion = mensaje["e"]?.GetValue<int>() ?? 0;
+
+            if (tipo == "fin_envio" && _recuperacionPorEstacion.TryRemove(estacion, out var conteo))
+            {
+                mensaje["nuevas"] = conteo.Nuevas;
+                mensaje["duplicadas"] = conteo.Duplicadas;
+                mensaje["descartadas"] = conteo.Descartadas;
+            }
+
+            _logger.LogInformation("SD estación {estacion}: {tipo}", estacion, tipo);
+
+            if (_hubConnection == null || _hubConnection.State != HubConnectionState.Connected)
+                return;
+
+            try
+            {
+                // Como texto JSON: el hub solo lo reenvía y el navegador lo parsea
+                await _hubConnection.InvokeAsync("NotificarSdMeteo", mensaje.ToJsonString());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error notificando el estado de la SD de la estación {estacion}", estacion);
+            }
+        }
+
+        // Publica en estacionN/comando. Solo se aceptan los comandos de la SD.
+        private async Task PublicarComandoSdAsync(int estacionNumero, string comando)
+        {
+            if (_mqttClient == null) return;
+
+            var valido = comando == "SD_ESTADO" ||
+                         (comando.StartsWith("SD_ENVIAR:") &&
+                          DateTime.TryParseExact(comando["SD_ENVIAR:".Length..], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _));
+            if (!valido)
+            {
+                _logger.LogWarning("Comando SD inválido para la estación {estacion}: {comando}", estacionNumero, comando);
+                return;
+            }
+
+            if (comando.StartsWith("SD_ENVIAR:"))
+                _recuperacionPorEstacion[estacionNumero] = new ConteoRecuperacion();
+
+            var mensaje = new MqttApplicationMessageBuilder()
+                .WithTopic($"estacion{estacionNumero}/comando")
+                .WithPayload(comando)
+                .Build();
+
+            try
+            {
+                await _mqttClient.EnqueueAsync(mensaje);
+                _logger.LogInformation("Comando {comando} enviado a la estación {estacion}", comando, estacionNumero);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error enviando {comando} a la estación {estacion}", comando, estacionNumero);
+            }
         }
 
         private static int PesoGravedad(string? nivel) => nivel?.Trim().ToLowerInvariant() switch
