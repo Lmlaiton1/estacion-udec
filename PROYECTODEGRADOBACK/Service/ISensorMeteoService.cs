@@ -10,6 +10,6 @@ namespace RR_Nueva_Naturaleza.Service
         Task<ServiceResponse> AddSensor(SensorMeteoCreateDto sensor);
         Task<ServiceResponse> UpdateSensor(Guid id, SensorMeteoUpdateDto sensor);
         Task<ServiceResponse> DeleteSensor(Guid id);
-        Task<ServiceResponse> CambiarEstado(Guid id, CambiarEstadoDto cambio, Guid usuarioId);
+        Task<ServiceResponse> CambiarEstado(Guid id, CambiarEstadoSensorMeteoDto cambio, Guid usuarioId);
     }
 }

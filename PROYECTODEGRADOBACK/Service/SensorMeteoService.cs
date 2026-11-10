@@ -18,7 +18,14 @@ namespace RR_Nueva_Naturaleza.Service
 
         public async Task<IEnumerable<SensorMeteo>> GetSensores()
         {
-            return await _context.Sensores_Meteo.ToListAsync();
+            var sensores = await _context.Sensores_Meteo.ToListAsync();
+            var inactivos = await _context.Sensores_Meteo_Inactivos.ToListAsync();
+            foreach (var sensor in sensores)
+            {
+                sensor.EstacionesInactivas = inactivos.Where(i => i.SensorId == sensor.Id)
+                    .Select(i => i.EstacionNumero).OrderBy(n => n).ToList();
+            }
+            return sensores;
         }
 
         public async Task<SensorMeteo?> GetSensor(Guid id)
@@ -125,7 +132,8 @@ namespace RR_Nueva_Naturaleza.Service
             return response;
         }
 
-        public async Task<ServiceResponse> CambiarEstado(Guid id, CambiarEstadoDto cambio, Guid usuarioId)
+        // Sin EstacionNumero cambia el estado en todas las estaciones; con EstacionNumero solo en esa.
+        public async Task<ServiceResponse> CambiarEstado(Guid id, CambiarEstadoSensorMeteoDto cambio, Guid usuarioId)
         {
             ServiceResponse response = new ServiceResponse();
             try
@@ -145,14 +153,65 @@ namespace RR_Nueva_Naturaleza.Service
                     return response;
                 }
 
-                if (existente.Activo != cambio.Activo)
-                {
-                    existente.Activo = cambio.Activo;
-                    _context.Sensores_Meteo.Update(existente);
-                    await _context.SaveChangesAsync();
+                var inactivos = await _context.Sensores_Meteo_Inactivos.Where(i => i.SensorId == id).ToListAsync();
+                string detalle;
 
-                    await _auditoriaMeteoService.Registrar("Sensor", existente.Id, existente.Nombre, cambio.Activo, cambio.Motivo, usuarioId);
+                if (cambio.EstacionNumero == null)
+                {
+                    // Activar en todas también limpia las desactivaciones puntuales
+                    if (existente.Activo == cambio.Activo && (!cambio.Activo || inactivos.Count == 0))
+                    {
+                        response.Result = ServiceResponseType.Succeded;
+                        return response;
+                    }
+
+                    existente.Activo = cambio.Activo;
+                    if (cambio.Activo) _context.Sensores_Meteo_Inactivos.RemoveRange(inactivos);
+                    detalle = "Todas las estaciones";
                 }
+                else
+                {
+                    var numero = cambio.EstacionNumero.Value;
+                    var estaciones = await _context.Estaciones_Meteo.Select(e => e.Numero).ToListAsync();
+                    if (!estaciones.Contains(numero))
+                    {
+                        response.Result = ServiceResponseType.Failed;
+                        response.ErrorMessage = $"La estación {numero} no existe";
+                        return response;
+                    }
+
+                    var marca = inactivos.FirstOrDefault(i => i.EstacionNumero == numero);
+                    var activoEnEstacion = existente.Activo && marca == null;
+                    if (activoEnEstacion == cambio.Activo)
+                    {
+                        response.Result = ServiceResponseType.Succeded;
+                        return response;
+                    }
+
+                    if (!cambio.Activo)
+                    {
+                        _context.Sensores_Meteo_Inactivos.Add(new SensorMeteoInactivo { SensorId = id, EstacionNumero = numero });
+                    }
+                    else
+                    {
+                        if (marca != null) _context.Sensores_Meteo_Inactivos.Remove(marca);
+
+                        // Estaba apagado en todas: se enciende el global y las demás estaciones quedan apagadas
+                        if (!existente.Activo)
+                        {
+                            existente.Activo = true;
+                            foreach (var otra in estaciones.Where(n => n != numero && !inactivos.Any(i => i.EstacionNumero == n)))
+                            {
+                                _context.Sensores_Meteo_Inactivos.Add(new SensorMeteoInactivo { SensorId = id, EstacionNumero = otra });
+                            }
+                        }
+                    }
+                    detalle = $"Estación {numero}";
+                }
+
+                _auditoriaMeteoService.Agregar("Sensor", existente.Id, existente.Nombre,
+                    cambio.Activo ? "Activada" : "Desactivada", detalle, cambio.Motivo, usuarioId);
+                await _context.SaveChangesAsync();
 
                 response.Result = ServiceResponseType.Succeded;
             }

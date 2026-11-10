@@ -17,6 +17,7 @@ import { UmbralMeteoUpdate } from '../../models/UmbralMeteoUpdate';
 import { AlertaMeteo } from '../../models/AlertaMeteo';
 import { LecturaMeteoPdfRequest } from '../../models/LecturaMeteoPdfRequest';
 import { CambiarEstado } from '../../models/CambiarEstado';
+import { CambiarEstadoSensorMeteo } from '../../models/CambiarEstadoSensorMeteo';
 import { AuditoriaMeteo } from '../../models/AuditoriaMeteo';
 import { EstadisticaMeteo } from '../../models/EstadisticaMeteo';
 import { Responses } from '../../models/Response';
@@ -179,7 +180,7 @@ export class WeatherService {
     return this._http.put<Responses>(this.apiUrl + this.complement21, { motivo });
   }
 
-  public cambiarEstadoSensor(id: string, cambio: CambiarEstado): Observable<Responses> {
+  public cambiarEstadoSensor(id: string, cambio: CambiarEstadoSensorMeteo): Observable<Responses> {
     return this._http.put<Responses>(`${this.apiUrl + this.complement16}/${id}`, cambio);
   }
 

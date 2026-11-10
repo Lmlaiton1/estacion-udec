@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR.Client;
+﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,12 +17,13 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ServicioSensorica.Worker
 {
-    // Suscriptor MQTT de las 3 estaciones meteorológicas. No modifica Worker.cs ni AppDbContext.
+    // Suscriptor MQTT de las estaciones meteorológicas (cualquier estacionN). No modifica Worker.cs ni AppDbContext.
     public class WeatherMqttWorker : BackgroundService
     {
         private readonly ILogger<WeatherMqttWorker> _logger;
@@ -49,6 +50,9 @@ namespace ServicioSensorica.Worker
         private static readonly Guid SensorDireccion = Guid.Parse("3e8b6d52-9c17-4a2f-b5d3-6f1e9a4c8b72");
         private static readonly Guid SensorLluvia = Guid.Parse("b91d4f27-6e83-45ca-8d19-4a7c2f5e3b60");
 
+        // Solo se procesan topics estacionN/datos|historico|sd; el comodín "+" también trae topics ajenos
+        private static readonly Regex TopicEstacion = new(@"^estacion\d+/(datos|historico|sd)$", RegexOptions.Compiled);
+
         public WeatherMqttWorker(ILogger<WeatherMqttWorker> logger, IServiceScopeFactory scopeFactory, IConfiguration configuration)
         {
             _logger = logger;
@@ -69,7 +73,7 @@ namespace ServicioSensorica.Worker
 
             _mqttClient = await CrearClienteMqttAsync(stoppingToken);
 
-            _logger.LogInformation("WeatherMqttWorker iniciado. Escuchando estacion1/datos, estacion2/datos, estacion3/datos en {broker}:{port}", _mqttBroker, _mqttPort);
+            _logger.LogInformation("WeatherMqttWorker iniciado. Escuchando estacionN/datos, estacionN/historico y estacionN/sd en {broker}:{port}", _mqttBroker, _mqttPort);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -148,17 +152,13 @@ namespace ServicioSensorica.Worker
                 .Build();
 
             // datos = lectura en vivo | historico = lecturas atrasadas desde la SD | sd = estado y fin de envío de la SD
+            // Comodín "+": una estación nueva solo necesita su firmware y su registro en Estaciones_Meteo.
+            // MQTT no admite "estacion+", por eso se filtra el prefijo en ProcesarMensajeAsync.
             await client.SubscribeAsync(new[]
             {
-                new MqttTopicFilterBuilder().WithTopic("estacion1/datos").Build(),
-                new MqttTopicFilterBuilder().WithTopic("estacion2/datos").Build(),
-                new MqttTopicFilterBuilder().WithTopic("estacion3/datos").Build(),
-                new MqttTopicFilterBuilder().WithTopic("estacion1/historico").Build(),
-                new MqttTopicFilterBuilder().WithTopic("estacion2/historico").Build(),
-                new MqttTopicFilterBuilder().WithTopic("estacion3/historico").Build(),
-                new MqttTopicFilterBuilder().WithTopic("estacion1/sd").Build(),
-                new MqttTopicFilterBuilder().WithTopic("estacion2/sd").Build(),
-                new MqttTopicFilterBuilder().WithTopic("estacion3/sd").Build(),
+                new MqttTopicFilterBuilder().WithTopic("+/datos").Build(),
+                new MqttTopicFilterBuilder().WithTopic("+/historico").Build(),
+                new MqttTopicFilterBuilder().WithTopic("+/sd").Build(),
             });
 
             await client.StartAsync(managedOptions);
@@ -226,6 +226,9 @@ namespace ServicioSensorica.Worker
 
         private async Task ProcesarMensajeAsync(string topic, string payload, CancellationToken stoppingToken)
         {
+            if (!TopicEstacion.IsMatch(topic))
+                return;
+
             if (topic.EndsWith("/historico"))
             {
                 await ProcesarHistoricoAsync(topic, payload, stoppingToken);
@@ -289,7 +292,8 @@ namespace ServicioSensorica.Worker
             }
 
             // El crudo ya quedó guardado arriba (rastro de auditoría). De acá en más, solo se procesa
-            // si la estación y los sensores están dados de alta Y activos en el catálogo (Estaciones_Meteo / Sensores_Meteo).
+            // si la estación y los sensores están dados de alta Y activos en el catálogo (Estaciones_Meteo / Sensores_Meteo),
+            // descontando los sensores desactivados solo en esta estación (Sensores_Meteo_Inactivos).
             var estacionActiva = await db.EstacionesMeteo.AnyAsync(e => e.Numero == datos.Estacion && e.Activa, stoppingToken);
             if (!estacionActiva)
             {
@@ -297,7 +301,7 @@ namespace ServicioSensorica.Worker
                 return;
             }
 
-            var sensoresRegistrados = (await db.SensoresMeteo.Where(s => s.Activo).Select(s => s.Id).ToListAsync(stoppingToken)).ToHashSet();
+            var sensoresRegistrados = await db.SensoresActivosEnEstacionAsync(datos.Estacion, stoppingToken);
             var lecturas = ConstruirLecturas(datos, fechaHora, fechaRecepcion)
                 .Where(l => sensoresRegistrados.Contains(l.SensorId))
                 .ToList();
@@ -518,7 +522,7 @@ namespace ServicioSensorica.Worker
                 return;
             }
 
-            var sensoresRegistrados = (await db.SensoresMeteo.Where(s => s.Activo).Select(s => s.Id).ToListAsync(stoppingToken)).ToHashSet();
+            var sensoresRegistrados = await db.SensoresActivosEnEstacionAsync(datos.Estacion, stoppingToken);
             var lecturas = ConstruirLecturas(datos, fechaHora, fechaRecepcion)
                 .Where(l => sensoresRegistrados.Contains(l.SensorId))
                 .ToList();
@@ -633,92 +637,65 @@ namespace ServicioSensorica.Worker
             _ => 1
         };
 
+        // Solo se arma la lectura de las variables que vienen en el JSON: una estación sin
+        // anemómetro, veleta, pluviómetro o luxómetro no debe guardar ceros como si fueran medidas.
         private static List<LecturaMeteo> ConstruirLecturas(EstacionDatosDto datos, DateTime fechaHora, DateTime fechaRecepcion)
         {
-            string? direccionCardinal = GradosACardinal(datos.DireccionGrados);
+            var lecturas = new List<LecturaMeteo>();
 
-            return new List<LecturaMeteo>
+            LecturaMeteo Nueva(Guid sensorId, string variable, decimal valor, string unidad) => new LecturaMeteo
             {
-                new LecturaMeteo
-                {
-                    Id = Guid.NewGuid(),
-                    EstacionNumero = datos.Estacion,
-                    SensorId = SensorTemperaturaHumedad,
-                    Variable = "temperatura",
-                    Valor = datos.Temperatura,
-                    Unidad = "C",
-                    FechaHora = fechaHora,
-                    FechaRecepcion = fechaRecepcion
-                },
-                new LecturaMeteo
-                {
-                    Id = Guid.NewGuid(),
-                    EstacionNumero = datos.Estacion,
-                    SensorId = SensorTemperaturaHumedad,
-                    Variable = "humedad",
-                    Valor = datos.Humedad,
-                    Unidad = "%",
-                    FechaHora = fechaHora,
-                    FechaRecepcion = fechaRecepcion
-                },
-                new LecturaMeteo
-                {
-                    Id = Guid.NewGuid(),
-                    EstacionNumero = datos.Estacion,
-                    SensorId = SensorRadiacion,
-                    Variable = "radiacion",
-                    Valor = datos.Radiacion,
-                    Unidad = "Lux",
-                    FechaHora = fechaHora,
-                    FechaRecepcion = fechaRecepcion
-                },
-                new LecturaMeteo
-                {
-                    Id = Guid.NewGuid(),
-                    EstacionNumero = datos.Estacion,
-                    SensorId = SensorVelocidadViento,
-                    Variable = "velocidadViento",
-                    Valor = datos.VelocidadViento,
-                    Unidad = "m/s",
-                    FechaHora = fechaHora,
-                    FechaRecepcion = fechaRecepcion,
-                    PulsosRaw = datos.VelocidadVientoPulsos,
-                    IntervaloMs = datos.VelocidadVientoIntervaloMs
-                },
-                new LecturaMeteo
-                {
-                    Id = Guid.NewGuid(),
-                    EstacionNumero = datos.Estacion,
-                    SensorId = SensorDireccion,
-                    Variable = "direccion",
-                    Valor = datos.DireccionGrados,
-                    ValorCardinal = direccionCardinal,
-                    Unidad = "grados",
-                    FechaHora = fechaHora,
-                    FechaRecepcion = fechaRecepcion
-                },
-                new LecturaMeteo
-                {
-                    Id = Guid.NewGuid(),
-                    EstacionNumero = datos.Estacion,
-                    SensorId = SensorLluvia,
-                    Variable = "lluvia",
-                    Valor = datos.Lluvia,
-                    Unidad = "mm/min",
-                    FechaHora = fechaHora,
-                    FechaRecepcion = fechaRecepcion,
-                    PulsosRaw = datos.LluviaPulsos
-                }
+                Id = Guid.NewGuid(),
+                EstacionNumero = datos.Estacion,
+                SensorId = sensorId,
+                Variable = variable,
+                Valor = valor,
+                Unidad = unidad,
+                FechaHora = fechaHora,
+                FechaRecepcion = fechaRecepcion
             };
+
+            if (datos.Temperatura.HasValue)
+                lecturas.Add(Nueva(SensorTemperaturaHumedad, "temperatura", datos.Temperatura.Value, "C"));
+
+            if (datos.Humedad.HasValue)
+                lecturas.Add(Nueva(SensorTemperaturaHumedad, "humedad", datos.Humedad.Value, "%"));
+
+            if (datos.Radiacion.HasValue)
+                lecturas.Add(Nueva(SensorRadiacion, "radiacion", datos.Radiacion.Value, "Lux"));
+
+            if (datos.VelocidadViento.HasValue)
+            {
+                var viento = Nueva(SensorVelocidadViento, "velocidadViento", datos.VelocidadViento.Value, "m/s");
+                viento.PulsosRaw = datos.VelocidadVientoPulsos;
+                viento.IntervaloMs = datos.VelocidadVientoIntervaloMs;
+                lecturas.Add(viento);
+            }
+
+            if (datos.DireccionGrados.HasValue)
+            {
+                var direccion = Nueva(SensorDireccion, "direccion", datos.DireccionGrados.Value, "grados");
+                direccion.ValorCardinal = GradosACardinal(datos.DireccionGrados);
+                lecturas.Add(direccion);
+            }
+
+            if (datos.Lluvia.HasValue)
+            {
+                var lluvia = Nueva(SensorLluvia, "lluvia", datos.Lluvia.Value, "mm/min");
+                lluvia.PulsosRaw = datos.LluviaPulsos;
+                lecturas.Add(lluvia);
+            }
+
+            return lecturas;
         }
 
         // Convierte grados (0-360) al punto cardinal más cercano en 8 sectores. -1 = sin dato.
-        private static string? GradosACardinal(int grados)
+        private static string? GradosACardinal(int? grados)
         {
-            if (grados < 0) return null;
+            if (grados is not >= 0) return null;
 
             string[] direcciones = { "N", "NE", "E", "SE", "S", "SO", "O", "NO" };
-            int indice = (int)Math.Round((grados % 360) / 45.0) % 8;
+            int indice = (int)Math.Round((grados.Value % 360) / 45.0) % 8;
             return direcciones[indice];
         }
 

@@ -42,6 +42,11 @@ export class EstacionCatalogo implements OnInit {
   sensorEnEdicion: SensorMeteo | null = null;
   formSensor = this.sensorVacio();
 
+  // Panel de activar/desactivar sensor (estadoEstacion null = todas las estaciones)
+  sensorEstado: SensorMeteo | null = null;
+  estadoEstacion: number | null = null;
+  estadoMotivo = '';
+
   constructor(private _weatherService: WeatherService, private _snackBar: MatSnackBar) { }
 
   ngOnInit(): void {
@@ -234,20 +239,46 @@ export class EstacionCatalogo implements OnInit {
     }
   }
 
-  alternarSensor(sensor: SensorMeteo): void {
-    const nuevoEstado = !sensor.activo;
-    const accion = nuevoEstado ? 'activar' : 'desactivar';
-    const motivo = prompt(`¿Por qué querés ${accion} el sensor "${sensor.nombre}"? (obligatorio)`);
-    if (motivo === null) return;
-    if (!motivo.trim()) {
+  // El mismo GUID de sensor se usa en las 3 estaciones: el estado se ve y se cambia por estación
+  activoEnEstacion(sensor: SensorMeteo, numero: number): boolean {
+    return sensor.activo && !sensor.estacionesInactivas.includes(numero);
+  }
+
+  abrirEstadoSensor(sensor: SensorMeteo): void {
+    this.sensorEstado = sensor;
+    this.estadoEstacion = this.estaciones.length > 0 ? this.estaciones[0].numero : null;
+    this.estadoMotivo = '';
+  }
+
+  cancelarEstadoSensor(): void {
+    this.sensorEstado = null;
+  }
+
+  // Si se elige una estación, la acción es la contraria a su estado actual. Para "todas": si está
+  // activo en alguna se desactiva en todas; si está apagado en todas se activa en todas.
+  get estadoNuevo(): boolean {
+    const s = this.sensorEstado;
+    if (!s) return false;
+    if (this.estadoEstacion !== null) return !this.activoEnEstacion(s, this.estadoEstacion);
+    return !this.estaciones.some(e => this.activoEnEstacion(s, e.numero));
+  }
+
+  confirmarEstadoSensor(): void {
+    const sensor = this.sensorEstado;
+    if (!sensor) return;
+    if (!this.estadoMotivo.trim()) {
       this.mostrarError('El motivo es obligatorio');
       return;
     }
 
-    this._weatherService.cambiarEstadoSensor(sensor.id, { activo: nuevoEstado, motivo: motivo.trim() }).subscribe({
+    const nuevoEstado = this.estadoNuevo;
+    const cambio = { activo: nuevoEstado, motivo: this.estadoMotivo.trim(), estacionNumero: this.estadoEstacion };
+    this._weatherService.cambiarEstadoSensor(sensor.id, cambio).subscribe({
       next: () => {
-        sensor.activo = nuevoEstado;
-        this._snackBar.open(nuevoEstado ? 'Sensor activado' : 'Sensor desactivado', 'Cerrar', { duration: 3000 });
+        const donde = this.estadoEstacion !== null ? ` en la estación ${this.estadoEstacion}` : ' en todas las estaciones';
+        this._snackBar.open((nuevoEstado ? 'Sensor activado' : 'Sensor desactivado') + donde, 'Cerrar', { duration: 3000 });
+        this.sensorEstado = null;
+        this.cargarSensores();
         this.cargarAuditoria();
       },
       error: err => this.mostrarError(this.extraerError(err, 'No se pudo cambiar el estado del sensor'))

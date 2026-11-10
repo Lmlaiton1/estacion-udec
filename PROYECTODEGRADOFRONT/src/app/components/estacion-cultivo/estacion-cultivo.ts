@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Observable, Subscription, map, of, switchMap, tap } from 'rxjs';
+import { Observable, Subscription, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { ApexAnnotations, ApexAxisChartSeries, ApexChart, ApexStroke, ApexTitleSubtitle, ApexXAxis, ApexYAxis } from 'ng-apexcharts';
 import { MATERIAL_MODULES } from '../../shared/material';
 import { CultivoService } from '../../service/cultivo/cultivo-service';
 import { AlarmaAviso } from '../../service/cultivo/alarma-aviso';
@@ -14,8 +15,21 @@ import { Responses } from '../../models/Response';
 import {
   ActuadorCultivo, ActuadorCultivoCreate, AlarmaCultivo, AuditoriaCultivo, BitacoraAlarmaCultivo, Cultivo, CultivoCreate,
   EtapaCultivo, EtapaCultivoCreate, EventoDispositivoCultivo, SensorCultivo, SensorCultivoCreate, UmbralCultivo, UmbralCultivoCreate,
-  DispositivoNuevaNaturaleza
+  DispositivoNuevaNaturaleza, LecturaCultivo
 } from '../../models/Cultivo';
+
+// Gráfica de un sensor del cultivo (pestaña Sensores)
+interface GraficaSensor {
+  sensorId: string;
+  series: ApexAxisChartSeries;
+  chart: ApexChart;
+  xaxis: ApexXAxis;
+  yaxis: ApexYAxis;
+  title: ApexTitleSubtitle;
+  stroke: ApexStroke;
+  annotations: ApexAnnotations;
+  sinDatos: boolean;
+}
 
 // Pestaña Control: qué sensor vigila, qué actuador enciende y a partir de qué valor.
 // sensorId/actuadorId es el Id del registro del cultivo, o "nn:{DeviceId}" si es un dispositivo de
@@ -26,7 +40,8 @@ interface ControlCultivo {
   maximo: number | null;
 }
 
-// Pestaña Control (índice de la pestaña en el mat-tab-group)
+// Índices de las pestañas en el mat-tab-group
+const TAB_SENSORES = 1;
 const TAB_CONTROL = 6;
 const PREFIJO_NN = 'nn:';
 
@@ -96,6 +111,19 @@ export class EstacionCultivo implements OnInit, OnDestroy {
   estaciones: EstacionMeteo[] = [];
 
   sensores: SensorCultivo[] = [];
+  // Gráficas de los sensores activos: lecturas de las últimas `horasGrafica` horas
+  readonly opcionesHoras = [
+    { horas: 6, label: 'Últimas 6 horas' },
+    { horas: 24, label: 'Últimas 24 horas' },
+    { horas: 72, label: 'Últimos 3 días' },
+    { horas: 168, label: 'Últimos 7 días' },
+  ];
+  horasGrafica = 24;
+  graficasSensores: GraficaSensor[] = [];
+  // ApexCharts no dibuja dentro de una pestaña oculta (queda con ancho 0): las gráficas se crean
+  // solo cuando la pestaña Sensores ya está visible
+  mostrarGraficas = false;
+  private lecturasPorSensor = new Map<string, LecturaCultivo[]>();
   actuadores: ActuadorCultivo[] = [];
   umbrales: UmbralCultivo[] = [];
   alarmas: AlarmaCultivo[] = [];
@@ -201,6 +229,10 @@ export class EstacionCultivo implements OnInit, OnDestroy {
 
   cambiarTab(index: number): void {
     this.tabIndex = index;
+    this.mostrarGraficas = false;
+    if (index === TAB_SENSORES) {
+      setTimeout(() => this.mostrarGraficas = this.tabIndex === TAB_SENSORES, 50);
+    }
     if (index === 5) this.cargarAuditoria();
     if (index === TAB_CONTROL) {
       this.prepararControl();
@@ -252,9 +284,72 @@ export class EstacionCultivo implements OnInit, OnDestroy {
         this.sensores = data;
         this.cargado.sensores = true;
         this.prepararControl();
+        this.cargarGraficas();
       },
       error: () => this.mostrarError('No se pudieron cargar los sensores')
     });
+  }
+
+  cambiarHorasGrafica(horas: number): void {
+    this.horasGrafica = horas;
+    this.cargarGraficas();
+  }
+
+  // Pide las lecturas de cada sensor activo y arma una gráfica por sensor
+  private cargarGraficas(): void {
+    const activos = this.sensores.filter(s => s.activo);
+    if (activos.length === 0) {
+      this.lecturasPorSensor.clear();
+      this.graficasSensores = [];
+      return;
+    }
+
+    forkJoin(activos.map(s =>
+      this._cultivoService.getLecturasSensor(s.id, this.horasGrafica).pipe(catchError(() => of([] as LecturaCultivo[])))
+    )).subscribe(resultados => {
+      this.lecturasPorSensor = new Map(activos.map((s, i) => [s.id, resultados[i]]));
+      this.armarGraficas();
+    });
+  }
+
+  // Se vuelve a armar también cuando cambian los umbrales (líneas de mínimo y máximo)
+  private armarGraficas(): void {
+    this.graficasSensores = this.sensores
+      .filter(s => this.lecturasPorSensor.has(s.id))
+      .map(s => this.construirGraficaSensor(s, this.lecturasPorSensor.get(s.id) ?? []));
+  }
+
+  private construirGraficaSensor(sensor: SensorCultivo, lecturas: LecturaCultivo[]): GraficaSensor {
+    const titulo = this.cultivoFiltro ? sensor.nombre : `${sensor.cultivoNombre} · ${sensor.nombre}`;
+
+    // Umbrales activos del sensor dibujados como líneas horizontales
+    const lineas: any[] = [];
+    this.umbrales.filter(u => u.sensorCultivoId === sensor.id && u.activo).forEach(u => {
+      const etapa = u.etapaNombre ? ` (${u.etapaNombre})` : '';
+      if (u.valorMin !== null) lineas.push(this.lineaUmbral(u.valorMin, `Mín ${u.valorMin}${etapa}`, '#1e88e5'));
+      if (u.valorMax !== null) lineas.push(this.lineaUmbral(u.valorMax, `Máx ${u.valorMax}${etapa}`, '#e53935'));
+    });
+
+    return {
+      sensorId: sensor.id,
+      series: [{ name: sensor.variable, data: lecturas.map(l => ({ x: new Date(l.fechaHora).getTime(), y: l.valor })) }],
+      chart: { type: 'line', height: 260, toolbar: { show: true }, animations: { enabled: false }, zoom: { enabled: true } },
+      xaxis: { type: 'datetime', labels: { datetimeUTC: false } },
+      yaxis: { title: { text: sensor.unidad }, decimalsInFloat: 1 },
+      title: { text: titulo, align: 'left' },
+      stroke: { width: 2, curve: 'straight' },
+      annotations: { yaxis: lineas },
+      sinDatos: lecturas.length === 0
+    };
+  }
+
+  private lineaUmbral(valor: number, texto: string, color: string): any {
+    return {
+      y: valor,
+      borderColor: color,
+      strokeDashArray: 4,
+      label: { text: texto, borderColor: color, style: { color: '#fff', background: color } }
+    };
   }
 
   private cargarActuadores(): void {
@@ -274,6 +369,7 @@ export class EstacionCultivo implements OnInit, OnDestroy {
         this.umbrales = data;
         this.cargado.umbrales = true;
         this.prepararControl();
+        this.armarGraficas();
       },
       error: () => this.mostrarError('No se pudieron cargar los umbrales')
     });

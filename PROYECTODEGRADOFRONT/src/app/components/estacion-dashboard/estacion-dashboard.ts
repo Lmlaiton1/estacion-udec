@@ -182,7 +182,7 @@ export class EstacionDashboard implements OnInit, OnDestroy {
     return this.estaciones.find(e => e.numero === numero)?.nombre ?? `Estación ${numero}`;
   }
 
-  private numerosEstaciones(): number[] {
+  numerosEstaciones(): number[] {
     return this.estaciones.length ? this.estaciones.map(e => e.numero) : [1, 2, 3];
   }
 
@@ -210,6 +210,7 @@ export class EstacionDashboard implements OnInit, OnDestroy {
       });
 
       this.procesarTarjetas();
+      this.procesarGraficas();   // las gráficas visibles dependen de las variables que reporta la estación
     });
   }
 
@@ -291,9 +292,17 @@ export class EstacionDashboard implements OnInit, OnDestroy {
     });
   }
 
+  // Variables que la estación seleccionada realmente reporta (ej. la estación 4 solo tiene DHT11).
+  // Si todavía no hay lecturas de esa estación se muestran todas, vacías.
+  private variablesDeEstacion(): DefinicionVariable[] {
+    const reportadas = this.variables.filter(v =>
+      this.ultimasLecturas.some(l => l.estacionNumero === this.estacionSeleccionada && l.variable === v.key));
+    return reportadas.length ? reportadas : this.variables;
+  }
+
   // Las tarjetas muestran el último valor real (viene de /UltimasLecturas), sin importar el filtro de fechas.
   private procesarTarjetas(): void {
-    this.tarjetas = this.variables.map(v => {
+    this.tarjetas = this.variablesDeEstacion().map(v => {
       const ultima = this.ultimasLecturas.find(l => l.estacionNumero === this.estacionSeleccionada && l.variable === v.key) ?? null;
 
       return {
@@ -310,7 +319,7 @@ export class EstacionDashboard implements OnInit, OnDestroy {
   // lecturasEstacionRaw ya viene filtrada por fecha desde el backend, acá solo se separa por variable.
   private procesarGraficas(): void {
     const { desde, hasta } = this.rangoEfectivo();
-    this.graficasEstacion = this.variables.map(v => {
+    this.graficasEstacion = this.variablesDeEstacion().map(v => {
       const datos = this.lecturasEstacionRaw
         .filter(l => l.variable === v.key)
         .filter(l => this.dentroDelRango(l.fechaHora, desde, hasta) && this.dentroDelHorario(l.fechaHora))

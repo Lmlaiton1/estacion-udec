@@ -73,6 +73,17 @@ export interface SensorCultivo {
   deviceId: string | null;
 }
 
+// Lectura guardada de un sensor del cultivo (ESP por MQTT o copiada de Nueva Naturaleza)
+export interface LecturaCultivo {
+  id: string;
+  cultivoId: string;
+  sensorCultivoId: string;
+  variable: string;
+  valor: number;
+  unidad: string;
+  fechaHora: string;
+}
+
 export interface SensorCultivoCreate {
   cultivoId: string;
   nombre: string;

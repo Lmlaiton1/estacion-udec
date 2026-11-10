@@ -87,7 +87,7 @@ namespace RR_Nueva_Naturaleza.ApiControllers
         [Authorize(Roles = "Administrador")]
         [ProducesResponseType(typeof(ServiceResponse), 200)]
         [ProducesResponseType(typeof(ServiceResponse), 400)]
-        public async Task<IActionResult> CambiarEstado(Guid id, CambiarEstadoDto cambio)
+        public async Task<IActionResult> CambiarEstado(Guid id, CambiarEstadoSensorMeteoDto cambio)
         {
             var usuarioId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var response = await _sensorMeteoService.CambiarEstado(id, cambio, usuarioId);

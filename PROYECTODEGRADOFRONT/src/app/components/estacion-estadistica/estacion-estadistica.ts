@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApexAnnotations, ApexAxisChartSeries, ApexChart, ApexDataLabels, ApexStroke, ApexXAxis, ApexYAxis } from 'ng-apexcharts';
 import { MATERIAL_MODULES } from '../../shared/material';
 import { WeatherService } from '../../service/weather/weather-service';
 import { EstadisticaMeteo } from '../../models/EstadisticaMeteo';
+import { EstacionMeteo } from '../../models/EstacionMeteo';
 
 const NUMERO_CLASES = 10;
 
@@ -15,7 +16,7 @@ const NUMERO_CLASES = 10;
   templateUrl: './estacion-estadistica.html',
   styleUrls: ['./estacion-estadistica.scss']
 })
-export class EstacionEstadistica {
+export class EstacionEstadistica implements OnInit {
   // La dirección del viento queda por fuera: es una variable angular (requiere sin/cos)
   readonly variables = [
     { key: 'temperatura', label: 'Temperatura' },
@@ -27,6 +28,8 @@ export class EstacionEstadistica {
 
   readonly cantidadesRapidas = [50, 100, 500, 1000];
 
+  // Catálogo de estaciones: el selector se llena desde Estaciones_Meteo
+  estaciones: EstacionMeteo[] = [];
   estacionNumero = 1;
   variable = 'temperatura';
   cantidad = 100;
@@ -50,6 +53,18 @@ export class EstacionEstadistica {
   serieAnnotations: ApexAnnotations = {};
 
   constructor(private _weatherService: WeatherService, private _snackBar: MatSnackBar) { }
+
+  ngOnInit(): void {
+    this._weatherService.getEstaciones().subscribe({
+      next: data => {
+        this.estaciones = data;
+        if (data.length && !data.some(e => e.numero === this.estacionNumero)) {
+          this.estacionNumero = data[0].numero;
+        }
+      },
+      error: () => this._snackBar.open('No se pudo cargar el catálogo de estaciones', 'Cerrar', { duration: 3000 })
+    });
+  }
 
   get variableLabel(): string {
     return this.variables.find(v => v.key === this.variable)?.label ?? this.variable;

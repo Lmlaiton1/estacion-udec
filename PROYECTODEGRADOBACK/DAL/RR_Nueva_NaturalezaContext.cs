@@ -30,6 +30,7 @@ namespace RR_Nueva_Naturaleza.DAL
         // Dominio Estación Meteorológica
         public DbSet<EstacionMeteo> Estaciones_Meteo { get; set; }
         public DbSet<SensorMeteo> Sensores_Meteo { get; set; }
+        public DbSet<SensorMeteoInactivo> Sensores_Meteo_Inactivos { get; set; }
         public DbSet<LecturaMeteo> Lecturas_Meteo { get; set; }
         public DbSet<LecturaCruda> Lecturas_Crudas { get; set; }
         public DbSet<UmbralMeteo> Umbrales_Meteo { get; set; }
@@ -132,6 +133,24 @@ namespace RR_Nueva_Naturaleza.DAL
                 .WithMany()
                 .HasForeignKey(l => l.SensorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // SensorMeteoInactivo: un sensor apagado en una estación puntual. Cascade en ambas FK:
+            // si se borra el sensor o la estación, la marca de inactivo ya no tiene sentido.
+            modelBuilder.Entity<SensorMeteoInactivo>()
+                .HasKey(i => new { i.SensorId, i.EstacionNumero });
+
+            modelBuilder.Entity<SensorMeteoInactivo>()
+                .HasOne<SensorMeteo>()
+                .WithMany()
+                .HasForeignKey(i => i.SensorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<SensorMeteoInactivo>()
+                .HasOne<EstacionMeteo>()
+                .WithMany()
+                .HasForeignKey(i => i.EstacionNumero)
+                .HasPrincipalKey(e => e.Numero)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // El payload crudo debe ser JSON válido
             modelBuilder.Entity<LecturaCruda>()

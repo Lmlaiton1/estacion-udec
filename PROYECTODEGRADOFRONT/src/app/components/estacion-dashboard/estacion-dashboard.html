@@ -90,7 +90,7 @@
       <mat-form-field appearance="outline" class="selector-estacion">
         <mat-label>Estación</mat-label>
         <mat-select [value]="estacionSeleccionada" (selectionChange)="cambiarEstacionSeleccionada($event.value)">
-          @for (numero of [1, 2, 3]; track numero) {
+          @for (numero of numerosEstaciones(); track numero) {
             <mat-option [value]="numero">{{ nombreEstacion(numero) }}</mat-option>
           }
         </mat-select>

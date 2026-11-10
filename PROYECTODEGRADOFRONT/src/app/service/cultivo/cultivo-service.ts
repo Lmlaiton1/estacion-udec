@@ -8,7 +8,8 @@ import { CambiarEstado } from '../../models/CambiarEstado';
 import {
   AccionarActuador, ActuadorCultivo, ActuadorCultivoCreate, ActuadorCultivoEnVivo, AlarmaCultivo, AlarmaCultivoEnVivo,
   BitacoraAlarmaCultivo, Cultivo, CultivoCreate, EtapaCultivo, EtapaCultivoCreate, EventoDispositivoCultivo,
-  SensorCultivo, SensorCultivoCreate, UmbralCultivo, UmbralCultivoCreate, AuditoriaCultivo, DispositivoNuevaNaturaleza
+  SensorCultivo, SensorCultivoCreate, UmbralCultivo, UmbralCultivoCreate, AuditoriaCultivo, DispositivoNuevaNaturaleza,
+  LecturaCultivo
 } from '../../models/Cultivo';
 
 @Injectable({
@@ -96,6 +97,11 @@ export class CultivoService {
   // Sensores
   public getSensores(cultivoId?: string | null): Observable<SensorCultivo[]> {
     return this._http.get<SensorCultivo[]>(this.apiUrl + this.sensor, { params: this.params({ cultivoId }) });
+  }
+
+  // Lecturas de un sensor en las últimas `horas` (el backend limita a 31 días)
+  public getLecturasSensor(id: string, horas: number): Observable<LecturaCultivo[]> {
+    return this._http.get<LecturaCultivo[]>(`${this.apiUrl + this.sensor}/Lecturas/${id}`, { params: this.params({ horas: String(horas) }) });
   }
 
   public crearSensor(sensor: SensorCultivoCreate): Observable<Responses> {

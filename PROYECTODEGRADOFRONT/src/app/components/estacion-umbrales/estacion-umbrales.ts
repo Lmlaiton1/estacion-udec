@@ -7,6 +7,7 @@ import { UmbralMeteo } from '../../models/UmbralMeteo';
 import { UmbralMeteoCreate } from '../../models/UmbralMeteoCreate';
 import { UmbralMeteoUpdate } from '../../models/UmbralMeteoUpdate';
 import { AlertaMeteo } from '../../models/AlertaMeteo';
+import { EstacionMeteo } from '../../models/EstacionMeteo';
 
 // Ventana que pide un texto obligatorio antes de ejecutar (motivo o qué se hizo); queda en la auditoría
 interface AccionPendiente {
@@ -29,6 +30,9 @@ export class EstacionUmbrales implements OnInit {
   readonly variables = ['temperatura', 'humedad', 'radiacion', 'velocidadViento', 'direccion', 'lluvia'];
   readonly niveles = ['Baja', 'Media', 'Alta'];
 
+  // Catálogo de estaciones: el selector se llena desde Estaciones_Meteo
+  estaciones: EstacionMeteo[] = [];
+
   umbrales: UmbralMeteo[] = [];
   columnasUmbrales = ['estacion', 'variable', 'rango', 'nivel', 'activo', 'acciones'];
 
@@ -46,6 +50,10 @@ export class EstacionUmbrales implements OnInit {
   constructor(private _weatherService: WeatherService, private _snackBar: MatSnackBar) { }
 
   ngOnInit(): void {
+    this._weatherService.getEstaciones().subscribe({
+      next: data => this.estaciones = data,
+      error: () => this.mostrarError('No se pudo cargar el catálogo de estaciones')
+    });
     this.cargarUmbrales();
     this.cargarAlertas();
   }

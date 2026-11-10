@@ -593,3 +593,30 @@ mat-panel-description {
 .nowrap {
   white-space: nowrap;
 }
+
+// Gráficas de los sensores (pestaña Sensores)
+.selector-horas {
+  width: 200px;
+}
+
+.graficas-sensores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+.grafica-card {
+  border-radius: 12px;
+  padding: 8px;
+  min-height: 60px;
+
+  apx-chart {
+    display: block;
+    width: 100%;
+  }
+}
+
+.grafica-titulo {
+  font-weight: 600;
+  margin: 4px 8px 0;
+}

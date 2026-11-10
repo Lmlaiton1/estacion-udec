@@ -156,6 +156,38 @@
       </mat-card>
     }
 
+    @if (sensorEstado) {
+      <mat-card class="form-card" appearance="outlined">
+        <mat-card-title>Activar / desactivar "{{ sensorEstado.nombre }}"</mat-card-title>
+        <mat-card-content>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Estación</mat-label>
+              <mat-select [(ngModel)]="estadoEstacion">
+                @for (e of estaciones; track e.id) {
+                  <mat-option [value]="e.numero">
+                    Estación {{ e.numero }} · {{ e.nombre }} ({{ activoEnEstacion(sensorEstado, e.numero) ? 'activo' : 'inactivo' }})
+                  </mat-option>
+                }
+                <mat-option [value]="null">Todas las estaciones</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="descripcion-field">
+              <mat-label>¿Por qué? (obligatorio, queda en la auditoría)</mat-label>
+              <input matInput [(ngModel)]="estadoMotivo">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+        <mat-card-actions align="end">
+          <button mat-button (click)="cancelarEstadoSensor()">Cancelar</button>
+          <button mat-raised-button [color]="estadoNuevo ? 'primary' : 'warn'" (click)="confirmarEstadoSensor()">
+            {{ estadoNuevo ? 'Activar' : 'Desactivar' }}{{ estadoEstacion !== null ? ' en estación ' + estadoEstacion : ' en todas' }}
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+
     <table mat-table [dataSource]="sensores" class="tabla">
       <ng-container matColumnDef="nombre">
         <th mat-header-cell *matHeaderCellDef>Nombre</th>
@@ -175,9 +207,14 @@
       <ng-container matColumnDef="activo">
         <th mat-header-cell *matHeaderCellDef>Estado</th>
         <td mat-cell *matCellDef="let s">
-          <span class="estado" [ngClass]="s.activo ? 'activa' : 'inactiva'">
-            {{ s.activo ? 'Activo' : 'Inactivo' }}
-          </span>
+          <div class="estados-estacion">
+            @for (e of estaciones; track e.id) {
+              <span class="estado" [ngClass]="activoEnEstacion(s, e.numero) ? 'activa' : 'inactiva'"
+                [matTooltip]="'Estación ' + e.numero + ': ' + (activoEnEstacion(s, e.numero) ? 'activo' : 'inactivo')">
+                E{{ e.numero }}
+              </span>
+            }
+          </div>
         </td>
       </ng-container>
 
@@ -187,9 +224,8 @@
           <button mat-icon-button color="primary" (click)="editarSensor(s)" matTooltip="Editar">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button [color]="s.activo ? 'warn' : 'primary'" (click)="alternarSensor(s)"
-            [matTooltip]="s.activo ? 'Desactivar' : 'Activar'">
-            <mat-icon>{{ s.activo ? 'block' : 'check_circle' }}</mat-icon>
+          <button mat-icon-button color="warn" (click)="abrirEstadoSensor(s)" matTooltip="Activar / desactivar por estación">
+            <mat-icon>power_settings_new</mat-icon>
           </button>
           <button mat-icon-button color="warn" (click)="eliminarSensor(s)" matTooltip="Eliminar">
             <mat-icon>delete</mat-icon>

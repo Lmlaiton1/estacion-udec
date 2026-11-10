@@ -1403,6 +1403,21 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.ToTable("Sensores_Meteo");
                 });
 
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.SensorMeteoInactivo", b =>
+                {
+                    b.Property<Guid>("SensorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("EstacionNumero")
+                        .HasColumnType("int");
+
+                    b.HasKey("SensorId", "EstacionNumero");
+
+                    b.HasIndex("EstacionNumero");
+
+                    b.ToTable("Sensores_Meteo_Inactivos");
+                });
+
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.SerialPortConfig", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2070,6 +2085,22 @@ namespace RR_Nueva_Naturaleza.Migrations
                     b.Navigation("Cultivo");
 
                     b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("RR_Nueva_Naturaleza.Models.SensorMeteoInactivo", b =>
+                {
+                    b.HasOne("RR_Nueva_Naturaleza.Models.EstacionMeteo", null)
+                        .WithMany()
+                        .HasForeignKey("EstacionNumero")
+                        .HasPrincipalKey("Numero")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RR_Nueva_Naturaleza.Models.SensorMeteo", null)
+                        .WithMany()
+                        .HasForeignKey("SensorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RR_Nueva_Naturaleza.Models.UmbralCultivo", b =>

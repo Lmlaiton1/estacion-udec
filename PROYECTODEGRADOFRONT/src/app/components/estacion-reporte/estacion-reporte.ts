@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MATERIAL_MODULES } from '../../shared/material';
 import { WeatherService } from '../../service/weather/weather-service';
 import { LecturaMeteoPdfRequest } from '../../models/LecturaMeteoPdfRequest';
+import { EstacionMeteo } from '../../models/EstacionMeteo';
 
 @Component({
   selector: 'app-estacion-reporte',
@@ -12,7 +13,7 @@ import { LecturaMeteoPdfRequest } from '../../models/LecturaMeteoPdfRequest';
   templateUrl: './estacion-reporte.html',
   styleUrls: ['./estacion-reporte.scss']
 })
-export class EstacionReporte {
+export class EstacionReporte implements OnInit {
   readonly variables = [
     { key: '', label: 'Todas las variables' },
     { key: 'temperatura', label: 'Temperatura' },
@@ -23,6 +24,8 @@ export class EstacionReporte {
     { key: 'lluvia', label: 'Lluvia' },
   ];
 
+  // Catálogo de estaciones: el selector se llena desde Estaciones_Meteo
+  estaciones: EstacionMeteo[] = [];
   estacionNumero: number | null = null;
   variable = '';
   fechaInicio: Date | null = null;
@@ -35,6 +38,13 @@ export class EstacionReporte {
   generando = false;
 
   constructor(private _weatherService: WeatherService, private _snackBar: MatSnackBar) { }
+
+  ngOnInit(): void {
+    this._weatherService.getEstaciones().subscribe({
+      next: data => this.estaciones = data,
+      error: () => this._snackBar.open('No se pudo cargar el catálogo de estaciones', 'Cerrar', { duration: 3000 })
+    });
+  }
 
   nombreEstacion(numero: number | null): string {
     return numero === null ? 'Todas las estaciones' : `Estación ${numero}`;

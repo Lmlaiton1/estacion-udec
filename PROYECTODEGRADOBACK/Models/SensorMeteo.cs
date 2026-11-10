@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RR_Nueva_Naturaleza.Models
 {
@@ -20,6 +21,11 @@ namespace RR_Nueva_Naturaleza.Models
         [MaxLength(500)]
         public string? Descripcion { get; set; }
 
+        // Activo global: false = apagado en todas las estaciones
         public bool Activo { get; set; } = true;
+
+        // Estaciones donde está desactivado puntualmente (Sensores_Meteo_Inactivos). Se llena en GetSensores.
+        [NotMapped]
+        public List<int> EstacionesInactivas { get; set; } = new();
     }
 }

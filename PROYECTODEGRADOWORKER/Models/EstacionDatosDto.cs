@@ -2,7 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace ServicioSensorica.Models
 {
-    // DTO del JSON compacto que publica cada estación en el topic estacionN/datos
+    // DTO del JSON compacto que publica cada estación en el topic estacionN/datos.
+    // Las variables son opcionales: una estación solo envía las de los sensores que tiene
+    // (ej. la estación 4 solo manda tem y hum) y el resto llega en null y no se guarda.
     public class EstacionDatosDto
     {
         [JsonPropertyName("e")]
@@ -12,30 +14,30 @@ namespace ServicioSensorica.Models
         public string? Timestamp { get; set; }
 
         [JsonPropertyName("tem")]
-        public decimal Temperatura { get; set; }
+        public decimal? Temperatura { get; set; }
 
         [JsonPropertyName("hum")]
-        public decimal Humedad { get; set; }
+        public decimal? Humedad { get; set; }
 
         [JsonPropertyName("rad")]
-        public decimal Radiacion { get; set; }
+        public decimal? Radiacion { get; set; }
 
         [JsonPropertyName("velV")]
-        public decimal VelocidadViento { get; set; }
+        public decimal? VelocidadViento { get; set; }
 
         [JsonPropertyName("vvp")]
-        public int VelocidadVientoPulsos { get; set; }
+        public int? VelocidadVientoPulsos { get; set; }
 
         [JsonPropertyName("vvi")]
-        public int VelocidadVientoIntervaloMs { get; set; }
+        public int? VelocidadVientoIntervaloMs { get; set; }
 
         [JsonPropertyName("dirV")]
-        public int DireccionGrados { get; set; }
+        public int? DireccionGrados { get; set; }
 
         [JsonPropertyName("lluv")]
-        public decimal Lluvia { get; set; }
+        public decimal? Lluvia { get; set; }
 
         [JsonPropertyName("llup")]
-        public int LluviaPulsos { get; set; }
+        public int? LluviaPulsos { get; set; }
     }
 }

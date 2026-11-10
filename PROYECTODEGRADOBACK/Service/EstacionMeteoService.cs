@@ -22,7 +22,7 @@ namespace RR_Nueva_Naturaleza.Service
 
         public async Task<IEnumerable<EstacionMeteo>> GetEstaciones()
         {
-            return await _context.Estaciones_Meteo.ToListAsync();
+            return await _context.Estaciones_Meteo.OrderBy(e => e.Numero).ToListAsync();
         }
 
         public async Task<EstacionMeteo?> GetEstacion(Guid id)

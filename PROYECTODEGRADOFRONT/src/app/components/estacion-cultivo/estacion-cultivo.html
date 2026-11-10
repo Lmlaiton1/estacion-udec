@@ -379,6 +379,44 @@
         </div>
         @if (sensores.length === 0) { <p class="no-data">No hay sensores registrados</p> }
       </section>
+
+      <!-- Gráficas de los sensores activos (las líneas punteadas son los umbrales activos) -->
+      @if (mostrarGraficas && graficasSensores.length) {
+        <section class="seccion">
+          <div class="seccion-header">
+            <h3>Gráficas de los sensores</h3>
+            <mat-form-field appearance="outline" class="selector-horas">
+              <mat-label>Periodo</mat-label>
+              <mat-select [value]="horasGrafica" (selectionChange)="cambiarHorasGrafica($event.value)">
+                @for (o of opcionesHoras; track o.horas) {
+                  <mat-option [value]="o.horas">{{ o.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="graficas-sensores">
+            @for (g of graficasSensores; track g.sensorId) {
+              <mat-card class="grafica-card" appearance="outlined">
+                @if (g.sinDatos) {
+                  <p class="grafica-titulo">{{ g.title.text }}</p>
+                  <p class="no-data">Sin lecturas en este periodo</p>
+                } @else {
+                  <apx-chart
+                    [series]="g.series"
+                    [chart]="g.chart"
+                    [xaxis]="g.xaxis"
+                    [yaxis]="g.yaxis"
+                    [title]="g.title"
+                    [stroke]="g.stroke"
+                    [annotations]="g.annotations">
+                  </apx-chart>
+                }
+              </mat-card>
+            }
+          </div>
+        </section>
+      }
     </mat-tab>
 
     <!-- ===================== ACTUADORES ===================== -->

@@ -9,9 +9,9 @@
           <mat-label>Estación</mat-label>
           <mat-select [(ngModel)]="estacionNumero">
             <mat-option [value]="null">Todas las estaciones</mat-option>
-            <mat-option [value]="1">Estación 1</mat-option>
-            <mat-option [value]="2">Estación 2</mat-option>
-            <mat-option [value]="3">Estación 3</mat-option>
+            @for (e of estaciones; track e.numero) {
+              <mat-option [value]="e.numero">Estación {{ e.numero }}</mat-option>
+            }
           </mat-select>
         </mat-form-field>
 
